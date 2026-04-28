@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Evita che il browser sposti lo scroll quando elementi sopra
+   (es. header sticky) cambiano altezza — previene flicker di stato. */
+html {
+  overflow-anchor: none;
+}
+
+/* ── Google Fonts ──────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap');
+
+/* ── Custom Fonts (local) ────────────────────────────────────── */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ── CSS Variables ───────────────────────────────────────────── */
+:root {
+  --color-primary: #2E9BDA;
+  --color-primary-dark: #1A7BB5;
+  --color-secondary: #5AAE4B;
+  --color-bg: #FFFFFF;
+  --color-bg-soft: #E8F3FB;
+  --color-bg-deep: #C9E2F2;
+  --color-text: #2A3642;
+  --color-accent: #2E9BDA;
+  --color-muted: #E8F3FB;
+  --font-base: 'Inter', system-ui, sans-serif;
+  --radius: 24px;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-base);
+}
+
+/* ── DSA Mode ────────────────────────────────────────────────── */
+html.dsa-mode {
+  --font-base: 'Lexend', sans-serif;
+  --color-bg: #FFFFFF;
+}
+
+html.dsa-mode body {
+  font-family: 'Lexend', sans-serif;
+  letter-spacing: 0.04em;
+  line-height: 1.8;
+  word-spacing: 0.1em;
+}
+
+/* ── High Contrast ────────────────────────────────────────────── */
+html.high-contrast {
+  --color-text: #1A1A1A;
+  --color-bg: #FFFFFF;
+  --color-primary: #1A6B9A;
+}
+
+html.high-contrast body {
+  color: #1A1A1A;
+  background: #FFFFFF;
+}
+
+html.high-contrast .bg-primary {
+  background-color: #1A6B9A !important;
+}
+
+html.high-contrast .glass,
+html.high-contrast .glass-card {
+  background: #FFFFFF !important;
+  border-color: #D1D5DB !important;
+  backdrop-filter: none !important;
+}
+
+/* ── Utility classes ─────────────────────────────────────────── */
+@layer components {
+  .glass {
+    @apply bg-white/60 backdrop-blur-xl border border-white/20 shadow-card;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/60 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-card {
+    @apply glass rounded-lg p-6;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white font-medium px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-primary border-2 border-primary font-medium px-6 py-3 rounded-sm hover:bg-primary hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply text-text-main font-medium px-6 py-3 rounded-sm hover:bg-muted transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded shadow-card p-6;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-card-hover transition-shadow duration-300 cursor-pointer;
+  }
+
+  .section {
+    @apply py-16 md:py-24;
+  }
+
+  .container-main {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .heading-1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-text-main;
+  }
+
+  .heading-2 {
+    @apply text-3xl md:text-4xl font-light tracking-tight text-text-main;
+  }
+
+  .heading-3 {
+    @apply text-2xl font-medium text-text-main;
+  }
+
+  .prose-content h2 {
+    @apply text-2xl font-medium mt-8 mb-4;
+  }
+
+  .prose-content p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .prose-content ul {
+    @apply list-disc pl-6 mb-4 space-y-2;
+  }
+}
