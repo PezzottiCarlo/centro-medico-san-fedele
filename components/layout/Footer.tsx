@@ -1,0 +1,125 @@
+import Link from 'next/link'
+import Image from 'next/image'
+import { Phone, Mail, MapPin, Clock, Instagram, Facebook, Linkedin } from 'lucide-react'
+
+export function Footer() {
+  return (
+    <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      {/* Top section — brand + social */}
+      <div className="container-main pt-12 pb-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 mb-10">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/logo-san-fedele.png"
+              alt="Centro Medico San Fedele"
+              width={48}
+              height={48}
+              className="rounded-full object-cover"
+            />
+            <div>
+              <div className="font-semibold text-lg leading-tight">Centro Medico</div>
+              <div className="text-sm text-gray-400 leading-tight">San Fedele</div>
+            </div>
+          </div>
+          <p className="text-gray-400 text-sm leading-relaxed max-w-md text-center md:text-left">
+            Centro medico d'eccellenza a Longone al Segrino. Cura, competenza e attenzione alla persona dal 2008.
+          </p>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://www.instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors"
+              aria-label="Instagram"
+            >
+              <Instagram size={18} />
+            </a>
+            <a
+              href="https://www.facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors"
+              aria-label="Facebook"
+            >
+              <Facebook size={18} />
+            </a>
+            <a
+              href="https://www.linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors"
+              aria-label="LinkedIn"
+            >
+              <Linkedin size={18} />
+            </a>
+          </div>
+        </div>
+
+        {/* Central — 3 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-white/10 pt-8">
+          {/* Servizi */}
+          <div>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Servizi</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link href="/ambulatori" className="hover:text-white transition-colors">Specialistiche</Link></li>
+              <li><Link href="/medici" className="hover:text-white transition-colors">I Nostri Medici</Link></li>
+              <li><Link href="/dsa" className="hover:text-white transition-colors">Area DSA</Link></li>
+              <li><Link href="/sport" className="hover:text-white transition-colors">Medicina Sportiva</Link></li>
+              <li><Link href="/news" className="hover:text-white transition-colors">News & Articoli</Link></li>
+            </ul>
+          </div>
+
+          {/* Info */}
+          <div>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Informazioni</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link href="/convenzioni" className="hover:text-white transition-colors">Convenzioni</Link></li>
+              <li><Link href="/lavora-con-noi" className="hover:text-white transition-colors">Lavora con Noi</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/contatti" className="hover:text-white transition-colors">Contatti</Link></li>
+            </ul>
+          </div>
+
+          {/* Contatti */}
+          <div>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Contatti</h4>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li className="flex items-start gap-2">
+                <MapPin size={16} className="mt-0.5 flex-shrink-0 text-primary" />
+                <span>Via Risorgimento, 1<br />22030 Longone al Segrino (CO)</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone size={16} className="flex-shrink-0 text-primary" />
+                <a href="tel:+390313333585" className="hover:text-white transition-colors font-medium">031 333 3585</a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail size={16} className="flex-shrink-0 text-primary" />
+                <a href="mailto:info@sanfedele.it" className="hover:text-white transition-colors">info@sanfedele.it</a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Clock size={16} className="flex-shrink-0 text-primary" />
+                <div>
+                  <p>Lun–Ven: 09:00–19:30</p>
+                  <p>Sab–Dom: Chiuso</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="border-t border-white/10">
+        <div className="container-main py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+          <p>&copy; {new Date().getFullYear()} Centro Medico San Fedele. Tutti i diritti riservati.</p>
+          <div className="flex items-center gap-4">
+            <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram size={16} /></a>
+            <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><Facebook size={16} /></a>
+            <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn"><Linkedin size={16} /></a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}
