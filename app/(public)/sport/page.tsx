@@ -144,7 +144,7 @@ export default async function SportPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/prenota"
+                href="/prenota?specialistica=medicina-sportiva"
                 className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-4 rounded-lg transition-all hover:shadow-lg hover:shadow-emerald-500/25 text-lg"
               >
                 Prenota visita
@@ -645,7 +645,7 @@ export default async function SportPage() {
                 e piani nutrizionali su misura per te.
               </p>
               <Link
-                href="/prenota"
+                href="/prenota?specialistica=medicina-sportiva"
                 className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-emerald-700 font-bold px-10 py-4 rounded-lg transition-all hover:shadow-xl text-lg"
               >
                 Prenota adesso

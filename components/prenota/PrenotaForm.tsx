@@ -43,9 +43,29 @@ export function PrenotaForm({
   const preselectedSpec = searchParams.get('specialistica') || ''
   const preselectedMedico = searchParams.get('medico') || ''
 
+  // Calcola lo step iniziale saltando quelli che sarebbero vuoti dato il preselect
+  function computeInitial(): {
+    step: 'spec' | 'sotto' | 'medico' | 'dati'
+    skippedMedico: boolean
+  } {
+    if (!preselectedSpec) return { step: 'spec', skippedMedico: false }
+    const spec = specialistiche.find((s) => s.slug === preselectedSpec)
+    if (!spec) return { step: 'spec', skippedMedico: false }
+    if (preselectedMedico) return { step: 'dati', skippedMedico: false }
+    if ((spec.sottoSpecialistiche?.length ?? 0) > 0) {
+      return { step: 'sotto', skippedMedico: false }
+    }
+    const mediciDisponibili = medici.filter(
+      (m) => m.specialisticheIds.includes(spec.id) && !m.suChiamata
+    )
+    if (mediciDisponibili.length > 0) return { step: 'medico', skippedMedico: false }
+    // niente sotto-spec e niente medici → vai diretto a "dati", segnala skip
+    return { step: 'dati', skippedMedico: true }
+  }
+
   // step: 'spec' | 'sotto' | 'medico' | 'dati'
   const [step, setStep] = useState<'spec' | 'sotto' | 'medico' | 'dati'>(
-    preselectedSpec ? 'sotto' : 'spec'
+    () => computeInitial().step
   )
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -63,7 +83,9 @@ export function PrenotaForm({
   const [messaggio, setMessaggio] = useState('')
 
   // Tiene traccia se il medico step è stato saltato (per il back da dati)
-  const [skippedMedico, setSkippedMedico] = useState(false)
+  const [skippedMedico, setSkippedMedico] = useState<boolean>(
+    () => computeInitial().skippedMedico
+  )
 
   /* ── Derived data ──────────────────────────────────────── */
 
