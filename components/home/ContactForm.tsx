@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle, Loader2, Send } from 'lucide-react'
+import { CheckCircle, Loader2 } from 'lucide-react'
+import { MelaButton } from '@/components/ui/MelaButton'
 
 export function ContactForm() {
   const [loading, setLoading] = useState(false)
@@ -117,17 +118,22 @@ export function ContactForm() {
         <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded p-3">{error}</p>
       )}
 
-      <button
+      <MelaButton
         type="submit"
+        mela="chiama"
+        melaSize="md"
+        melaPosition="left"
+        fullWidth
+        showArrow={false}
         disabled={loading}
-        className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+        className="mt-2"
       >
         {loading ? (
-          <><Loader2 size={18} className="animate-spin" /> Invio in corso...</>
+          <><Loader2 size={18} className="animate-spin" /> La mela sta correndo...</>
         ) : (
-          <><Send size={16} /> Invia messaggio</>
+          <>Inviamelo, ti rispondo!</>
         )}
-      </button>
+      </MelaButton>
       <p className="text-xs text-gray-400">* Campi obbligatori. I tuoi dati saranno trattati secondo la nostra Privacy Policy.</p>
     </form>
   )
