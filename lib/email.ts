@@ -63,14 +63,15 @@ const CENTRO = {
   sito: SITE_URL.replace(/^https?:\/\//, ''),
 }
 
-// Palette
+// Palette — allineata al sito (azzurro) — vedi tailwind.config.ts
 const C = {
-  primary: '#D05241',
-  primaryDark: '#B6452F',
-  text: '#1f2937',
+  primary: '#2E9BDA',
+  primaryDark: '#1A7BB5',
+  text: '#2A3642',
   textSoft: '#6b7280',
-  border: '#e5e7eb',
-  bgSoft: '#f8f5f3',
+  border: '#dbeafe',
+  bgSoft: '#E8F3FB',
+  bgDeep: '#C9E2F2',
   white: '#ffffff',
 }
 
@@ -105,13 +106,18 @@ function emailShell(opts: { preheader: string; bodyHtml: string }): string {
       <td align="center" style="padding:32px 16px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:${C.white};border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
 
-          <!-- Header brand -->
+          <!-- Header brand: gradiente azzurro + card bianca interna per logo+titolo
+               (il logo è una scritta blu — su azzurro serve sfondo bianco) -->
           <tr>
-            <td style="background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);padding:32px 32px 28px 32px;text-align:center;">
-              <img src="cid:${CID_LOGO}" alt="${CENTRO.nome}" width="72" height="72" style="display:inline-block;border:0;border-radius:50%;background:${C.white};padding:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);" />
-              <div style="margin-top:14px;">
-                <img src="cid:${CID_TITOLO}" alt="${CENTRO.nome}" height="34" style="display:inline-block;border:0;height:34px;filter:brightness(0) invert(1);" />
-              </div>
+            <td style="background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);padding:36px 32px 36px 32px;text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="background:${C.white};border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.10);">
+                <tr>
+                  <td style="padding:18px 28px;text-align:center;">
+                    <img src="cid:${CID_LOGO}" alt="${CENTRO.nome}" width="56" height="56" style="display:inline-block;vertical-align:middle;border:0;" />
+                    <img src="cid:${CID_TITOLO}" alt="${CENTRO.nome}" height="36" style="display:inline-block;vertical-align:middle;border:0;height:36px;margin-left:14px;" />
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
