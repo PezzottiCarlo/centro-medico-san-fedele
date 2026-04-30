@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 const MELA_IMAGES = {
   welcome: { src: '/mela-welcome.png', width: 1024, height: 1024 },
   indica: { src: '/mela-indica.png', width: 500, height: 500 },
+  chiama: { src: '/mela-chiama.png', width: 713, height: 1035 },
 } as const
 
 export type MelaType = keyof typeof MELA_IMAGES
@@ -65,8 +66,7 @@ const SIZE_CONFIG: Record<MelaSize, SizeConfig> = {
   },
 }
 
-interface MelaButtonProps {
-  href: string
+interface MelaButtonBaseProps {
   children: ReactNode
   mela: MelaType
   melaPosition?: 'left' | 'right'
@@ -74,24 +74,43 @@ interface MelaButtonProps {
   melaSize?: MelaSize
   variant?: 'gradient' | 'primary'
   showArrow?: boolean
+  fullWidth?: boolean
   className?: string
-  target?: string
-  rel?: string
 }
 
-export function MelaButton({
-  href,
-  children,
-  mela,
-  melaPosition = 'left',
-  melaFlip = false,
-  melaSize = 'md',
-  variant = 'gradient',
-  showArrow = true,
-  className = '',
-  target,
-  rel,
-}: MelaButtonProps) {
+interface MelaButtonLinkProps extends MelaButtonBaseProps {
+  href: string
+  target?: string
+  rel?: string
+  type?: never
+  onClick?: never
+  disabled?: never
+}
+
+interface MelaButtonButtonProps extends MelaButtonBaseProps {
+  href?: never
+  type?: 'button' | 'submit' | 'reset'
+  onClick?: () => void
+  disabled?: boolean
+  target?: never
+  rel?: never
+}
+
+type MelaButtonProps = MelaButtonLinkProps | MelaButtonButtonProps
+
+export function MelaButton(props: MelaButtonProps) {
+  const {
+    children,
+    mela,
+    melaPosition = 'left',
+    melaFlip = false,
+    melaSize = 'md',
+    variant = 'gradient',
+    showArrow = true,
+    fullWidth = false,
+    className = '',
+  } = props
+
   const img = MELA_IMAGES[mela]
   const cfg = SIZE_CONFIG[melaSize]
   const isLeft = melaPosition === 'left'
@@ -102,19 +121,25 @@ export function MelaButton({
       : 'bg-primary hover:bg-primary-dark'
 
   const padding = isLeft ? cfg.padLeft : cfg.padRight
-  const justify = isLeft ? 'justify-end' : 'justify-start'
+  const justify = fullWidth
+    ? 'justify-center'
+    : isLeft
+      ? 'justify-end'
+      : 'justify-start'
   const melaPositionClasses = isLeft ? cfg.offsetLeft : cfg.offsetRight
   const melaHoverRotate = isLeft
     ? 'group-hover:-rotate-6'
     : 'group-hover:rotate-6'
+  const display = fullWidth ? 'flex w-full' : 'inline-flex'
+  const disabledClasses =
+    'href' in props
+      ? ''
+      : 'disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-card'
 
-  return (
-    <Link
-      href={href}
-      target={target}
-      rel={rel}
-      className={`group relative inline-flex items-center ${justify} overflow-visible rounded-full ${bgClasses} ${padding} ${cfg.padY} shadow-card hover:shadow-card-hover transition-all ${className}`}
-    >
+  const rootClassName = `group relative ${display} items-center ${justify} overflow-visible rounded-full ${bgClasses} ${padding} ${cfg.padY} shadow-card hover:shadow-card-hover transition-all ${disabledClasses} ${className}`
+
+  const inner = (
+    <>
       <div
         className={`absolute ${melaPositionClasses} top-1/2 -translate-y-1/2 pointer-events-none`}
       >
@@ -132,6 +157,30 @@ export function MelaButton({
         {children}
         {showArrow && <ArrowRight size={cfg.arrow} />}
       </span>
-    </Link>
+    </>
+  )
+
+  if ('href' in props && props.href) {
+    return (
+      <Link
+        href={props.href}
+        target={props.target}
+        rel={props.rel}
+        className={rootClassName}
+      >
+        {inner}
+      </Link>
+    )
+  }
+
+  return (
+    <button
+      type={props.type ?? 'button'}
+      onClick={props.onClick}
+      disabled={props.disabled}
+      className={rootClassName}
+    >
+      {inner}
+    </button>
   )
 }
