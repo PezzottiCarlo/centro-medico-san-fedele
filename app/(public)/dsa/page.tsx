@@ -268,7 +268,7 @@ export default async function DSAPage() {
           <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
             Il percorso inizia con una valutazione specialistica. I nostri esperti ti guideranno in ogni fase.
           </p>
-          <Link href="/prenota?specialistica=dsa" className="bg-white text-primary font-medium px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-lg">
+          <Link href="/prenota?specialistica=equipe-dsa" className="bg-white text-primary font-medium px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-lg">
             Prenota adesso <ArrowRight size={18} />
           </Link>
         </div>
