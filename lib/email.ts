@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer'
+import path from 'path'
+import fs from 'fs'
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -23,8 +25,33 @@ export interface LeadEmailData {
 
 // ─── Brand & contatti centro ──────────────────────────────────────────
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://centromedicosanfedele.it'
-const LOGO_URL = `${SITE_URL}/logo-san-fedele.png`
-const TITOLO_URL = `${SITE_URL}/titolo.png`
+
+// Inline brand images via CID (più affidabili di URL remote — Outlook le mostra
+// senza chiedere conferma e funzionano anche senza NEXT_PUBLIC_SITE_URL).
+const CID_LOGO = 'logo-sanfedele'
+const CID_TITOLO = 'titolo-sanfedele'
+
+interface BrandAsset {
+  filename: string
+  cid: string
+  diskPath: string
+}
+
+function brandAssets(): BrandAsset[] {
+  const root = process.cwd()
+  return [
+    { filename: 'logo.png', cid: CID_LOGO, diskPath: path.resolve(root, 'public/logo-san-fedele.png') },
+    { filename: 'titolo.png', cid: CID_TITOLO, diskPath: path.resolve(root, 'public/titolo.png') },
+  ].filter((a) => fs.existsSync(a.diskPath))
+}
+
+function brandAttachments() {
+  return brandAssets().map((a) => ({
+    filename: a.filename,
+    path: a.diskPath,
+    cid: a.cid,
+  }))
+}
 
 const CENTRO = {
   nome: 'Centro Medico San Fedele',
@@ -81,9 +108,9 @@ function emailShell(opts: { preheader: string; bodyHtml: string }): string {
           <!-- Header brand -->
           <tr>
             <td style="background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);padding:32px 32px 28px 32px;text-align:center;">
-              <img src="${LOGO_URL}" alt="${CENTRO.nome}" width="72" height="72" style="display:inline-block;border:0;border-radius:50%;background:${C.white};padding:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);" />
+              <img src="cid:${CID_LOGO}" alt="${CENTRO.nome}" width="72" height="72" style="display:inline-block;border:0;border-radius:50%;background:${C.white};padding:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);" />
               <div style="margin-top:14px;">
-                <img src="${TITOLO_URL}" alt="${CENTRO.nome}" height="34" style="display:inline-block;border:0;height:34px;filter:brightness(0) invert(1);" />
+                <img src="cid:${CID_TITOLO}" alt="${CENTRO.nome}" height="34" style="display:inline-block;border:0;height:34px;filter:brightness(0) invert(1);" />
               </div>
             </td>
           </tr>
@@ -317,12 +344,15 @@ function buildPatientHtml(data: LeadEmailData): string {
 export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
   const fullName = `${data.nome}${data.cognome ? ' ' + data.cognome : ''}`
 
+  const attachments = brandAttachments()
+
   await transporter.sendMail({
     from: `"Portale ${CENTRO.nome}" <${process.env.EMAIL_USER}>`,
     to: process.env.EMAIL_TO,
     replyTo: `"${fullName}" <${data.email}>`,
     subject: `Nuova richiesta — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
     html: buildSecretariatHtml(data),
+    attachments,
   })
 
   await transporter.sendMail({
@@ -330,5 +360,6 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
     to: data.email,
     subject: `Abbiamo ricevuto la tua richiesta, ${data.nome} ✓`,
     html: buildPatientHtml(data),
+    attachments,
   })
 }
