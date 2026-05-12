@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Immagini pubbliche del sito (medici, specialistiche, patologie, convenzioni, storia, content):
+    // lettura aperta, scrittura solo via Admin SDK (API /api/upload)
+    match /{folder}/{file=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

@@ -376,10 +376,51 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 ## 10. Infrastruttura
 
 - **Firebase project**: `san-fedele-dev`
-- **Hosting**: Firebase Hosting
-- **Storage**: Firebase Storage (immagini medici, contenuti)
-- **Email**: SMTP Gmail → segreteria@sanfedele.it
+- **Hosting**: Firebase **App Hosting** (Next.js 14 nativo — SSR + API routes + middleware)
+- **Regione**: `europe-west1` (Belgio)
+- **Storage**: Firebase Storage (`san-fedele-dev.appspot.com`) — immagini medici, patologie, specialistiche, convenzioni, storia, news
+- **Email**: SMTP Gmail → segreteria@sanfedele.it (env vars `SMTP_*` come secret)
 - **Costi stimati**: 4-8 EUR/mese (mostly free tier)
+
+### Deploy workflow
+
+| Branch | Ruolo |
+|---|---|
+| `dev` | Sviluppo locale e push remoto. Nessun deploy automatico. |
+| `main` | Produzione. **Push → deploy automatico** App Hosting. |
+| `prod` | Backup storico pre-migrazione (verrà rimosso dopo stabilizzazione). |
+
+**Flusso:** lavora su `dev` → `git checkout main && git merge dev && git push` → App Hosting builda e deploya.
+
+### Configurazione App Hosting
+
+- `apphosting.yaml` — runtime, env vars, lista secret
+- `firebase.json` — punta a regole Firestore + Storage
+- `.firebaserc` — collega il repo al progetto `san-fedele-dev`
+- `firestore.rules` — lettura pubblica per contenuti pubblici, scrittura solo via Admin SDK
+- `storage.rules` — lettura pubblica per asset immagine, scrittura solo via Admin SDK
+
+### Secret richiesti su Google Secret Manager
+
+`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+
+Comandi:
+```bash
+firebase apphosting:secrets:set <NAME>
+firebase apphosting:secrets:grantaccess <NAME> --backend <BACKEND_ID>
+```
+
+### Migrazione immagini locali → Firebase Storage
+
+```bash
+# Anteprima
+npm run migrate-uploads -- --dry-run
+
+# Esecuzione (upload + update Firestore)
+npm run migrate-uploads -- --execute
+```
+
+Script in `scripts/migrate-uploads-to-storage.ts`. Mapping salvato in `scripts/uploads-mapping.json`.
 
 ---
 

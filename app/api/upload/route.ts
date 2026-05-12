@@ -1,28 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { getAdminApp } from '@/lib/firebase/admin'
+import { getStorage } from 'firebase-admin/storage'
 
-const isProduction = process.env.NODE_ENV === 'production'
-
-async function uploadLocal(buffer: Buffer, folder: string, filename: string): Promise<string> {
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', folder)
-  await mkdir(uploadDir, { recursive: true })
-  await writeFile(path.join(uploadDir, filename), buffer)
-  return `/uploads/${folder}/${filename}`
-}
-
-async function uploadFirebase(buffer: Buffer, folder: string, filename: string, contentType: string): Promise<string> {
-  const { getAdminApp } = await import('@/lib/firebase/admin')
-  const { getStorage } = await import('firebase-admin/storage')
-
-  const bucket = getStorage(getAdminApp()).bucket()
-  const fileRef = bucket.file(`${folder}/${filename}`)
-
-  await fileRef.save(buffer, { metadata: { contentType } })
-  await fileRef.makePublic()
-
-  return `https://storage.googleapis.com/${bucket.name}/${folder}/${filename}`
-}
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,11 +18,14 @@ export async function POST(request: NextRequest) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
     const filename = `${Date.now()}_${safeName}`
 
-    const url = isProduction
-      ? await uploadFirebase(buffer, folder, filename, file.type)
-      : await uploadLocal(buffer, folder, filename)
+    const bucket = getStorage(getAdminApp()).bucket()
+    const fileRef = bucket.file(`${folder}/${filename}`)
 
-    console.log(`[Upload] ${isProduction ? 'Firebase' : 'Local'}: ${url}`)
+    await fileRef.save(buffer, { metadata: { contentType: file.type } })
+    await fileRef.makePublic()
+
+    const url = `https://storage.googleapis.com/${bucket.name}/${folder}/${filename}`
+    console.log(`[Upload] Firebase: ${url}`)
 
     return NextResponse.json({ url })
   } catch (error) {

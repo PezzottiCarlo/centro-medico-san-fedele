@@ -45,4 +45,23 @@ Il sito gira su [http://localhost:3000](http://localhost:3000).
 
 ## Deploy
 
-In produzione il sito è hostato su **Firebase Hosting** (App Hosting).
+L'applicazione è hostata su **Firebase App Hosting** (progetto `san-fedele-dev`, regione `europe-west1`).
+
+**Branch strategy:**
+- `dev` — sviluppo locale (`npm run dev`)
+- `main` — produzione: ogni push su `main` triggera un build & deploy automatici di Firebase App Hosting
+
+**Flusso tipico:**
+1. Lavora su `dev`, commit & push
+2. Quando pronto: `git checkout main && git merge dev && git push`
+3. Monitora il build su [console.firebase.google.com](https://console.firebase.google.com) → App Hosting
+
+**Variabili d'ambiente di produzione** — gestite come Secret su Google Secret Manager:
+```bash
+firebase apphosting:secrets:set NOME_SECRET
+firebase apphosting:secrets:grantaccess NOME_SECRET --backend <BACKEND_ID>
+```
+
+Vedi `apphosting.yaml` per la lista completa di env vars e secret richiesti.
+
+**Storage immagini** — Firebase Storage (`san-fedele-dev.appspot.com`), uploads via API `/api/upload` con Firebase Admin SDK. Niente filesystem locale in produzione.

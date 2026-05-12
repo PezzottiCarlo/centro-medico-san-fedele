@@ -61,6 +61,16 @@ next-env.d.ts
 /ecosystem.config.js
 .pm2/
 
+# upload locali — su Firebase Storage in produzione
+/public/uploads/
+
+# Firebase local cache / emulator data
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*-debug.log
+
 # materiale interno (non per repo pubblico)
 /preventivo
 

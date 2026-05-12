@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Contenuti pubblici del sito: lettura aperta, scrittura solo via Admin SDK (server)
+    match /specialistiche/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /medici/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /patologie/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /news_eventi/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /convenzioni/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /recensioni_statiche/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /storia_eventi/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /riconoscimenti/{doc=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Lead form contatti / prenotazioni: niente accesso client; solo Admin SDK lato server
+    match /leads/{doc=**} {
+      allow read, write: if false;
+    }
+
+    // Default deny per qualsiasi altra collezione futura
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
