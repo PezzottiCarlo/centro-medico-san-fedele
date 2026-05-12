@@ -45,7 +45,7 @@ Il sito gira su [http://localhost:3000](http://localhost:3000).
 
 ## Deploy
 
-L'applicazione è hostata su **Firebase App Hosting** (progetto `san-fedele-dev`, regione `europe-west1`).
+L'applicazione è hostata su **Firebase App Hosting** (progetto `san-fedele-dev`, regione `europe-west4`).
 
 **Branch strategy:**
 - `dev` — sviluppo locale (`npm run dev`)
