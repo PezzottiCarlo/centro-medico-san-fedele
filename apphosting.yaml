@@ -29,7 +29,7 @@ env:
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: san-fedele-dev.appspot.com
+    value: san-fedele-dev.firebasestorage.app
     availability:
       - BUILD
       - RUNTIME
@@ -63,7 +63,7 @@ env:
       - RUNTIME
 
   - variable: FIREBASE_STORAGE_BUCKET
-    value: san-fedele-dev.appspot.com
+    value: san-fedele-dev.firebasestorage.app
     availability:
       - RUNTIME
 

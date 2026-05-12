@@ -378,7 +378,7 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 - **Firebase project**: `san-fedele-dev`
 - **Hosting**: Firebase **App Hosting** (Next.js 14 nativo — SSR + API routes + middleware)
 - **Regione**: `europe-west1` (Belgio)
-- **Storage**: Firebase Storage (`san-fedele-dev.appspot.com`) — immagini medici, patologie, specialistiche, convenzioni, storia, news
+- **Storage**: Firebase Storage (`san-fedele-dev.firebasestorage.app`, regione `us-east1`) — immagini medici, patologie, specialistiche, convenzioni, storia, news
 - **Email**: SMTP Gmail → segreteria@sanfedele.it (env vars `SMTP_*` come secret)
 - **Costi stimati**: 4-8 EUR/mese (mostly free tier)
 
