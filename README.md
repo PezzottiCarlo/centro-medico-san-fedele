@@ -1,5 +1,6 @@
 # Centro Medico San Fedele — Sito web
 
+
 Sito istituzionale del Centro Medico San Fedele (Longone al Segrino, CO).
 Stack: **Next.js 14** (App Router) · **TypeScript** · **Tailwind CSS** · **Firebase** (Firestore + Auth + Admin SDK).
 
