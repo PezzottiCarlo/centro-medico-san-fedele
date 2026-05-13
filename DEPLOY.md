@@ -138,19 +138,19 @@ git branch -D prod && git push origin --delete prod
 | Branch sviluppo | `dev` |
 | Repo GitHub | `PezzottiCarlo/centro-medico-san-fedele` |
 
-### Secret richiesti (10)
+### Secret richiesti (8)
 
-Valori da `.env.local`:
+Valori da `.env.local`. **Admin SDK NON serve in prod** — App Hosting usa Application Default Credentials tramite il SA `firebase-app-hosting-compute@san-fedele-dev` (ruoli `Cloud Datastore User` + `Firebase Admin SDK Administrator Service Agent` + `Storage Object Viewer` già configurati). Quindi solo per la build/runtime client + email:
 
 | Secret name | Note |
 |---|---|
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | da console Firebase → Project Settings → Web app |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | idem |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | idem |
-| `FIREBASE_ADMIN_CLIENT_EMAIL` | dal JSON del service account |
-| `FIREBASE_ADMIN_PRIVATE_KEY` | dal JSON del service account, **newline reali via --data-file** |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` | credenziali Gmail SMTP (per ora `carlo.pezzotti01@gmail.com`, cliente deciderà la mail definitiva) |
 | `EMAIL_TO` | destinatario dei lead (form contatti + prenotazioni) |
+
+I secret `FIREBASE_ADMIN_CLIENT_EMAIL` e `FIREBASE_ADMIN_PRIVATE_KEY` possono restare in Secret Manager (costano zero) ma non sono più referenziati in `apphosting.yaml`.
 
 Le seguenti sono già impostate come `value:` (non secret) in `apphosting.yaml`:
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=san-fedele-dev.firebaseapp.com`
