@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { addDoc, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
@@ -10,6 +10,14 @@ import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 
 export default function NuovaStoriaPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>
+      <NuovaStoriaForm />
+    </Suspense>
+  )
+}
+
+function NuovaStoriaForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tipo = searchParams.get('tipo') || 'evento'

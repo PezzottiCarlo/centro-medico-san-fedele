@@ -46,25 +46,31 @@ env:
       - BUILD
       - RUNTIME
 
-  # ─── Firebase Admin SDK (RUNTIME only) ─────────────────────────
+  # ─── Firebase Admin SDK (BUILD + RUNTIME) ──────────────────────
+  # BUILD necessario perché pagine pubbliche (/storia, /news, sitemap.xml)
+  # leggono Firestore via Admin SDK durante la static generation.
   - variable: FIREBASE_ADMIN_PROJECT_ID
     value: san-fedele-dev
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: FIREBASE_ADMIN_CLIENT_EMAIL
     secret: FIREBASE_ADMIN_CLIENT_EMAIL
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: FIREBASE_ADMIN_PRIVATE_KEY
     secret: FIREBASE_ADMIN_PRIVATE_KEY
     availability:
+      - BUILD
       - RUNTIME
 
   - variable: FIREBASE_STORAGE_BUCKET
     value: san-fedele-dev.firebasestorage.app
     availability:
+      - BUILD
       - RUNTIME
 
   # ─── Email per nodemailer (RUNTIME only) ───────────────────────
