@@ -402,7 +402,9 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 
 ### Secret richiesti su Google Secret Manager
 
-`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_TO`.
+`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_TO`.
+
+Le credenziali Admin SDK NON sono più secret in produzione: App Hosting usa Application Default Credentials tramite il SA `firebase-app-hosting-compute@san-fedele-dev` (ruoli `Cloud Datastore User` + `Firebase Admin SDK Administrator Service Agent`). In sviluppo locale si continua a usare `FIREBASE_ADMIN_CLIENT_EMAIL` + `FIREBASE_ADMIN_PRIVATE_KEY` da `.env.local` (vedi [lib/firebase/admin.ts](../lib/firebase/admin.ts)).
 
 Comandi:
 ```bash

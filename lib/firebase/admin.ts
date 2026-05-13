@@ -13,25 +13,38 @@ export function getAdminApp(): App {
     return adminApp
   }
 
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n')
-
-  if (!process.env.FIREBASE_ADMIN_PROJECT_ID || !privateKey) {
-    throw new Error('Firebase Admin credentials not configured. Set FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY in .env.local')
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+  if (!projectId) {
+    throw new Error('FIREBASE_ADMIN_PROJECT_ID not configured.')
   }
 
-  adminApp = initializeApp(
-    {
-      credential: cert({
-        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey,
-      }),
-      ...(process.env.FIREBASE_STORAGE_BUCKET && {
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      }),
-    },
-    'admin'
-  )
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL
+  const rawKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
+  const hasExplicitKey = !!rawKey && !!clientEmail
+
+  if (hasExplicitKey) {
+    // Local development: explicit service account credentials from .env.local
+    const privateKey = rawKey!.replace(/\\n/g, '\n')
+    adminApp = initializeApp(
+      {
+        credential: cert({ projectId, clientEmail, privateKey }),
+        ...(storageBucket && { storageBucket }),
+      },
+      'admin'
+    )
+  } else {
+    // Production (Firebase App Hosting / Cloud Run): Application Default Credentials
+    // from the runtime service account (firebase-app-hosting-compute@...).
+    adminApp = initializeApp(
+      {
+        projectId,
+        ...(storageBucket && { storageBucket }),
+      },
+      'admin'
+    )
+  }
+
   return adminApp
 }
 

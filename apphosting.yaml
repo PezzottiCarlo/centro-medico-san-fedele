@@ -46,23 +46,14 @@ env:
       - BUILD
       - RUNTIME
 
-  # ─── Firebase Admin SDK (BUILD + RUNTIME) ──────────────────────
-  # BUILD necessario perché pagine pubbliche (/storia, /news, sitemap.xml)
-  # leggono Firestore via Admin SDK durante la static generation.
+  # ─── Firebase Admin SDK ────────────────────────────────────────
+  # In produzione usiamo Application Default Credentials (ADC): il backend
+  # App Hosting gira con il SA firebase-app-hosting-compute che ha i ruoli
+  # Cloud Datastore User + Firebase Admin SDK Administrator Service Agent.
+  # Nessuna service account key serve qui. La key nel .env.local locale
+  # viene usata solo in sviluppo (vedi lib/firebase/admin.ts).
   - variable: FIREBASE_ADMIN_PROJECT_ID
     value: san-fedele-dev
-    availability:
-      - BUILD
-      - RUNTIME
-
-  - variable: FIREBASE_ADMIN_CLIENT_EMAIL
-    secret: FIREBASE_ADMIN_CLIENT_EMAIL
-    availability:
-      - BUILD
-      - RUNTIME
-
-  - variable: FIREBASE_ADMIN_PRIVATE_KEY
-    secret: FIREBASE_ADMIN_PRIVATE_KEY
     availability:
       - BUILD
       - RUNTIME
