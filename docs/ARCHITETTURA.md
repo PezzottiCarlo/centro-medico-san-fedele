@@ -379,7 +379,7 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 - **Hosting**: Firebase **App Hosting** (Next.js 14 nativo — SSR + API routes + middleware)
 - **Regione**: `europe-west4` (Belgio)
 - **Storage**: Firebase Storage (`san-fedele-dev.firebasestorage.app`, regione `us-east1`) — immagini medici, patologie, specialistiche, convenzioni, storia, news
-- **Email**: SMTP Gmail → segreteria@sanfedele.it (env vars `SMTP_*` come secret)
+- **Email**: SMTP Gmail (env vars `EMAIL_HOST/PORT/USER/PASS/TO` come secret; mail definitiva da decidere col cliente)
 - **Costi stimati**: 4-8 EUR/mese (mostly free tier)
 
 ### Deploy workflow
@@ -402,7 +402,7 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 
 ### Secret richiesti su Google Secret Manager
 
-`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_TO`.
 
 Comandi:
 ```bash

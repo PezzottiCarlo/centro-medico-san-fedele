@@ -63,6 +63,8 @@ next-env.d.ts
 
 # upload locali — su Firebase Storage in produzione
 /public/uploads/
+# mapping rigenerabile dallo script di migrazione
+/scripts/uploads-mapping.json
 
 # Firebase local cache / emulator data
 .firebase/

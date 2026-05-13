@@ -67,28 +67,28 @@ env:
     availability:
       - RUNTIME
 
-  # ─── SMTP per nodemailer (RUNTIME only) ────────────────────────
-  - variable: SMTP_HOST
-    secret: SMTP_HOST
+  # ─── Email per nodemailer (RUNTIME only) ───────────────────────
+  - variable: EMAIL_HOST
+    secret: EMAIL_HOST
     availability:
       - RUNTIME
 
-  - variable: SMTP_PORT
-    secret: SMTP_PORT
+  - variable: EMAIL_PORT
+    secret: EMAIL_PORT
     availability:
       - RUNTIME
 
-  - variable: SMTP_USER
-    secret: SMTP_USER
+  - variable: EMAIL_USER
+    secret: EMAIL_USER
     availability:
       - RUNTIME
 
-  - variable: SMTP_PASS
-    secret: SMTP_PASS
+  - variable: EMAIL_PASS
+    secret: EMAIL_PASS
     availability:
       - RUNTIME
 
-  - variable: SMTP_FROM
-    secret: SMTP_FROM
+  - variable: EMAIL_TO
+    secret: EMAIL_TO
     availability:
       - RUNTIME

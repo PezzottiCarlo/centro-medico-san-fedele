@@ -55,12 +55,14 @@ firebase apphosting:secrets:set NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 firebase apphosting:secrets:set NEXT_PUBLIC_FIREBASE_APP_ID
 firebase apphosting:secrets:set FIREBASE_ADMIN_CLIENT_EMAIL
 firebase apphosting:secrets:set FIREBASE_ADMIN_PRIVATE_KEY    # ⚠️ usa --data-file (vedi sotto)
-firebase apphosting:secrets:set SMTP_HOST
-firebase apphosting:secrets:set SMTP_PORT
-firebase apphosting:secrets:set SMTP_USER
-firebase apphosting:secrets:set SMTP_PASS
-firebase apphosting:secrets:set SMTP_FROM
+firebase apphosting:secrets:set EMAIL_HOST
+firebase apphosting:secrets:set EMAIL_PORT
+firebase apphosting:secrets:set EMAIL_USER
+firebase apphosting:secrets:set EMAIL_PASS
+firebase apphosting:secrets:set EMAIL_TO
 ```
+
+> **Nota:** il codice ([lib/email.ts](lib/email.ts)) usa il prefisso `EMAIL_*` (non `SMTP_*`). Il "from" è derivato da `EMAIL_USER`, quindi non serve un secret separato. `EMAIL_TO` è il destinatario dei lead (form contatti + prenotazioni).
 
 #### ⚠️ Attenzione `FIREBASE_ADMIN_PRIVATE_KEY`
 La chiave in `.env.local` ha `\n` testuali. Vanno trasformati in newline reali. Procedura:
@@ -147,7 +149,8 @@ Valori da `.env.local`:
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | idem |
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | dal JSON del service account |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | dal JSON del service account, **newline reali via --data-file** |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | credenziali Gmail SMTP segreteria@sanfedele.it |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` | credenziali Gmail SMTP (per ora `carlo.pezzotti01@gmail.com`, cliente deciderà la mail definitiva) |
+| `EMAIL_TO` | destinatario dei lead (form contatti + prenotazioni) |
 
 Le seguenti sono già impostate come `value:` (non secret) in `apphosting.yaml`:
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=san-fedele-dev.firebaseapp.com`
