@@ -2,13 +2,21 @@ import nodemailer from 'nodemailer'
 import path from 'path'
 import fs from 'fs'
 
+// Trim difensivo: secret iniettati via `echo ... | firebase apphosting:secrets:set`
+// su PowerShell finiscono con \r\n (errore EBADNAME su smtp.gmail.com\r\n).
+const EMAIL_HOST = process.env.EMAIL_HOST?.trim()
+const EMAIL_PORT = process.env.EMAIL_PORT?.trim()
+const EMAIL_USER = process.env.EMAIL_USER?.trim()
+const EMAIL_PASS = process.env.EMAIL_PASS?.trim()
+const EMAIL_TO = process.env.EMAIL_TO?.trim()
+
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT) || 587,
+  host: EMAIL_HOST,
+  port: Number(EMAIL_PORT) || 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
   },
 })
 
@@ -353,8 +361,8 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
   const attachments = brandAttachments()
 
   await transporter.sendMail({
-    from: `"Portale ${CENTRO.nome}" <${process.env.EMAIL_USER}>`,
-    to: process.env.EMAIL_TO,
+    from: `"Portale ${CENTRO.nome}" <${EMAIL_USER}>`,
+    to: EMAIL_TO,
     replyTo: `"${fullName}" <${data.email}>`,
     subject: `Nuova richiesta — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
     html: buildSecretariatHtml(data),
@@ -362,7 +370,7 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
   })
 
   await transporter.sendMail({
-    from: `"${CENTRO.nome}" <${process.env.EMAIL_USER}>`,
+    from: `"${CENTRO.nome}" <${EMAIL_USER}>`,
     to: data.email,
     subject: `Abbiamo ricevuto la tua richiesta, ${data.nome} ✓`,
     html: buildPatientHtml(data),

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node -e \"const fs=require('fs');const p=require('path');function cp(src,dst){if(!fs.existsSync(src))return;fs.mkdirSync(dst,{recursive:true});for(const e of fs.readdirSync(src,{withFileTypes:true})){const s=p.join(src,e.name),d=p.join(dst,e.name);e.isDirectory()?cp(s,d):fs.copyFileSync(s,d);}}cp('public','.next/standalone/public');cp('.next/static','.next/standalone/.next/static');console.log('postbuild: copied public/ and .next/static into .next/standalone');\"",
     "start": "next start",
     "lint": "next lint",
     "seed": "npx ts-node --project tsconfig.seed.json scripts/seed-firestore.ts",
