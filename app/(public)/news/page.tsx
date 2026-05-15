@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { ArrowRight, Newspaper, BookOpen, CalendarDays } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
+import { getHeroConfig } from '@/lib/firebase/hero'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -48,7 +49,7 @@ function FeaturedCard({ item }: { item: NewsEvento }) {
     >
       <div className="flex flex-col md:flex-row">
         {/* Image */}
-        <div className="relative h-56 md:h-auto md:w-2/5 bg-gradient-to-br from-primary/10 to-secondary/10 flex-shrink-0">
+        <div className="relative aspect-video md:aspect-auto md:w-2/5 bg-gradient-to-br from-primary/10 to-secondary/10 flex-shrink-0">
           {item.immagine ? (
             <Image src={item.immagine} alt={item.titolo} fill className="object-cover" />
           ) : (
@@ -113,7 +114,7 @@ function NewsCard({ item }: { item: NewsEvento }) {
 }
 
 export default async function NewsPage() {
-  const allItems = await getNews()
+  const [allItems, hero] = await Promise.all([getNews(), getHeroConfig('news')])
 
   const grouped = {
     news: allItems.filter((n) => n.categoria === 'news'),
@@ -129,12 +130,7 @@ export default async function NewsPage() {
 
   return (
     <>
-      <PageHero
-        title="News, Articoli & Eventi"
-        label="Resta aggiornato"
-        subtitle="Aggiornamenti, approfondimenti e notizie dal mondo della salute e dal nostro centro medico."
-        imageSrc="/news.jpg"
-      />
+      <PageHero config={hero} />
 
       {!hasContent ? (
         <div className="section">

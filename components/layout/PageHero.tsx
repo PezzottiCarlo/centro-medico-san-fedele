@@ -1,41 +1,56 @@
 import Image from 'next/image'
+import type { HeroConfig } from '@/types'
 
 interface PageHeroProps {
-  title: string
-  /** @deprecated non più mostrato — l'hero lascia spazio all'immagine */
+  config?: HeroConfig
+  /** Override per casi legacy o pagine [slug] dinamiche */
+  title?: string
   subtitle?: string
-  /** @deprecated non più mostrato — l'hero lascia spazio all'immagine */
-  label?: string
   imageSrc?: string
-  imageScale?: number // zoom dell'immagine bg (1 = nessuno zoom, 1.15 = +15%)
+  imageScale?: number
 }
 
-export function PageHero({ title, imageSrc, imageScale = 1 }: PageHeroProps) {
+export function PageHero({ config, title, subtitle, imageSrc, imageScale }: PageHeroProps) {
+  const finalTitle = title ?? config?.titolo ?? ''
+  const finalSubtitle = subtitle ?? config?.sottotitolo
+  const finalImage = imageSrc ?? config?.immagine
+  const finalScale = imageScale ?? config?.imageScale ?? 1
+
   return (
-    <section className="relative w-full min-h-[360px] md:min-h-[480px] flex items-end overflow-hidden">
-      {/* Background */}
+    <section className="relative w-full min-h-[320px] sm:min-h-[400px] md:min-h-[480px] flex items-end overflow-hidden">
       <div className="absolute inset-0 -z-10">
-        {imageSrc ? (
+        {finalImage ? (
           <>
             <Image
-              src={imageSrc}
+              src={finalImage}
               alt=""
               fill
               priority
+              sizes="100vw"
               className="object-cover"
-              style={imageScale !== 1 ? { transform: `scale(${imageScale})`, transformOrigin: 'center' } : undefined}
+              style={
+                finalScale !== 1
+                  ? { transform: `scale(${finalScale})`, transformOrigin: 'center' }
+                  : undefined
+              }
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-[#145a85]" />
         )}
       </div>
 
-      {/* Content — titolo allineato in basso, lascia respiro all'immagine */}
-      <div className="container-main w-full pb-10 md:pb-14">
-        <span className="block h-1 w-10 rounded-full bg-white/80 mb-4 drop-shadow" />
-        <h1 className="heading-1 !text-white drop-shadow-md">{title}</h1>
+      <div className="container-main w-full pb-8 sm:pb-10 md:pb-14">
+        <span className="block h-1 w-10 rounded-full bg-white/80 mb-3 sm:mb-4 drop-shadow" />
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-white drop-shadow-md">
+          {finalTitle}
+        </h1>
+        {finalSubtitle && (
+          <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base md:text-lg text-white/90 drop-shadow">
+            {finalSubtitle}
+          </p>
+        )}
       </div>
     </section>
   )

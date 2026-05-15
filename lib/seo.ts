@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { SiteConfig } from '@/types'
 
 const BASE_URL = 'https://sanfedele.it'
 const DEFAULT_TITLE = 'Centro Medico San Fedele'
@@ -82,7 +83,7 @@ export function generateSpecialtyJsonLd(spec: {
   }
 }
 
-export function generateOrganizationJsonLd() {
+export function generateOrganizationJsonLd(site?: SiteConfig) {
   return {
     '@context': 'https://schema.org',
     '@type': 'MedicalOrganization',
@@ -91,16 +92,17 @@ export function generateOrganizationJsonLd() {
     logo: `${BASE_URL}/logo.png`,
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+39-031-333-3585',
+      telephone: site?.telefonoE164 || '+390313333585',
+      email: site?.email,
       contactType: 'customer service',
       availableLanguage: 'Italian',
     },
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'Via Risorgimento, 1',
-      addressLocality: 'Longone al Segrino',
-      addressRegion: 'CO',
-      postalCode: '22030',
+      streetAddress: site?.indirizzo || 'Via Risorgimento, 1',
+      addressLocality: site?.citta || 'Longone al Segrino',
+      addressRegion: site?.provincia || 'CO',
+      postalCode: site?.cap || '22030',
       addressCountry: 'IT',
     },
   }

@@ -6,6 +6,7 @@ import { generatePageMetadata, generatePhysicianJsonLd } from '@/lib/seo'
 import type { Medico, Specialistica, SottoSpecialistica } from '@/types'
 import { Calendar, Clock, Phone, Mail, ArrowRight, Stethoscope, Sparkles } from 'lucide-react'
 import { specialisticaHref } from '@/lib/utils'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
 export const revalidate = 3600
 
@@ -79,7 +80,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function MedicoPage({ params }: { params: { slug: string } }) {
-  const data = await getData(params.slug)
+  const [data, site] = await Promise.all([getData(params.slug), getSiteConfig()])
   if (!data) notFound()
 
   const { medico, specialistiche, terapie } = data
@@ -212,7 +213,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                     per verificare la disponibilità.
                   </p>
                   <a
-                    href="tel:+390313333585"
+                    href={`tel:${site.telefonoE164}`}
                     className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
                   >
                     <Phone size={16} /> Chiama lo studio per informazioni

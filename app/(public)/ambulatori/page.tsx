@@ -4,6 +4,7 @@ import type { Specialistica } from '@/types'
 import Link from 'next/link'
 import { ArrowRight, Shield, Building2, Scan } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
+import { getHeroConfig } from '@/lib/firebase/hero'
 import { specialisticaHref } from '@/lib/utils'
 
 export const revalidate = 3600
@@ -55,16 +56,14 @@ const SERVIZI_DEDICATI = [
 ]
 
 export default async function AmbulatorioPage() {
-  const specialistiche = await getSpecialistiche()
+  const [specialistiche, hero] = await Promise.all([
+    getSpecialistiche(),
+    getHeroConfig('ambulatori'),
+  ])
 
   return (
     <>
-      <PageHero
-        title="Specialistiche e Servizi"
-        label="I nostri ambulatori"
-        subtitle="Un centro multidisciplinare con tutte le aree specialistiche e i servizi dedicati per ogni esigenza di salute, dalla diagnosi alla riabilitazione."
-        imageSrc="/ambulatori.jpg"
-      />
+      <PageHero config={hero} />
 
       {/* Intro */}
       <section className="py-12 bg-white border-b border-gray-100">
@@ -137,16 +136,16 @@ export default async function AmbulatorioPage() {
       </section>
 
       {/* CTA */}
-      <section className="relative py-20 overflow-hidden">
+      <section className="relative py-12 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark" />
         <div className="container-main text-center relative">
-          <h2 className="text-3xl md:text-4xl font-light tracking-tight text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white mb-3 sm:mb-4">
             Non sai quale specialistica scegliere?
           </h2>
-          <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
+          <p className="text-white/80 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
             Contattaci e ti aiuteremo a individuare il percorso di cura più adatto alle tue esigenze.
           </p>
-          <Link href="/prenota" className="bg-white text-primary font-medium px-6 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+          <Link href="/prenota" className="bg-white text-primary font-medium px-6 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 min-h-[44px]">
             Prenota una visita <ArrowRight size={18} />
           </Link>
         </div>

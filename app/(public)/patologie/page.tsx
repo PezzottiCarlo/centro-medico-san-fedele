@@ -4,6 +4,8 @@ import type { Patologia, Specialistica } from '@/types'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
+import { HeroGradient } from '@/components/layout/HeroGradient'
+import { getHeroConfig } from '@/lib/firebase/hero'
 
 export const revalidate = 3600
 export const metadata = generatePageMetadata({
@@ -27,20 +29,16 @@ async function getData() {
 }
 
 export default async function PatologiePage() {
-  const { patologie, specialistiche } = await getData()
+  const [{ patologie, specialistiche }, hero] = await Promise.all([
+    getData(),
+    getHeroConfig('patologie'),
+  ])
 
   const getSpec = (id: string) => specialistiche.find((s) => s.id === id)
 
   return (
     <>
-      <section className="bg-gradient-to-br from-primary/10 via-bg to-secondary/10 py-20">
-        <div className="container-main text-center">
-          <h1 className="heading-1 mb-4">Patologie Trattate</h1>
-          <p className="text-gray-500 text-xl max-w-2xl mx-auto">
-            Approfondisci le patologie trattate dai nostri specialisti.
-          </p>
-        </div>
-      </section>
+      <HeroGradient config={hero} />
 
       <div className="section">
         <div className="container-main">

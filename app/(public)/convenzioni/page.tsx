@@ -3,6 +3,8 @@ import { generatePageMetadata } from '@/lib/seo'
 import type { Convenzione } from '@/types'
 import { PageHero } from '@/components/layout/PageHero'
 import { ConvenzioniGrid } from '@/components/convenzioni/ConvenzioniGrid'
+import { getHeroConfig } from '@/lib/firebase/hero'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
 export const revalidate = 3600
 
@@ -22,16 +24,15 @@ async function getConvenzioni(): Promise<Convenzione[]> {
 }
 
 export default async function ConvenzioniPage() {
-  const convenzioni = await getConvenzioni()
+  const [convenzioni, hero, site] = await Promise.all([
+    getConvenzioni(),
+    getHeroConfig('convenzioni'),
+    getSiteConfig(),
+  ])
 
   return (
     <>
-      <PageHero
-        title="Convenzioni"
-        label="Partner"
-        subtitle="Grazie alle nostre convenzioni, le prestazioni sono più accessibili. Verifica se la tua assicurazione o il tuo ente è tra i nostri partner."
-        imageSrc="/convenzioni.jpg"
-      />
+      <PageHero config={hero} />
 
       <div className="section">
         <div className="container-main">
@@ -47,8 +48,8 @@ export default async function ConvenzioniPage() {
             <p className="text-gray-500 mb-6">
               Contattaci per verificare se il tuo ente o la tua assicurazione è convenzionata con noi.
             </p>
-            <a href="tel:+390313333585" className="btn-primary">
-              Chiama il 031 333 3585
+            <a href={`tel:${site.telefonoE164}`} className="btn-primary">
+              Chiama il {site.telefono}
             </a>
           </div>
         </div>

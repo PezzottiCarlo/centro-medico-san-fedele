@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { generateOrganizationJsonLd } from '@/lib/seo'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
 export const metadata: Metadata = {
   title: {
@@ -29,12 +30,13 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const orgJsonLd = generateOrganizationJsonLd()
+  const site = await getSiteConfig()
+  const orgJsonLd = generateOrganizationJsonLd(site)
 
   return (
     <html lang="it">

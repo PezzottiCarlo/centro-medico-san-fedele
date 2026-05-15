@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Loader2, Send, CheckCircle } from 'lucide-react'
+import { usePrenotaForm } from '@/hooks/usePrenotaForm'
 
 interface FormData {
   nome: string
@@ -13,6 +14,7 @@ interface FormData {
 }
 
 export function HomeContactForm({ specialistiche, embedded = false }: { specialistiche: { id: string; nome: string }[]; embedded?: boolean }) {
+  const { loading, success, error, submit, reset } = usePrenotaForm()
   const [form, setForm] = useState<FormData>({
     nome: '',
     cognome: '',
@@ -21,9 +23,6 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
     specialistica: '',
     messaggio: '',
   })
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
 
   function update(key: keyof FormData, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -31,34 +30,16 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      const res = await fetch('/api/prenota', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: form.cognome ? `${form.nome} ${form.cognome}` : form.nome,
-          cognome: form.cognome,
-          telefono: form.telefono,
-          email: form.email,
-          specialistica: form.specialistica,
-          messaggio: form.messaggio,
-        }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.message || 'Errore durante l\'invio')
-      }
-
-      setSuccess(true)
+    const ok = await submit({
+      nome: form.nome,
+      cognome: form.cognome,
+      telefono: form.telefono,
+      email: form.email,
+      specialistica: form.specialistica,
+      messaggio: form.messaggio,
+    })
+    if (ok) {
       setForm({ nome: '', cognome: '', telefono: '', email: '', specialistica: '', messaggio: '' })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Errore durante l\'invio. Riprova.')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -69,10 +50,10 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
         <h3 className="text-xl font-semibold text-text-main mb-2">Richiesta inviata!</h3>
         <p className="text-gray-500">Ti ricontatteremo il prima possibile.</p>
         <button
-          onClick={() => setSuccess(false)}
+          onClick={reset}
           className="btn-secondary mt-6"
         >
-          Invia un'altra richiesta
+          Invia un&apos;altra richiesta
         </button>
       </div>
     )

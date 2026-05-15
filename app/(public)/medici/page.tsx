@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
+import { getHeroConfig } from '@/lib/firebase/hero'
 
 export const revalidate = 3600
 export const metadata = generatePageMetadata({
@@ -23,16 +24,11 @@ async function getMedici(): Promise<Medico[]> {
 }
 
 export default async function MediciPage() {
-  const medici = await getMedici()
+  const [medici, hero] = await Promise.all([getMedici(), getHeroConfig('medici')])
 
   return (
     <>
-      <PageHero
-        title="I Nostri Medici"
-        label="Il team"
-        subtitle="Un team di professionisti esperti e dedicati alla tua salute, con competenze trasversali e anni di esperienza clinica."
-        imageSrc="/medici.jpg"
-      />
+      <PageHero config={hero} />
 
       <section className="section bg-muted/30">
         <div className="container-main">

@@ -2,22 +2,22 @@ import Link from 'next/link'
 import { generatePageMetadata } from '@/lib/seo'
 import { Mail } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
+import { getHeroConfig } from '@/lib/firebase/hero'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
+export const revalidate = 3600
 export const metadata = generatePageMetadata({
   title: 'Lavora con Noi',
   description: 'Opportunità di lavoro al Centro Medico San Fedele. Entra a far parte del nostro team.',
   slug: 'lavora-con-noi',
 })
 
-export default function LavoraConNoiPage() {
+export default async function LavoraConNoiPage() {
+  const [hero, site] = await Promise.all([getHeroConfig('lavora-con-noi'), getSiteConfig()])
+  const mailHref = `mailto:${site.email}?subject=${encodeURIComponent('Candidatura spontanea')}`
   return (
     <>
-      <PageHero
-        title="Lavora con Noi"
-        label="Carriere"
-        subtitle="Cerchiamo professionisti appassionati e competenti per ampliare il nostro team."
-        imageSrc="/lavora-con-noi.jpg"
-      />
+      <PageHero config={hero} />
 
       <div className="section">
         <div className="container-main">
@@ -33,11 +33,11 @@ export default function LavoraConNoiPage() {
                 vitae all'indirizzo email seguente:
               </p>
               <a
-                href="mailto:info@sanfedele.it?subject=Candidatura%20spontanea"
+                href={mailHref}
                 className="btn-primary inline-flex items-center gap-2"
               >
                 <Mail size={18} />
-                info@sanfedele.it
+                {site.email}
               </a>
               <p className="text-gray-400 text-sm mt-6">
                 Valuteremo la tua candidatura e ti contatteremo per un eventuale colloquio.

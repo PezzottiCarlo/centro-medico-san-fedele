@@ -7,6 +7,7 @@ import { SpecialtySearchGrid } from '@/components/home/SpecialtySearchGrid'
 import { MelaButton } from '@/components/ui/MelaButton'
 import { generatePageMetadata } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
+import { getHeroConfig } from '@/lib/firebase/hero'
 import type { Specialistica, Convenzione, Medico, Patologia } from '@/types'
 
 export const revalidate = 3600
@@ -57,12 +58,15 @@ async function getHomeData() {
 }
 
 export default async function HomePage() {
-  const { specialistiche, reviews, convenzioni, medici, patologie } = await getHomeData()
+  const [{ specialistiche, reviews, convenzioni, medici, patologie }, hero] = await Promise.all([
+    getHomeData(),
+    getHeroConfig('home'),
+  ])
 
   return (
     <>
       {/* 1. Hero scroll-reveal: bg pulito → titolo → bottoni */}
-      <HomeHeroZoom />
+      <HomeHeroZoom config={hero} />
 
       {/* 3. Convenzioni scroller infinito */}
       {convenzioni.length > 0 && (
@@ -93,7 +97,7 @@ export default async function HomePage() {
                 I nostri servizi
               </p>
               <h2 className="heading-2 mb-4">Le nostre specialistiche</h2>
-              <p className="text-text-main/60 text-lg max-w-2xl mx-auto">
+              <p className="text-text-main/60 text-base sm:text-lg max-w-2xl mx-auto">
                 Un centro multidisciplinare con specialisti dedicati per ogni area della salute.
               </p>
             </div>
@@ -143,7 +147,7 @@ export default async function HomePage() {
                 La nostra storia
               </p>
               <h2 className="heading-2 mb-4 text-text-main">Oltre 20 anni al servizio della salute</h2>
-              <p className="text-text-main/70 leading-relaxed mb-6 text-lg">
+              <p className="text-text-main/70 leading-relaxed mb-6 text-base sm:text-lg">
                 Nati a Longone al Segrino nel 2008, siamo cresciuti per diventare un punto di
                 riferimento nella Provincia di Como per la cura e il benessere della persona.
               </p>
@@ -189,7 +193,7 @@ export default async function HomePage() {
                 Testimonianze
               </p>
               <h2 className="heading-2 mb-4">Cosa dicono di noi</h2>
-              <p className="text-text-main/60 text-lg">
+              <p className="text-text-main/60 text-base sm:text-lg">
                 La soddisfazione dei pazienti è la nostra ricompensa più grande.
               </p>
             </div>
@@ -206,7 +210,7 @@ export default async function HomePage() {
               Modulo contatto
             </p>
             <h2 className="heading-2 mb-4">Contattaci subito</h2>
-            <p className="text-text-main/60 text-lg max-w-xl mx-auto">
+            <p className="text-text-main/60 text-base sm:text-lg max-w-xl mx-auto">
               Compila il modulo e ti risponderemo il prima possibile.
             </p>
           </div>

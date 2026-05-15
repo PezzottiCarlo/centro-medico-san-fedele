@@ -1,5 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin'
-import { CENTER_INFO } from '@/lib/siteConfig'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import type {
   Specialistica,
   Medico,
@@ -40,12 +40,13 @@ function truncate(text: string, max: number): string {
 
 /** Costruisce la knowledge base interrogando Firestore. */
 async function buildKnowledgeBase(): Promise<string> {
-  const [specSnap, mediciSnap, patSnap, newsSnap, convSnap] = await Promise.all([
+  const [specSnap, mediciSnap, patSnap, newsSnap, convSnap, site] = await Promise.all([
     adminDb.collection('specialistiche').get(),
     adminDb.collection('medici').get(),
     adminDb.collection('patologie').get(),
     adminDb.collection('news_eventi').get(),
     adminDb.collection('convenzioni').get(),
+    getSiteConfig(),
   ])
 
   const specialistiche = specSnap.docs
@@ -85,13 +86,17 @@ async function buildKnowledgeBase(): Promise<string> {
   const sections: string[] = []
 
   // ─── Centro ──────────────────────────────────────────────────
+  const orariStr = site.orari
+    .map((o) => `${o.giorno} ${o.ore}`)
+    .join('; ')
   sections.push(
     [
       '=== INFORMAZIONI SUL CENTRO ===',
-      `Nome: ${CENTER_INFO.nome}`,
-      `Indirizzo: ${CENTER_INFO.indirizzo}`,
-      `Telefono: ${CENTER_INFO.telefono}`,
-      `Orari di apertura: ${CENTER_INFO.orari}`,
+      `Nome: Centro Medico San Fedele`,
+      `Indirizzo: ${site.indirizzoCompleto}`,
+      `Telefono: ${site.telefono}`,
+      `Email: ${site.email}`,
+      `Orari di apertura: ${orariStr}`,
       'Per prenotare una visita si usa la pagina /prenota del sito oppure si chiama il centro.',
     ].join('\n')
   )

@@ -1,12 +1,15 @@
 import { generatePageMetadata } from '@/lib/seo'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
+export const revalidate = 3600
 export const metadata = generatePageMetadata({
   title: 'Privacy Policy',
   description: 'Informativa sulla privacy del Centro Medico San Fedele.',
   slug: 'privacy',
 })
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const site = await getSiteConfig()
   return (
     <div className="section">
       <div className="container-main">
@@ -21,9 +24,9 @@ export default function PrivacyPage() {
             <h2>Titolare del trattamento</h2>
             <p>
               Centro Medico San Fedele<br />
-              Via Risorgimento, 1 — 22030 Longone al Segrino (CO)<br />
-              Email: info@sanfedele.it<br />
-              Telefono: 031 333 3585
+              {site.indirizzoCompleto}<br />
+              Email: {site.email}<br />
+              Telefono: {site.telefono}
             </p>
 
             <h2>Dati raccolti</h2>

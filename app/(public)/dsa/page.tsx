@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { DSASwitch } from '@/components/accessibility/DSASwitch'
 import { DyslexiaSimulation } from '@/components/accessibility/DyslexiaSimulation'
 import { PageHero } from '@/components/layout/PageHero'
+import { getHeroConfig } from '@/lib/firebase/hero'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 
 export const revalidate = 3600
@@ -44,17 +45,11 @@ async function getDSAData(): Promise<{ spec: Specialistica | null; medici: Medic
 }
 
 export default async function DSAPage() {
-  const { spec, medici } = await getDSAData()
+  const [{ spec, medici }, hero] = await Promise.all([getDSAData(), getHeroConfig('dsa')])
 
   return (
     <>
-      <PageHero
-        title={spec?.nome || 'Area DSA'}
-        label="Disturbi Specifici dell'Apprendimento"
-        subtitle={spec?.descrizioneBreve || 'Percorsi specializzati di diagnosi, trattamento e supporto per bambini, adolescenti e adulti.'}
-        imageSrc={spec?.immagine || '/dsa.jpg'}
-        imageScale={1}
-      />
+      <PageHero config={hero} />
 
       {/* Accessibility toggle */}
       <section className="py-6 bg-white border-b border-gray-100">
@@ -230,27 +225,27 @@ export default async function DSAPage() {
               </p>
               <h2 className="heading-2 mb-4">I Nostri Specialisti DSA</h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-5 md:gap-6">
               {medici.map((m) => (
-                <Link key={m.id} href={`/medici/${m.slug}`} className="group bg-white rounded-lg p-5 shadow-card border border-gray-100 text-center hover:shadow-card-hover transition-all hover:-translate-y-1">
+                <Link key={m.id} href={`/medici/${m.slug}`} className="group bg-white rounded-lg p-3 sm:p-5 shadow-card border border-gray-100 text-center hover:shadow-card-hover transition-all hover:-translate-y-1">
                   {m.foto ? (
                     <Image
                       src={m.foto}
                       alt={m.nome}
                       width={80}
                       height={80}
-                      className="rounded-full object-cover mx-auto mb-3 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all"
+                      className="rounded-full object-cover mx-auto mb-2 sm:mb-3 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all w-14 h-14 sm:w-20 sm:h-20"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold mx-auto mb-3">
+                    <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl sm:text-3xl font-bold mx-auto mb-2 sm:mb-3">
                       {m.nome.charAt(0)}
                     </div>
                   )}
-                  <h3 className="font-semibold text-text-main text-sm leading-tight">{m.nome}</h3>
+                  <h3 className="font-semibold text-text-main text-xs sm:text-sm leading-tight">{m.nome}</h3>
                   {m.mansione && (
-                    <p className="text-xs text-text-main/60 mt-1">{m.mansione}</p>
+                    <p className="text-[10px] sm:text-xs text-text-main/60 mt-1 line-clamp-2">{m.mansione}</p>
                   )}
-                  <span className="block text-primary text-xs font-medium group-hover:underline mt-2">
+                  <span className="hidden sm:block text-primary text-xs font-medium group-hover:underline mt-2">
                     Vedi profilo →
                   </span>
                 </Link>
@@ -261,14 +256,14 @@ export default async function DSAPage() {
       )}
 
       {/* CTA */}
-      <section className="relative py-20 overflow-hidden">
+      <section className="relative py-12 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark" />
         <div className="container-main text-center relative">
-          <h2 className="text-3xl md:text-4xl font-light tracking-tight text-white mb-4">Prenota una valutazione</h2>
-          <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white mb-3 sm:mb-4">Prenota una valutazione</h2>
+          <p className="text-white/80 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
             Il percorso inizia con una valutazione specialistica. I nostri esperti ti guideranno in ogni fase.
           </p>
-          <Link href="/prenota?specialistica=equipe-dsa" className="bg-white text-primary font-medium px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-lg">
+          <Link href="/prenota?specialistica=equipe-dsa" className="bg-white text-primary font-medium px-6 sm:px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-base sm:text-lg min-h-[44px]">
             Prenota adesso <ArrowRight size={18} />
           </Link>
         </div>

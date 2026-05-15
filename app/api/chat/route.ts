@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getKnowledgeBase } from '@/lib/chatbot/knowledgeBase'
 import { buildSystemPrompt } from '@/lib/chatbot/systemPrompt'
 import { generateReply } from '@/lib/chatbot/llm'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -29,10 +30,10 @@ function isRateLimited(ip: string): boolean {
   return recent.length > RATE_LIMIT
 }
 
-const ERROR_FALLBACK =
-  "Mi dispiace, c'è stato un problema tecnico. Riprova tra poco oppure chiamaci al 031 333 3585."
-
 export async function POST(request: NextRequest) {
+  const site = await getSiteConfig().catch(() => null)
+  const errorFallback = `Mi dispiace, c'è stato un problema tecnico. Riprova tra poco oppure chiamaci al ${site?.telefono || '031 333 3585'}.`
+
   try {
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
     console.error('[chatbot] /api/chat error:', error)
     return NextResponse.json(
-      { success: false, message: ERROR_FALLBACK },
+      { success: false, message: errorFallback },
       { status: 502 }
     )
   }

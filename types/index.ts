@@ -103,6 +103,8 @@ export interface Lead {
   medico?: string
   timestamp: string // ISO string
   letto: boolean
+  evaso?: boolean
+  evasoIl?: string // ISO string
   fonte: 'form'
 }
 
@@ -122,6 +124,49 @@ export interface RecensioneStatica {
   stelle: number
   data: string
   fonte: 'google' | 'editoriale'
+}
+
+export type HeroVariant = 'standard' | 'home-zoom' | 'dark' | 'gradient-soft'
+export type HeroCtaIcon = 'phone' | 'whatsapp' | 'calendar' | 'arrow' | 'none'
+
+export interface HeroCTA {
+  testo: string
+  href: string
+  icona?: HeroCtaIcon
+}
+
+export interface HeroConfig {
+  pageSlug: string
+  titolo: string
+  titoloEvidenziato?: string
+  sottotitolo?: string
+  immagine?: string
+  imageScale?: number
+  variant: HeroVariant
+  ctaPrimaria?: HeroCTA
+  ctaSecondaria?: HeroCTA
+  pubblicato: boolean
+  aggiornatoIl?: string
+}
+
+export interface SiteConfigOrario {
+  giorno: string
+  ore: string
+}
+
+export interface SiteConfig {
+  telefono: string
+  telefonoE164: string
+  whatsappE164?: string
+  email: string
+  indirizzo: string
+  indirizzoCompleto: string
+  citta: string
+  cap: string
+  provincia: string
+  orari: SiteConfigOrario[]
+  mapsUrl?: string
+  aggiornatoIl?: string
 }
 
 // ============================================================

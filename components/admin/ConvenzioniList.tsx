@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase/client'
 import type { Convenzione } from '@/types'
 import { Trash2, ExternalLink, Pencil } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function ConvenzioniList({ initial }: { initial: Convenzione[] }) {
   const [items, setItems] = useState(initial)
@@ -57,7 +58,13 @@ export function ConvenzioniList({ initial }: { initial: Convenzione[] }) {
               <div className="flex items-center gap-3">
                 {c.logo && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.logo} alt={c.nome} className="h-8 w-16 object-contain rounded bg-white p-1" />
+                  <Image
+                    src={c.logo}
+                    alt={c.nome}
+                    width={64}
+                    height={32}
+                    className="h-8 w-16 object-contain rounded bg-white p-1"
+                  />
                 )}
                 <span className="font-medium text-white">{c.nome}</span>
               </div>

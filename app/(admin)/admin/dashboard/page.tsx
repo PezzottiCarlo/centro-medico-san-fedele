@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { adminAuth, adminDb } from '@/lib/firebase/admin'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Users, FileText, Stethoscope, MessageSquare, Star, Building2, History, HeartPulse } from 'lucide-react'
+import { Users, FileText, Stethoscope, MessageSquare, Star, Building2, History, HeartPulse, LayoutTemplate, Settings } from 'lucide-react'
 import { LogoutButton } from '@/components/admin/LogoutButton'
 
 async function getStats() {
@@ -59,6 +59,8 @@ export default async function DashboardPage() {
     { label: 'Convenzioni', value: stats.convenzioni, icon: Building2, href: '/admin/dashboard/convenzioni', color: 'bg-cyan-500/10 text-cyan-400' },
     { label: 'Recensioni', value: stats.recensioni, icon: Star, href: '/admin/dashboard/recensioni', color: 'bg-rose-500/10 text-rose-400' },
     { label: 'Storia', value: stats.storia, icon: History, href: '/admin/dashboard/storia', color: 'bg-orange-500/10 text-orange-400' },
+    { label: 'Hero pagine', value: 11, icon: LayoutTemplate, href: '/admin/dashboard/hero', color: 'bg-indigo-500/10 text-indigo-400' },
+    { label: 'Contatti & info', value: 1, icon: Settings, href: '/admin/dashboard/site-config', color: 'bg-slate-500/10 text-slate-300' },
   ]
 
   return (

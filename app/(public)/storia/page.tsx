@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/firebase/admin'
 import type { StoriaEvento, Riconoscimento } from '@/types'
 import { Award, ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
+import { getHeroConfig } from '@/lib/firebase/hero'
 import Link from 'next/link'
 
 export const revalidate = 60
@@ -31,16 +32,11 @@ async function getData() {
 }
 
 export default async function StoriaPage() {
-  const { eventi, riconoscimenti } = await getData()
+  const [{ eventi, riconoscimenti }, hero] = await Promise.all([getData(), getHeroConfig('storia')])
 
   return (
     <>
-      <PageHero
-        title="La nostra storia"
-        label="Chi siamo"
-        subtitle="Dal 2008 al fianco dei nostri pazienti. Un percorso di crescita, innovazione e dedizione alla cura della persona."
-        imageSrc="/storia.jpg"
-      />
+      <PageHero config={hero} />
 
       
 

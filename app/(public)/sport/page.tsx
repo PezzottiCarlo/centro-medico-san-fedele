@@ -4,6 +4,8 @@ import type { Medico, StoriaEvento, Specialistica, Patologia } from '@/types'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { HeroDark } from '@/components/layout/HeroDark'
+import { getHeroConfig } from '@/lib/firebase/hero'
 
 export const revalidate = 3600
 export const metadata = generatePageMetadata({
@@ -113,59 +115,16 @@ const STATS = [
 ]
 
 export default async function SportPage() {
-  const [storiaSportiva, specSport] = await Promise.all([
+  const [storiaSportiva, specSport, hero] = await Promise.all([
     getStoriaSportiva(),
     getSpecialisticaSport(),
+    getHeroConfig('sport'),
   ])
   const medici = specSport.medici.slice(0, 4)
 
   return (
     <div className="bg-slate-950 text-white">
-      {/* Hero — gradient energizzante */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
-        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%2310b981\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
-
-        <div className="relative container-main py-24 md:py-32">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-emerald-400 text-sm font-semibold tracking-wider uppercase">Centro Medico San Fedele</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">
-              Medicina<br />
-              <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400 bg-clip-text text-transparent">
-                Sportiva
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed mb-8">
-              Certificazioni medico-sportive, valutazioni funzionali e supporto nutrizionale
-              per atleti di ogni livello. La tua performance inizia dalla salute.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href="/prenota?specialistica=medicina-sportiva"
-                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-4 rounded-lg transition-all hover:shadow-lg hover:shadow-emerald-500/25 text-lg"
-              >
-                Prenota visita
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-                  <path d="M13 7l5 5m0 0l-5 5m5-5H6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-              <a
-                href="#servizi"
-                className="inline-flex items-center gap-2 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white px-8 py-4 rounded-lg transition-all text-lg"
-              >
-                Scopri i servizi
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Decorative element */}
-        <div className="absolute -right-32 top-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
-        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl" />
-      </section>
+      <HeroDark config={hero} />
 
       {/* Stats bar */}
       <section className="border-y border-slate-800 bg-slate-900/50">

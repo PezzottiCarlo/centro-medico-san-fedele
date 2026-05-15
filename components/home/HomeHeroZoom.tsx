@@ -2,7 +2,8 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Phone } from 'lucide-react'
+import { Phone, Calendar, ArrowRight } from 'lucide-react'
+import type { HeroConfig, HeroCTA } from '@/types'
 
 function WhatsAppIcon({ size = 18, className = '' }: { size?: number; className?: string }) {
   return (
@@ -20,38 +21,67 @@ function WhatsAppIcon({ size = 18, className = '' }: { size?: number; className?
   )
 }
 
-/**
- * Hero scroll-reveal:
- * - Frame 1 (progress 0): solo immagine bg pulita
- * - Frame 2 (progress 0→0.5): appare la scritta principale dal basso
- * - Frame 3 (progress 0.5→1): appaiono i due bottoni
- * - Quando tutto è on-screen, lo sticky si rilascia e riprende lo scroll normale
- */
-export function HomeHeroZoom() {
+function ctaClasses(cta: HeroCTA): string {
+  switch (cta.icona) {
+    case 'whatsapp':
+      return 'text-white bg-[#25D366] hover:bg-[#1ebe57] shadow-lg shadow-[#25D366]/30'
+    case 'phone':
+      return 'text-white bg-sky-500 hover:bg-sky-400 shadow-lg shadow-sky-500/30'
+    case 'calendar':
+      return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
+    case 'arrow':
+      return 'text-white bg-secondary hover:bg-secondary-dark shadow-lg shadow-secondary/30'
+    default:
+      return 'text-white bg-white/10 hover:bg-white/20 border border-white/30 backdrop-blur'
+  }
+}
+
+function CtaIcon({ kind, size = 18 }: { kind?: HeroCTA['icona']; size?: number }) {
+  if (kind === 'phone') return <Phone size={size} aria-hidden="true" />
+  if (kind === 'whatsapp') return <WhatsAppIcon size={size} />
+  if (kind === 'calendar') return <Calendar size={size} aria-hidden="true" />
+  if (kind === 'arrow') return <ArrowRight size={size} aria-hidden="true" />
+  return null
+}
+
+interface HomeHeroZoomProps {
+  config: HeroConfig
+}
+
+export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [progress, setProgress] = useState(0)
+  const [isDesktop, setIsDesktop] = useState(false)
 
   useEffect(() => {
-    let ticking = false
+    const mq = window.matchMedia('(min-width: 768px)')
+    const onChange = () => setIsDesktop(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
+  useEffect(() => {
+    if (!isDesktop) {
+      setProgress(1)
+      return
+    }
+    let ticking = false
     function update() {
       ticking = false
       if (!wrapperRef.current) return
       const rect = wrapperRef.current.getBoundingClientRect()
       const vh = window.innerHeight
       const scrolled = Math.max(0, -rect.top)
-      // Reveal completo quando l'utente ha scrollato 1.0 * vh
       const p = Math.min(1, scrolled / vh)
       setProgress(p)
     }
-
     function onScroll() {
       if (!ticking) {
         ticking = true
         requestAnimationFrame(update)
       }
     }
-
     update()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', update)
@@ -59,88 +89,121 @@ export function HomeHeroZoom() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', update)
     }
-  }, [])
+  }, [isDesktop])
 
-  // Easing helpers
   const clamp = (v: number, min = 0, max = 1) => Math.max(min, Math.min(max, v))
-
-  // Headline: appare tra 0.05 e 0.55 (fade + slide-up)
   const headlineP = clamp((progress - 0.05) / 0.5)
-  const headlineOpacity = headlineP
-  const headlineTranslate = (1 - headlineP) * 32
-
-  // Buttons: appaiono tra 0.45 e 0.95
   const buttonsP = clamp((progress - 0.45) / 0.5)
-  const buttonsOpacity = buttonsP
-  const buttonsTranslate = (1 - buttonsP) * 24
+  const overlayAlpha = 0.25 + progress * 0.3
 
-  // Overlay scuro graduale per leggibilità
-  const overlayAlpha = 0.15 + progress * 0.35
+  const ctaPrimaria = config.ctaPrimaria
+  const ctaSecondaria = config.ctaSecondaria
+  const bgImage = config.immagine || '/hero-bg.jpg'
+
+  if (!isDesktop) {
+    return (
+      <section className="relative w-full min-h-[88vh] flex items-center overflow-hidden" aria-label="Hero">
+        <Image src={bgImage} alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="relative z-10 container-main py-12">
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-white drop-shadow-md">
+              {config.titolo}{' '}
+              {config.titoloEvidenziato && (
+                <span className="font-semibold block sm:inline">{config.titoloEvidenziato}</span>
+              )}
+            </h1>
+            {(ctaPrimaria || ctaSecondaria) && (
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {ctaPrimaria && (
+                  <a
+                    href={ctaPrimaria.href}
+                    target={ctaPrimaria.href.startsWith('http') ? '_blank' : undefined}
+                    rel={ctaPrimaria.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all w-full sm:w-auto justify-center min-h-[44px] ${ctaClasses(ctaPrimaria)}`}
+                  >
+                    <CtaIcon kind={ctaPrimaria.icona} />
+                    {ctaPrimaria.testo}
+                  </a>
+                )}
+                {ctaSecondaria && (
+                  <a
+                    href={ctaSecondaria.href}
+                    target={ctaSecondaria.href.startsWith('http') ? '_blank' : undefined}
+                    rel={ctaSecondaria.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all w-full sm:w-auto justify-center min-h-[44px] ${ctaClasses(ctaSecondaria)}`}
+                  >
+                    <CtaIcon kind={ctaSecondaria.icona} />
+                    {ctaSecondaria.testo}
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
-    <section
-      ref={wrapperRef}
-      className="relative"
-      style={{ height: '200vh' }}
-      aria-label="Hero"
-    >
+    <section ref={wrapperRef} className="relative" style={{ height: '200vh' }} aria-label="Hero">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* Hero bg */}
-        <Image
-          src="/hero-bg.jpg"
-          alt=""
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
+        <Image src={bgImage} alt="" fill priority sizes="100vw" className="object-cover" />
         <div
           className="absolute inset-0 transition-colors"
           style={{ backgroundColor: `rgba(0,0,0,${overlayAlpha})` }}
         />
-
-        {/* Contenuto centrato — scritta + bottoni */}
         <div className="absolute inset-0 flex items-center justify-center px-6">
           <div className="text-center max-w-4xl w-full">
             <h1
-              className="text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-white drop-shadow-md"
+              className="text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-white drop-shadow-md"
               style={{
-                opacity: headlineOpacity,
-                transform: `translateY(${headlineTranslate}px)`,
+                opacity: headlineP,
+                transform: `translateY(${(1 - headlineP) * 32}px)`,
                 transition: 'opacity 0.05s linear',
                 willChange: 'opacity, transform',
               }}
             >
-              La tua salute,{' '}
-              <span className="font-semibold">la nostra missione</span>
+              {config.titolo}{' '}
+              {config.titoloEvidenziato && (
+                <span className="font-semibold">{config.titoloEvidenziato}</span>
+              )}
             </h1>
 
-            <div
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-              style={{
-                opacity: buttonsOpacity,
-                transform: `translateY(${buttonsTranslate}px)`,
-                pointerEvents: buttonsOpacity > 0.5 ? 'auto' : 'none',
-                willChange: 'opacity, transform',
-              }}
-            >
-              <a
-                href="tel:+390313333585"
-                className="group inline-flex items-center gap-2.5 text-white bg-sky-500 hover:bg-sky-400 shadow-lg shadow-sky-500/30 px-7 py-3 rounded-full font-semibold transition-all"
+            {(ctaPrimaria || ctaSecondaria) && (
+              <div
+                className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+                style={{
+                  opacity: buttonsP,
+                  transform: `translateY(${(1 - buttonsP) * 24}px)`,
+                  pointerEvents: buttonsP > 0.5 ? 'auto' : 'none',
+                  willChange: 'opacity, transform',
+                }}
               >
-                <Phone size={18} />
-                Chiamaci ora
-              </a>
-              <a
-                href="https://wa.me/390313333585"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2.5 text-white bg-[#25D366] hover:bg-[#1ebe57] shadow-lg shadow-[#25D366]/30 px-7 py-3 rounded-full font-semibold transition-all"
-              >
-                <WhatsAppIcon size={18} />
-                Chatta ora
-              </a>
-            </div>
+                {ctaPrimaria && (
+                  <a
+                    href={ctaPrimaria.href}
+                    target={ctaPrimaria.href.startsWith('http') ? '_blank' : undefined}
+                    rel={ctaPrimaria.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className={`group inline-flex items-center gap-2.5 px-7 py-3 rounded-full font-semibold transition-all ${ctaClasses(ctaPrimaria)}`}
+                  >
+                    <CtaIcon kind={ctaPrimaria.icona} />
+                    {ctaPrimaria.testo}
+                  </a>
+                )}
+                {ctaSecondaria && (
+                  <a
+                    href={ctaSecondaria.href}
+                    target={ctaSecondaria.href.startsWith('http') ? '_blank' : undefined}
+                    rel={ctaSecondaria.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className={`group inline-flex items-center gap-2.5 px-7 py-3 rounded-full font-semibold transition-all ${ctaClasses(ctaSecondaria)}`}
+                  >
+                    <CtaIcon kind={ctaSecondaria.icona} />
+                    {ctaSecondaria.testo}
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

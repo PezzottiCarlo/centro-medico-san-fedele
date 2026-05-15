@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer'
 import path from 'path'
 import fs from 'fs'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import type { SiteConfig } from '@/types'
 
 // Trim difensivo: secret iniettati via `echo ... | firebase apphosting:secrets:set`
 // su PowerShell finiscono con \r\n (errore EBADNAME su smtp.gmail.com\r\n).
@@ -31,11 +33,8 @@ export interface LeadEmailData {
   medico?: string
 }
 
-// ─── Brand & contatti centro ──────────────────────────────────────────
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://centromedicosanfedele.it'
 
-// Inline brand images via CID (più affidabili di URL remote — Outlook le mostra
-// senza chiedere conferma e funzionano anche senza NEXT_PUBLIC_SITE_URL).
 const CID_LOGO = 'logo-sanfedele'
 const CID_TITOLO = 'titolo-sanfedele'
 
@@ -61,17 +60,32 @@ function brandAttachments() {
   }))
 }
 
-const CENTRO = {
-  nome: 'Centro Medico San Fedele',
-  indirizzo: 'Via San Fedele, 22030 Longone al Segrino (CO)',
-  telefono: '031 333 3585',
-  telefonoLink: '+390313333585',
-  email: 'info@centromedicosanfedele.it',
-  orari: 'Lun–Ven 09:00–19:30',
-  sito: SITE_URL.replace(/^https?:\/\//, ''),
+interface CentroBrand {
+  nome: string
+  indirizzo: string
+  telefono: string
+  telefonoLink: string
+  email: string
+  orari: string
+  sito: string
 }
 
-// Palette — allineata al sito (azzurro) — vedi tailwind.config.ts
+function centroFromSite(site: SiteConfig): CentroBrand {
+  const orari = site.orari
+    .filter((o) => o.giorno && o.ore && o.ore.toLowerCase() !== 'chiuso')
+    .map((o) => `${o.giorno} ${o.ore}`)
+    .join(' · ')
+  return {
+    nome: 'Centro Medico San Fedele',
+    indirizzo: site.indirizzoCompleto,
+    telefono: site.telefono,
+    telefonoLink: site.telefonoE164,
+    email: site.email,
+    orari: orari || 'Lun–Ven 09:00–19:30',
+    sito: SITE_URL.replace(/^https?:\/\//, ''),
+  }
+}
+
 const C = {
   primary: '#2E9BDA',
   primaryDark: '#1A7BB5',
@@ -83,7 +97,6 @@ const C = {
   white: '#ffffff',
 }
 
-// ─── Helper ───────────────────────────────────────────────────────────
 function escape(s: string): string {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -97,14 +110,15 @@ function nl2br(s: string): string {
   return escape(s).replace(/\n/g, '<br/>')
 }
 
-function emailShell(opts: { preheader: string; bodyHtml: string }): string {
+function emailShell(opts: { preheader: string; bodyHtml: string; centro: CentroBrand }): string {
+  const { centro } = opts
   return `<!doctype html>
 <html lang="it">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>${CENTRO.nome}</title>
+  <title>${centro.nome}</title>
 </head>
 <body style="margin:0;padding:0;background-color:${C.bgSoft};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${C.text};">
   <span style="display:none!important;visibility:hidden;mso-hide:all;font-size:1px;color:${C.bgSoft};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${escape(opts.preheader)}</span>
@@ -114,42 +128,38 @@ function emailShell(opts: { preheader: string; bodyHtml: string }): string {
       <td align="center" style="padding:32px 16px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:${C.white};border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
 
-          <!-- Header brand: gradiente azzurro + card bianca interna per logo+titolo
-               (il logo è una scritta blu — su azzurro serve sfondo bianco) -->
           <tr>
             <td style="background:linear-gradient(135deg,${C.primary} 0%,${C.primaryDark} 100%);padding:36px 32px 36px 32px;text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="background:${C.white};border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.10);">
                 <tr>
                   <td style="padding:18px 28px;text-align:center;">
-                    <img src="cid:${CID_LOGO}" alt="${CENTRO.nome}" width="56" height="56" style="display:inline-block;vertical-align:middle;border:0;" />
-                    <img src="cid:${CID_TITOLO}" alt="${CENTRO.nome}" height="36" style="display:inline-block;vertical-align:middle;border:0;height:36px;margin-left:14px;" />
+                    <img src="cid:${CID_LOGO}" alt="${centro.nome}" width="56" height="56" style="display:inline-block;vertical-align:middle;border:0;" />
+                    <img src="cid:${CID_TITOLO}" alt="${centro.nome}" height="36" style="display:inline-block;vertical-align:middle;border:0;height:36px;margin-left:14px;" />
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Body -->
           ${opts.bodyHtml}
 
-          <!-- Footer brand -->
           <tr>
             <td style="background-color:#fafafa;padding:24px 32px;border-top:1px solid ${C.border};">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="text-align:center;font-size:12px;color:${C.textSoft};line-height:1.6;">
-                    <strong style="color:${C.text};">${CENTRO.nome}</strong><br/>
-                    ${CENTRO.indirizzo}<br/>
-                    Tel <a href="tel:${CENTRO.telefonoLink}" style="color:${C.primary};text-decoration:none;">${CENTRO.telefono}</a>
+                    <strong style="color:${C.text};">${centro.nome}</strong><br/>
+                    ${escape(centro.indirizzo)}<br/>
+                    Tel <a href="tel:${centro.telefonoLink}" style="color:${C.primary};text-decoration:none;">${centro.telefono}</a>
                     &nbsp;·&nbsp;
-                    <a href="mailto:${CENTRO.email}" style="color:${C.primary};text-decoration:none;">${CENTRO.email}</a>
+                    <a href="mailto:${centro.email}" style="color:${C.primary};text-decoration:none;">${centro.email}</a>
                     <br/>
-                    <a href="${SITE_URL}" style="color:${C.textSoft};text-decoration:underline;">${CENTRO.sito}</a>
+                    <a href="${SITE_URL}" style="color:${C.textSoft};text-decoration:underline;">${centro.sito}</a>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding-top:16px;text-align:center;font-size:11px;color:#9ca3af;line-height:1.5;">
-                    Hai ricevuto questa email perché hai contattato il ${CENTRO.nome}.<br/>
+                    Hai ricevuto questa email perché hai contattato il ${centro.nome}.<br/>
                     Tratteremo i tuoi dati nel rispetto della normativa privacy.
                   </td>
                 </tr>
@@ -158,7 +168,7 @@ function emailShell(opts: { preheader: string; bodyHtml: string }): string {
           </tr>
 
         </table>
-        <div style="font-size:11px;color:#9ca3af;padding-top:16px;">© ${new Date().getFullYear()} ${CENTRO.nome}</div>
+        <div style="font-size:11px;color:#9ca3af;padding-top:16px;">© ${new Date().getFullYear()} ${centro.nome}</div>
       </td>
     </tr>
   </table>
@@ -166,8 +176,7 @@ function emailShell(opts: { preheader: string; bodyHtml: string }): string {
 </html>`
 }
 
-// ─── Email alla segreteria ────────────────────────────────────────────
-function buildSecretariatHtml(data: LeadEmailData): string {
+function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string {
   const fullName = `${data.nome}${data.cognome ? ' ' + data.cognome : ''}`
 
   const detailRow = (label: string, value: string) => `
@@ -191,7 +200,6 @@ function buildSecretariatHtml(data: LeadEmailData): string {
       </td>
     </tr>
 
-    <!-- Contatti rapidi -->
     <tr>
       <td style="padding:24px 32px 0 32px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.bgSoft};border-radius:12px;border:1px solid ${C.border};">
@@ -213,7 +221,6 @@ function buildSecretariatHtml(data: LeadEmailData): string {
       </td>
     </tr>
 
-    <!-- Dettagli richiesta -->
     ${serviceRows ? `
     <tr>
       <td style="padding:24px 32px 0 32px;">
@@ -224,7 +231,6 @@ function buildSecretariatHtml(data: LeadEmailData): string {
       </td>
     </tr>` : ''}
 
-    <!-- Messaggio -->
     <tr>
       <td style="padding:24px 32px 0 32px;">
         <p style="margin:0 0 8px 0;font-size:11px;font-weight:700;color:${C.textSoft};letter-spacing:0.06em;text-transform:uppercase;">Messaggio</p>
@@ -232,7 +238,6 @@ function buildSecretariatHtml(data: LeadEmailData): string {
       </td>
     </tr>
 
-    <!-- CTA -->
     <tr>
       <td style="padding:28px 32px 32px 32px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
@@ -254,11 +259,11 @@ function buildSecretariatHtml(data: LeadEmailData): string {
   return emailShell({
     preheader: `Nuova richiesta da ${fullName} — ${data.telefono}`,
     bodyHtml: body,
+    centro,
   })
 }
 
-// ─── Email di conferma al paziente ────────────────────────────────────
-function buildPatientHtml(data: LeadEmailData): string {
+function buildPatientHtml(data: LeadEmailData, centro: CentroBrand): string {
   const summary = [
     data.specialistica && `<li style="padding:4px 0;color:${C.text};"><strong>Specialistica:</strong> ${escape(data.specialistica)}</li>`,
     data.sottoSpecialistica && `<li style="padding:4px 0;color:${C.text};"><strong>Servizio:</strong> ${escape(data.sottoSpecialistica)}</li>`,
@@ -286,7 +291,6 @@ function buildPatientHtml(data: LeadEmailData): string {
     </tr>
 
     ${summary ? `
-    <!-- Riepilogo -->
     <tr>
       <td style="padding:28px 32px 0 32px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.bgSoft};border-radius:12px;">
@@ -302,7 +306,6 @@ function buildPatientHtml(data: LeadEmailData): string {
       </td>
     </tr>` : ''}
 
-    <!-- Contatti centro / CTA -->
     <tr>
       <td style="padding:28px 32px 0 32px;">
         <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;color:${C.textSoft};letter-spacing:0.06em;text-transform:uppercase;">Hai bisogno di noi prima?</p>
@@ -313,8 +316,8 @@ function buildPatientHtml(data: LeadEmailData): string {
                 <tr>
                   <td style="font-size:13px;color:${C.textSoft};line-height:1.5;">
                     <strong style="color:${C.text};font-size:15px;display:block;margin-bottom:2px;">📞 Telefono</strong>
-                    <a href="tel:${CENTRO.telefonoLink}" style="color:${C.primary};text-decoration:none;font-weight:600;font-size:15px;">${CENTRO.telefono}</a><br/>
-                    <span style="font-size:12px;">${CENTRO.orari}</span>
+                    <a href="tel:${centro.telefonoLink}" style="color:${C.primary};text-decoration:none;font-weight:600;font-size:15px;">${centro.telefono}</a><br/>
+                    <span style="font-size:12px;">${centro.orari}</span>
                   </td>
                 </tr>
               </table>
@@ -327,7 +330,7 @@ function buildPatientHtml(data: LeadEmailData): string {
                 <tr>
                   <td style="font-size:13px;color:${C.textSoft};line-height:1.5;">
                     <strong style="color:${C.text};font-size:15px;display:block;margin-bottom:2px;">📍 Dove siamo</strong>
-                    ${CENTRO.indirizzo}<br/>
+                    ${escape(centro.indirizzo)}<br/>
                     <a href="${SITE_URL}/contatti" style="color:${C.primary};text-decoration:none;font-size:13px;">Apri indicazioni →</a>
                   </td>
                 </tr>
@@ -342,7 +345,7 @@ function buildPatientHtml(data: LeadEmailData): string {
       <td style="padding:28px 32px 32px 32px;text-align:center;">
         <p style="margin:0;font-size:14px;color:${C.text};line-height:1.6;">
           A presto,<br/>
-          <strong>Il team del ${CENTRO.nome}</strong>
+          <strong>Il team del ${centro.nome}</strong>
         </p>
       </td>
     </tr>
@@ -351,29 +354,30 @@ function buildPatientHtml(data: LeadEmailData): string {
   return emailShell({
     preheader: `Abbiamo ricevuto la tua richiesta, ${data.nome}. Ti ricontattiamo a breve.`,
     bodyHtml: body,
+    centro,
   })
 }
 
-// ─── Send ─────────────────────────────────────────────────────────────
 export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
+  const site = await getSiteConfig()
+  const centro = centroFromSite(site)
   const fullName = `${data.nome}${data.cognome ? ' ' + data.cognome : ''}`
-
   const attachments = brandAttachments()
 
   await transporter.sendMail({
-    from: `"Portale ${CENTRO.nome}" <${EMAIL_USER}>`,
+    from: `"Portale ${centro.nome}" <${EMAIL_USER}>`,
     to: EMAIL_TO,
     replyTo: `"${fullName}" <${data.email}>`,
     subject: `Nuova richiesta — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
-    html: buildSecretariatHtml(data),
+    html: buildSecretariatHtml(data, centro),
     attachments,
   })
 
   await transporter.sendMail({
-    from: `"${CENTRO.nome}" <${EMAIL_USER}>`,
+    from: `"${centro.nome}" <${EMAIL_USER}>`,
     to: data.email,
     subject: `Abbiamo ricevuto la tua richiesta, ${data.nome} ✓`,
-    html: buildPatientHtml(data),
+    html: buildPatientHtml(data, centro),
     attachments,
   })
 }
