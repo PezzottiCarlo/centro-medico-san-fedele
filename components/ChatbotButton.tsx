@@ -3,6 +3,8 @@
 import Image from 'next/image'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send } from 'lucide-react'
+import ReactMarkdown, { type Components } from 'react-markdown'
+import { CENTER_INFO } from '@/lib/siteConfig'
 
 interface Message {
   id: string
@@ -12,28 +14,39 @@ interface Message {
   visible: boolean
 }
 
-const GREETING_TEXT = 'Ciao! Sono l\'assistente del Centro Medico San Fedele. Come posso aiutarti? 😊'
+const GREETING_TEXT = 'Ciao! Sono **MelaBot**, l\'assistente del Centro Medico San Fedele. Come posso aiutarti? 😊'
 
-const REPLIES = [
-  'Grazie per il tuo messaggio! Purtroppo al momento il nostro assistente virtuale non è ancora attivo. Stiamo lavorando per offrirti un servizio sempre migliore!',
-  'Mi farebbe piacere aiutarti, ma per ora non sono ancora operativo al 100%. Nel frattempo puoi chiamarci al 031 333 3585, rispondiamo sempre con il sorriso!',
-  'Apprezzo la tua pazienza! Il servizio di chat sarà disponibile a breve. Per qualsiasi urgenza, il nostro team è raggiungibile telefonicamente al 031 333 3585.',
-  'Capisco, e vorrei poterti dare una mano! Per ora ti consiglio di contattarci direttamente: il nostro staff sarà felice di assisterti di persona.',
-  'Hai ragione a voler avere risposte rapide! Purtroppo non sono ancora pronto, ma il nostro centralino è attivo dal lunedì al venerdì, 09:00–19:30.',
-]
+const ERROR_FALLBACK = `Mi dispiace, in questo momento non riesco a rispondere. Puoi chiamarci al ${CENTER_INFO.telefono} (${CENTER_INFO.orari}). 📞`
 
-const PERSISTENT_REPLIES = [
-  'Ci tengo a farti sapere che il tuo messaggio non va perso! Appena sarò attivo, potremo fare grandi cose insieme. Per ora, il telefono è il modo più veloce per raggiungerci. 📞',
-  'Ammiro la tua tenacia! 😄 Ma davvero, per ora non posso fare molto. Ti prometto che ne varrà la pena quando sarò pronto!',
-  'Sai cosa? Mi stai simpatico. Ma non posso ancora aiutarti come vorrei. Chiamaci al 031 333 3585, ti tratteranno benissimo!',
-]
+// Componenti custom per ReactMarkdown nelle bolle del bot — link in rosso brand,
+// elenchi compatti, niente titoli/tabelle (il system prompt vieta markdown pesante).
+const botMarkdownComponents: Components = {
+  a: ({ href, children }) => {
+    const isExternal = !!href && /^https?:\/\//i.test(href)
+    return (
+      <a
+        href={href}
+        target={isExternal ? '_blank' : undefined}
+        rel={isExternal ? 'noopener noreferrer' : undefined}
+        className="font-medium underline underline-offset-2 hover:opacity-80 break-words"
+        style={{ color: '#D05241' }}
+      >
+        {children}
+      </a>
+    )
+  },
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc pl-5 my-2 space-y-0.5">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-5 my-2 space-y-0.5">{children}</ol>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+}
 
 export function ChatbotButton() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [replyIndex, setReplyIndex] = useState(0)
   const [mounted, setMounted] = useState(false)
   const [hasOpened, setHasOpened] = useState(false)
   const [chatVisible, setChatVisible] = useState(false)
@@ -97,15 +110,7 @@ export function ChatbotButton() {
     }
   }, [open, hasOpened])
 
-  function getBotReply(): string {
-    const reply = replyIndex < REPLIES.length
-      ? REPLIES[replyIndex]
-      : PERSISTENT_REPLIES[(replyIndex - REPLIES.length) % PERSISTENT_REPLIES.length]
-    setReplyIndex((i) => i + 1)
-    return reply
-  }
-
-  function handleSend() {
+  async function handleSend() {
     const text = input.trim()
     if (!text || isTyping) return
 
@@ -117,6 +122,16 @@ export function ChatbotButton() {
       visible: false,
     }
 
+    // Snapshot della conversazione PRIMA del nuovo messaggio (esclude il greeting
+    // sintetico), mappata al formato dell'API. Tiene gli ultimi scambi.
+    const history = messages
+      .filter((m) => m.id !== 'greeting')
+      .slice(-9)
+      .map((m) => ({
+        role: m.sender === 'bot' ? ('assistant' as const) : ('user' as const),
+        content: m.text,
+      }))
+
     setMessages((prev) => [...prev, userMsg])
     setInput('')
 
@@ -127,31 +142,44 @@ export function ChatbotButton() {
       )
     })
 
-    // Bot starts typing after a small pause
-    setTimeout(() => setIsTyping(true), 400)
+    setIsTyping(true)
 
-    const reply = getBotReply()
-    const delay = Math.min(1200 + reply.length * 10, 3000)
-
-    setTimeout(() => {
-      setIsTyping(false)
-      const botMsg: Message = {
-        id: `bot-${Date.now()}`,
-        text: reply,
-        sender: 'bot',
-        timestamp: new Date(),
-        visible: false,
-      }
-      setMessages((prev) => [...prev, botMsg])
-      // Animate bot message in
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setMessages((prev) =>
-            prev.map((m) => m.id === botMsg.id ? { ...m, visible: true } : m)
-          )
-        })
+    let replyText: string
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...history, { role: 'user' as const, content: text }],
+        }),
       })
-    }, delay)
+      const data = await res.json()
+      replyText =
+        data?.success && data?.reply
+          ? data.reply
+          : data?.message || ERROR_FALLBACK
+    } catch {
+      replyText = ERROR_FALLBACK
+    } finally {
+      setIsTyping(false)
+    }
+
+    const botMsg: Message = {
+      id: `bot-${Date.now()}`,
+      text: replyText,
+      sender: 'bot',
+      timestamp: new Date(),
+      visible: false,
+    }
+    setMessages((prev) => [...prev, botMsg])
+    // Animate bot message in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setMessages((prev) =>
+          prev.map((m) => m.id === botMsg.id ? { ...m, visible: true } : m)
+        )
+      })
+    })
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -283,7 +311,7 @@ export function ChatbotButton() {
                 <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden ring-2 ring-white/40">
                   <Image
                     src="/mela-chatbot.png"
-                    alt="Assistente San Fedele"
+                    alt="MelaBot"
                     width={44}
                     height={44}
                     className="w-full h-full object-cover"
@@ -295,8 +323,8 @@ export function ChatbotButton() {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-semibold text-sm">Centro Medico San Fedele</p>
-                <p className="text-white/70 text-xs">Di solito risponde subito</p>
+                <p className="text-white font-semibold text-sm">MelaBot</p>
+                <p className="text-white/70 text-xs">Assistente San Fedele · Di solito risponde subito</p>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -324,7 +352,13 @@ export function ChatbotButton() {
                     }`}
                     style={msg.sender === 'user' ? { backgroundColor: '#D05241' } : undefined}
                   >
-                    <p>{msg.text}</p>
+                    {msg.sender === 'bot' ? (
+                      <ReactMarkdown components={botMarkdownComponents}>
+                        {msg.text}
+                      </ReactMarkdown>
+                    ) : (
+                      <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                    )}
                     <p
                       className={`text-[10px] mt-1.5 text-right ${
                         msg.sender === 'user' ? 'text-white/50' : 'text-gray-400'
@@ -389,7 +423,7 @@ export function ChatbotButton() {
           className={`group flex items-center gap-3 text-white shadow-xl pl-5 pr-6 py-4 rounded-full active:scale-95 transition-all duration-200 relative ${
             mounted ? 'fab-enter' : 'scale-0'
           } ${!open && mounted ? 'fab-pulse' : ''}`}
-          aria-label={open ? 'Chiudi chat' : 'Apri chat assistente virtuale'}
+          aria-label={open ? 'Chiudi chat' : 'Apri chat con MelaBot'}
         >
           <span className="relative w-7 h-7 flex items-center justify-center shrink-0">
             <MessageCircle

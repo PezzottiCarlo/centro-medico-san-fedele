@@ -64,6 +64,28 @@ env:
       - BUILD
       - RUNTIME
 
+  # ─── Chatbot — Gemini via Vertex AI (RUNTIME only) ─────────────
+  # Nessun secret: il backend chiama Vertex AI con le Application Default
+  # Credentials del SA firebase-app-hosting-compute (ruolo "Vertex AI User").
+  # Vertex AI va abilitato da Firebase Console > Build > AI Logic.
+  - variable: GCLOUD_PROJECT
+    value: san-fedele-dev
+    availability:
+      - RUNTIME
+
+  # 'global' = endpoint multiregionale, ha sempre i modelli più nuovi.
+  # Per data-residency UE: europe-west4.
+  - variable: VERTEX_LOCATION
+    value: global
+    availability:
+      - RUNTIME
+
+  # Alias che punta sempre all'ultimo Flash disponibile.
+  - variable: VERTEX_MODEL
+    value: gemini-flash-latest
+    availability:
+      - RUNTIME
+
   # ─── Email per nodemailer (RUNTIME only) ───────────────────────
   - variable: EMAIL_HOST
     secret: EMAIL_HOST
