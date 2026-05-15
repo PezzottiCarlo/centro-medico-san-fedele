@@ -8,6 +8,7 @@ import { MelaButton } from '@/components/ui/MelaButton'
 import { generatePageMetadata } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
 import { getHeroConfig } from '@/lib/firebase/hero'
+import { getReviews } from '@/lib/reviews'
 import type { Specialistica, Convenzione, Medico, Patologia } from '@/types'
 
 export const revalidate = 3600
@@ -16,9 +17,9 @@ export const metadata = generatePageMetadata({})
 
 async function getHomeData() {
   try {
-    const [specSnap, reviewsSnap, convSnap, mediciSnap, patSnap] = await Promise.all([
+    const [specSnap, reviews, convSnap, mediciSnap, patSnap] = await Promise.all([
       adminDb.collection('specialistiche').where('pubblicata', '==', true).get(),
-      adminDb.collection('recensioni_statiche').orderBy('data', 'desc').limit(6).get(),
+      getReviews({ limit: 6 }),
       adminDb.collection('convenzioni').where('attiva', '==', true).get(),
       adminDb.collection('medici').where('pubblicato', '==', true).get(),
       adminDb.collection('patologie').get(),
@@ -27,14 +28,6 @@ async function getHomeData() {
     const specialistiche: Specialistica[] = specSnap.docs
       .map((d) => ({ id: d.id, ...(d.data() as Omit<Specialistica, 'id'>) }))
       .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
-
-    const reviews = reviewsSnap.docs.map((d) => ({
-      autore: d.data().autore as string,
-      testo: d.data().testo as string,
-      stelle: d.data().stelle as number,
-      data: d.data().data as string,
-      fonte: d.data().fonte as 'google' | 'editoriale',
-    }))
 
     const convenzioni: Convenzione[] = convSnap.docs.map((d) => ({
       id: d.id,
