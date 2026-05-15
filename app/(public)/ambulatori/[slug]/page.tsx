@@ -6,6 +6,7 @@ import { generatePageMetadata, generateSpecialtyJsonLd } from '@/lib/seo'
 import type { Specialistica, Medico, Patologia } from '@/types'
 import { ArrowRight } from 'lucide-react'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
+import { SottoSpecialisticheSection } from '@/components/specialistiche/SottoSpecialisticheSection'
 
 export const revalidate = 3600
 
@@ -76,7 +77,7 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
 
       {/* Hero */}
       {spec.immagine ? (
-        <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] max-h-[75vh] overflow-hidden">
+        <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] max-h-[80vh] overflow-hidden">
           <Image
             src={spec.immagine}
             alt=""
@@ -85,14 +86,11 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
             className="object-cover object-center"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute inset-x-0 bottom-0">
-            <div className="container-main pb-8 md:pb-12">
-              <div className="text-4xl md:text-5xl mb-3 drop-shadow">{spec.icona}</div>
-              <h1 className="heading-1 mb-3 text-white drop-shadow-md">{spec.nome}</h1>
-              <p className="text-lg md:text-xl max-w-2xl text-white/90 drop-shadow">
-                {spec.descrizioneBreve}
-              </p>
+            <div className="container-main pb-8 md:pb-14">
+              <span className="block h-1 w-10 rounded-full bg-white/80 mb-4 drop-shadow" />
+              <h1 className="heading-1 !text-white drop-shadow-md">{spec.nome}</h1>
             </div>
           </div>
         </div>
@@ -116,6 +114,16 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
               dangerouslySetInnerHTML={{ __html: spec.descrizione }}
             />
           </div>
+
+          {/* Prestazioni e terapie (sotto-specialistiche) */}
+          {spec.sottoSpecialistiche && spec.sottoSpecialistiche.length > 0 && (
+            <SottoSpecialisticheSection
+              sottoSpecialistiche={spec.sottoSpecialistiche}
+              specSlug={spec.slug}
+              specNome={spec.nome}
+              icona={spec.icona}
+            />
+          )}
 
           {/* Patologie trattate */}
           {patologie.length > 0 && (

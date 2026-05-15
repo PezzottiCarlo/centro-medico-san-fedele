@@ -122,8 +122,11 @@ Le sotto-specialistiche sono **etichette pure**: la relazione N:N coi medici viv
 interface SottoSpecialistica {
   id: string
   nome: string
+  descrizione?: string  // breve descrizione mostrata nel modale sulla pagina specialistica
 }
 ```
+
+Sulla pagina `/ambulatori/[slug]` le sotto-specialistiche sono renderizzate come card cliccabili (`SottoSpecialisticheSection`, client component): il click apre un modale con la `descrizione` e un bottone "Prenota" (`MelaButton`) che porta a `/prenota?specialistica=<slug>&sottoSpecialistica=<id>`.
 
 **Per trovare i medici di una sotto-spec**:
 ```ts
@@ -423,6 +426,40 @@ npm run migrate-uploads -- --execute
 ```
 
 Script in `scripts/migrate-uploads-to-storage.ts`. Mapping salvato in `scripts/uploads-mapping.json`.
+
+---
+
+## 11ter. Chatbot contestuale "MelaBot" (14-15 maggio 2026)
+
+Chatbot AI che risponde **solo** dai contenuti del sito e resta sempre aggiornato senza pipeline di sincronizzazione.
+
+**Architettura:**
+- `POST /api/chat` (`runtime = 'nodejs'`, `dynamic = 'force-dynamic'`): valida con Zod `{ messages: {role,content}[] }`, rate limit best-effort per-IP (15/min), compone knowledge base + system prompt, chiama l'LLM, ritorna `{ success, reply }`.
+- `lib/chatbot/knowledgeBase.ts`: legge `specialistiche/medici/patologie/news_eventi/convenzioni` via `adminDb`, le compila in testo semplice (HTML stripped, campi lunghi troncati), cache in memoria TTL 5 min. Freschezza automatica: nessun vector DB.
+- `lib/chatbot/systemPrompt.ts`: persona "MelaBot", grounding rule, guardrail medico, gestione fuori-tema. Obbliga il modello a usare markdown leggero con link interni cliccabili (`[testo](/percorso)`).
+- `lib/chatbot/llm.ts`: wrapper isolato — Google Gemini via **Vertex AI**, SDK `@google/genai` (il vecchio `@google-cloud/vertexai` è deprecato). Modello e regione configurabili via env `VERTEX_MODEL` (default `gemini-flash-latest`) e `VERTEX_LOCATION` (default `global`). Auth dual-mode come `lib/firebase/admin.ts`: ADC in produzione, `FIREBASE_ADMIN_*` in locale. Cambiare provider = riscrivere solo questo file.
+- `components/ChatbotButton.tsx`: bot rinominato in MelaBot; le risposte sono renderizzate via `react-markdown` (link rosso brand, target=_blank su esterni, niente HTML grezzo, protocolli `javascript:`/`vbscript:` filtrati di default).
+- `lib/siteConfig.ts`: aggiunto `CENTER_INFO` (nome, telefono, indirizzo, orari) — fonte unica.
+
+**Setup IAM richiesto** (l'API Vertex deve essere abilitata + il SA deve avere `roles/aiplatform.user`):
+- Abilitare `aiplatform.googleapis.com` (Firebase Console > Build > AI Logic, o `gcloud services enable`).
+- Ruolo **"Vertex AI User"** (`roles/aiplatform.user`) a **due** service account: `firebase-app-hosting-compute@san-fedele-dev` (produzione) **e** il SA di `FIREBASE_ADMIN_CLIENT_EMAIL` usato in locale. NB: "Vertex AI Service Agent" NON basta — è un ruolo per SA Google-managed.
+- Env in `apphosting.yaml`: `GCLOUD_PROJECT`, `VERTEX_LOCATION`, `VERTEX_MODEL` (solo `value:`, nessun secret).
+
+---
+
+## 11bis. Changelog Modifiche (14 maggio 2026)
+
+### Modifiche al modello dati
+- `SottoSpecialistica.descrizione?: string` **aggiunto** — breve descrizione per terapia/sotto-specialistica
+
+### Modifiche UI Admin
+- **Form specialistiche** (`nuovo` e `[id]`): ogni sotto-specialistica ora ha una textarea "Breve descrizione" oltre al nome
+
+### Modifiche UI Pubblica
+- **Pagina /ambulatori/[slug]**: nuova sezione "Prestazioni e terapie" che mostra le sotto-specialistiche come card cliccabili (`components/specialistiche/SottoSpecialisticheSection.tsx`, client component). Click → modale con la descrizione + `MelaButton` "Prenota una visita"
+- **PrenotaForm**: gestisce il query param `sottoSpecialistica` (id). Se presente, salta direttamente allo step "medico" (o "dati" se nessun medico con orario fisso), preselezionando la sotto-specialistica
+- Keyframes `modalFade` / `modalPop` aggiunti in `globals.css`
 
 ---
 

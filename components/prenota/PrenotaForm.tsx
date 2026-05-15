@@ -42,6 +42,14 @@ export function PrenotaForm({
 
   const preselectedSpec = searchParams.get('specialistica') || ''
   const preselectedMedico = searchParams.get('medico') || ''
+  const preselectedSotto = searchParams.get('sottoSpecialistica') || ''
+
+  // Oggetto sotto-specialistica preselezionato (se la spec lo contiene)
+  const preselectedSottoObj = preselectedSpec
+    ? specialistiche
+        .find((s) => s.slug === preselectedSpec)
+        ?.sottoSpecialistiche?.find((s) => s.id === preselectedSotto)
+    : undefined
 
   // Calcola lo step iniziale saltando quelli che sarebbero vuoti dato il preselect
   function computeInitial(): {
@@ -52,6 +60,13 @@ export function PrenotaForm({
     const spec = specialistiche.find((s) => s.slug === preselectedSpec)
     if (!spec) return { step: 'spec', skippedMedico: false }
     if (preselectedMedico) return { step: 'dati', skippedMedico: false }
+    if (preselectedSottoObj) {
+      const mediciDisponibili = medici.filter(
+        (m) => m.sottoSpecialisticheIds.includes(preselectedSottoObj.id) && !m.suChiamata
+      )
+      if (mediciDisponibili.length > 0) return { step: 'medico', skippedMedico: false }
+      return { step: 'dati', skippedMedico: true }
+    }
     if ((spec.sottoSpecialistiche?.length ?? 0) > 0) {
       return { step: 'sotto', skippedMedico: false }
     }
@@ -73,8 +88,8 @@ export function PrenotaForm({
 
   // Stato form (dati che vanno all'API)
   const [specSlug, setSpecSlug] = useState(preselectedSpec)
-  const [sottoNome, setSottoNome] = useState('')
-  const [sottoId, setSottoId] = useState('')
+  const [sottoNome, setSottoNome] = useState(preselectedSottoObj?.nome ?? '')
+  const [sottoId, setSottoId] = useState(preselectedSottoObj?.id ?? '')
   const [medicoSlug, setMedicoSlug] = useState(preselectedMedico)
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')

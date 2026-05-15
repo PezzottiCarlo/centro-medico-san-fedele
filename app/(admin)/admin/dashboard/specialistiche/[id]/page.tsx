@@ -106,6 +106,12 @@ export default function EditSpecialisticaPage() {
     update('sottoSpecialistiche', updated)
   }
 
+  function updateSottoSpecialisticaDescrizione(index: number, value: string) {
+    const updated = [...form.sottoSpecialistiche]
+    updated[index] = { ...updated[index], descrizione: value }
+    update('sottoSpecialistiche', updated)
+  }
+
   function removeSottoSpecialistica(index: number) {
     update('sottoSpecialistiche', form.sottoSpecialistiche.filter((_, i) => i !== index))
   }
@@ -262,6 +268,7 @@ export default function EditSpecialisticaPage() {
           </div>
           <p className="text-xs text-slate-400 mb-4">
             I medici si abbinano direttamente nella scheda di ogni medico. Qui sotto vedi solo chi è già associato a ciascuna terapia.
+            La descrizione breve viene mostrata nel modale che si apre cliccando la terapia sulla pagina pubblica.
           </p>
 
           {form.sottoSpecialistiche.length === 0 ? (
@@ -287,6 +294,13 @@ export default function EditSpecialisticaPage() {
                         <Trash2 size={16} />
                       </button>
                     </div>
+                    <textarea
+                      value={sotto.descrizione || ''}
+                      onChange={(e) => updateSottoSpecialisticaDescrizione(i, e.target.value)}
+                      rows={3}
+                      className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      placeholder="Breve descrizione della terapia (mostrata nel modale sulla pagina pubblica)..."
+                    />
                     <div>
                       <p className="text-xs text-slate-400 mb-2">
                         Medici associati ({medici.length}):

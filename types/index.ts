@@ -5,6 +5,7 @@
 export interface SottoSpecialistica {
   id: string
   nome: string
+  descrizione?: string // breve descrizione mostrata nel modale sulla pagina specialistica
 }
 
 export interface Specialistica {
