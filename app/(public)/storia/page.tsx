@@ -42,24 +42,7 @@ export default async function StoriaPage() {
         imageSrc="/storia.jpg"
       />
 
-      {/* Intro "fiera" */}
-      <section className="py-16 md:py-20 bg-white">
-        <div className="container-main">
-          <div className="max-w-4xl mx-auto text-center">
-            <p className="text-primary uppercase text-xs tracking-widest font-bold mb-4">
-              Oltre vent'anni di cura
-            </p>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-text-main leading-tight mb-6">
-              Una storia fatta di persone, competenza e dedizione
-            </h2>
-            <p className="text-lg md:text-xl text-text-main/70 leading-relaxed font-medium">
-              Dal primo ambulatorio aperto nel 2008 a Longone al Segrino, fino al centro
-              multidisciplinare di oggi: ogni passo è stato guidato dalla missione di mettere
-              la persona al centro della cura.
-            </p>
-          </div>
-        </div>
-      </section>
+      
 
       {/* Timeline — bento serpentina con anno tipografico */}
       {eventi.length > 0 && (
@@ -115,17 +98,17 @@ export default async function StoriaPage() {
                 return (
                   <article
                     key={evento.id}
-                    className={`group relative grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-center ${
+                    className={`group relative grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-start ${
                       isLeft ? '' : 'md:[&>*:first-child]:order-2'
                     }`}
                   >
-                    {/* Anno tipografico XL — col-span 5, allineato lato esterno */}
+                    {/* Anno tipografico XL — col-span 5, allineato lato esterno, sticky su card lunghe */}
                     <div
                       className={`md:col-span-5 flex ${
                         isLeft ? 'md:justify-end md:text-right' : 'md:justify-start md:text-left'
-                      } items-center`}
+                      } items-start`}
                     >
-                      <div className="relative">
+                      <div className="relative md:sticky md:top-28">
                         {/* Anno outline gigante — decor */}
                         <span
                           aria-hidden
@@ -187,7 +170,7 @@ export default async function StoriaPage() {
                           {evento.titolo}
                         </h3>
                         <div
-                          className="text-text-main/75 leading-relaxed text-sm md:text-base font-medium prose prose-sm md:prose-base max-w-none line-clamp-6"
+                          className="prose-content text-text-main/80 text-sm md:text-base max-w-none"
                           dangerouslySetInnerHTML={{ __html: evento.descrizione }}
                         />
                       </div>

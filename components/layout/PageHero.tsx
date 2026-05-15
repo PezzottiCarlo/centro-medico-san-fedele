@@ -2,15 +2,17 @@ import Image from 'next/image'
 
 interface PageHeroProps {
   title: string
+  /** @deprecated non più mostrato — l'hero lascia spazio all'immagine */
   subtitle?: string
+  /** @deprecated non più mostrato — l'hero lascia spazio all'immagine */
   label?: string
   imageSrc?: string
   imageScale?: number // zoom dell'immagine bg (1 = nessuno zoom, 1.15 = +15%)
 }
 
-export function PageHero({ title, subtitle, label, imageSrc, imageScale = 1 }: PageHeroProps) {
+export function PageHero({ title, imageSrc, imageScale = 1 }: PageHeroProps) {
   return (
-    <section className="relative w-full min-h-[320px] md:min-h-[380px] flex items-center overflow-hidden">
+    <section className="relative w-full min-h-[360px] md:min-h-[480px] flex items-end overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 -z-10">
         {imageSrc ? (
@@ -23,26 +25,17 @@ export function PageHero({ title, subtitle, label, imageSrc, imageScale = 1 }: P
               className="object-cover"
               style={imageScale !== 1 ? { transform: `scale(${imageScale})`, transformOrigin: 'center' } : undefined}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/55 to-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-[#145a85]" />
         )}
       </div>
 
-      {/* Content */}
-      <div className="container-main text-center w-full py-16">
-        {label && (
-          <p className="text-white/70 font-medium tracking-wide uppercase text-sm mb-3">
-            {label}
-          </p>
-        )}
-        <h1 className="heading-1 !text-white mb-4 drop-shadow-md">{title}</h1>
-        {subtitle && (
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed drop-shadow">
-            {subtitle}
-          </p>
-        )}
+      {/* Content — titolo allineato in basso, lascia respiro all'immagine */}
+      <div className="container-main w-full pb-10 md:pb-14">
+        <span className="block h-1 w-10 rounded-full bg-white/80 mb-4 drop-shadow" />
+        <h1 className="heading-1 !text-white drop-shadow-md">{title}</h1>
       </div>
     </section>
   )
