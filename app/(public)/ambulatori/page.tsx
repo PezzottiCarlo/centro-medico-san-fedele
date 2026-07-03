@@ -7,7 +7,7 @@ import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { specialisticaHref } from '@/lib/utils'
 
-export const revalidate = 3600
+export const revalidate = 60
 export const metadata = generatePageMetadata({
   title: 'Specialistiche Mediche e Servizi',
   description: 'Scopri le nostre specialistiche mediche e i servizi dedicati. Centro Medico San Fedele, Longone al Segrino.',

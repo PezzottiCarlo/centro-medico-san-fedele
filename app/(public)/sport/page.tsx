@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { HeroDark } from '@/components/layout/HeroDark'
 import { getHeroConfig } from '@/lib/firebase/hero'
+import { SportServiziSection } from '@/components/sport/SportServiziSection'
 
-export const revalidate = 3600
+export const revalidate = 60
 export const metadata = generatePageMetadata({
   title: 'Medicina Sportiva - Certificazioni e Valutazioni',
   description: 'Certificazioni medico-sportive agonistiche e non agonistiche, valutazione funzionale e nutrizione sportiva. Centro Medico San Fedele, Longone al Segrino.',
@@ -74,39 +75,6 @@ async function getSpecialisticaSport(): Promise<{
   }
 }
 
-const SERVICES = [
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-10 h-10">
-        <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: 'Certificazioni medico-sportive',
-    desc: 'Visite di idoneita agonistica e non agonistica, complete di ECG e valutazione clinica secondo le normative vigenti.',
-    tag: 'Agonistica & Non',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-10 h-10">
-        <path d="M3.5 12h2l3-9 4 18 3-9h2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: 'Valutazione funzionale',
-    desc: 'Test da sforzo, ECG sotto sforzo e spirometria per monitorare performance cardiovascolari e respiratorie.',
-    tag: 'Performance',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-10 h-10">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: 'Nutrizione sportiva',
-    desc: 'Piani alimentari personalizzati per atleti, studiati per ottimizzare prestazioni, recupero e benessere.',
-    tag: 'Nutrizione',
-  },
-]
-
 const STATS = [
   { value: '500+', label: 'Certificazioni/anno' },
   { value: '98%', label: 'Soddisfazione' },
@@ -151,25 +119,16 @@ export default async function SportPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {SERVICES.map((s) => (
-              <div
-                key={s.title}
-                className="group relative bg-slate-900 border border-slate-800 rounded-2xl p-8 hover:border-emerald-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/5"
-              >
-                <div className="absolute top-4 right-4">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-500/60 bg-emerald-500/10 px-2 py-1 rounded">
-                    {s.tag}
-                  </span>
-                </div>
-                <div className="text-emerald-400 mb-6 group-hover:scale-110 transition-transform duration-300">
-                  {s.icon}
-                </div>
-                <h3 className="font-bold text-lg mb-3">{s.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
+          {specSport.spec?.sottoSpecialistiche && specSport.spec.sottoSpecialistiche.length > 0 ? (
+            <SportServiziSection
+              sottoSpecialistiche={specSport.spec.sottoSpecialistiche}
+              specSlug={specSport.spec.slug}
+            />
+          ) : (
+            <p className="text-center text-slate-500">
+              I servizi saranno disponibili a breve. Contattaci per maggiori informazioni.
+            </p>
+          )}
         </div>
       </section>
 
@@ -302,73 +261,6 @@ export default async function SportPage() {
                     className="prose prose-invert prose-slate max-w-none text-slate-300 prose-headings:text-white prose-strong:text-white prose-a:text-emerald-400"
                     dangerouslySetInnerHTML={{ __html: specSport.spec.descrizione }}
                   />
-                </div>
-              </div>
-            )}
-
-            {/* Sotto-specialistiche */}
-            {specSport.spec.sottoSpecialistiche && specSport.spec.sottoSpecialistiche.length > 0 && (
-              <div className="mb-20">
-                <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
-                  <div>
-                    <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase mb-2 block">
-                      Il nostro know-how
-                    </span>
-                    <h3 className="text-2xl md:text-3xl font-bold text-white">Aree di competenza</h3>
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {specSport.spec.sottoSpecialistiche.length} aree disponibili
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {specSport.spec.sottoSpecialistiche.map((sotto, i) => {
-                    const mediciSotto = specSport.medici.filter((m) =>
-                      (m.sottoSpecialisticheIds || []).includes(sotto.id)
-                    )
-                    return (
-                      <div
-                        key={sotto.id}
-                        className="group relative bg-gradient-to-br from-slate-900 to-slate-900/50 border border-slate-800 rounded-2xl p-6 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 overflow-hidden"
-                      >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
-                        <div className="absolute top-4 right-4 text-[11px] font-bold text-emerald-500/40 tracking-widest">
-                          {String(i + 1).padStart(2, '0')}
-                        </div>
-
-                        <div className="relative">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition-colors">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-emerald-400">
-                              <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-
-                          <h4 className="font-bold text-white text-lg mb-3 leading-snug">{sotto.nome}</h4>
-
-                          {mediciSotto.length > 0 ? (
-                            <div className="space-y-2 pt-3 border-t border-slate-800">
-                              <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Medici dedicati</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {mediciSotto.map((m) => (
-                                  <Link
-                                    key={m.id}
-                                    href={`/medici/${m.slug}`}
-                                    className="text-xs text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/15 px-2.5 py-1 rounded-full border border-emerald-500/15 hover:border-emerald-500/40 transition-all"
-                                  >
-                                    {m.nome}
-                                  </Link>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-600 italic pt-3 border-t border-slate-800">
-                              Medici in assegnazione
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
                 </div>
               </div>
             )}

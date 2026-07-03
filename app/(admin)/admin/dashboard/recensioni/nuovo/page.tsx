@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { addDoc, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Star } from 'lucide-react'
 
@@ -32,6 +33,7 @@ export default function NuovaRecensione() {
     setError('')
     try {
       await addDoc(collection(db, 'recensioni_statiche'), form)
+      await revalidatePublic(['/'])
       router.push('/admin/dashboard/recensioni')
     } catch {
       setError('Errore durante il salvataggio.')

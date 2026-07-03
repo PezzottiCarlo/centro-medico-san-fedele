@@ -11,7 +11,7 @@ import { getHeroConfig } from '@/lib/firebase/hero'
 import { getReviews } from '@/lib/reviews'
 import type { Specialistica, Convenzione, Medico, Patologia } from '@/types'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata = generatePageMetadata({})
 

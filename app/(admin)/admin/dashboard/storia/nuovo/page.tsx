@@ -6,6 +6,7 @@ import { addDoc, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 
@@ -55,6 +56,7 @@ function NuovaStoriaForm() {
         ? { anno: form.anno, titolo: form.titolo, descrizione: form.descrizione, immagine: form.immagine, order: form.order, pubblicato: form.pubblicato, sportivo: form.sportivo }
         : { anno: form.anno, titolo: form.titolo, descrizione: form.descrizione, pubblicato: form.pubblicato }
       await addDoc(collection(db, collectionName), data)
+      await revalidatePublic(['/storia', '/sport', '/'])
       router.push('/admin/dashboard/storia')
     } catch {
       setError('Errore durante il salvataggio.')

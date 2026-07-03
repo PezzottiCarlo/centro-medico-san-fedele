@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import type { RecensioneStatica } from '@/types'
 import { Star, Trash2 } from 'lucide-react'
 import Link from 'next/link'
@@ -57,6 +58,7 @@ export function RecensioniAdmin({ editoriali: initialEditoriali }: { editoriali:
     try {
       await deleteDoc(doc(db, 'recensioni_statiche', id))
       setEditoriali((prev) => prev.filter((r) => r.id !== id))
+      await revalidatePublic(['/'])
     } finally {
       setDeleting(null)
     }

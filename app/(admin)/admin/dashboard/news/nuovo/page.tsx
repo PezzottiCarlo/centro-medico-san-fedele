@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/client'
 import { slugify } from '@/lib/utils'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 
@@ -47,6 +48,7 @@ export default function NuovaNewsPage() {
         ...form,
         dataPublicazione: new Date(form.dataPublicazione).toISOString(),
       })
+      await revalidatePublic(['/news', `/news/${form.slug}`, '/'])
       router.push('/admin/dashboard/news')
     } catch {
       setError('Errore durante il salvataggio.')

@@ -61,6 +61,25 @@ export default function SiteConfigPage() {
     setForm((f) => ({ ...f, orari: f.orari.filter((_, i) => i !== idx) }))
   }
 
+  function updateDomanda(idx: number, value: string) {
+    setForm((f) => {
+      const domande = [...(f.chatbotDomande ?? [])]
+      domande[idx] = value
+      return { ...f, chatbotDomande: domande }
+    })
+  }
+
+  function addDomanda() {
+    setForm((f) => ({ ...f, chatbotDomande: [...(f.chatbotDomande ?? []), ''] }))
+  }
+
+  function removeDomanda(idx: number) {
+    setForm((f) => ({
+      ...f,
+      chatbotDomande: (f.chatbotDomande ?? []).filter((_, i) => i !== idx),
+    }))
+  }
+
   async function handleSave() {
     setSaving(true)
     setError('')
@@ -292,6 +311,47 @@ export default function SiteConfigPage() {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-700 pt-5">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-slate-300">Domande suggerite chatbot</label>
+              <button
+                type="button"
+                onClick={addDomanda}
+                className="text-primary text-sm hover:text-primary-dark flex items-center gap-1"
+              >
+                <Plus size={14} /> Aggiungi domanda
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mb-3">
+              Mostrate all&apos;apertura del chatbot MelaBot. Cliccandole, l&apos;utente invia subito la domanda.
+            </p>
+            <div className="space-y-2">
+              {(form.chatbotDomande ?? []).length === 0 ? (
+                <p className="text-slate-400 text-sm">Nessuna domanda impostata.</p>
+              ) : (
+                (form.chatbotDomande ?? []).map((q, idx) => (
+                  <div key={idx} className="grid grid-cols-[1fr_auto] gap-2">
+                    <input
+                      type="text"
+                      value={q}
+                      onChange={(e) => updateDomanda(idx, e.target.value)}
+                      placeholder="es. Come posso prenotare una visita?"
+                      className="bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeDomanda(idx)}
+                      className="text-red-400 hover:text-red-300 px-2"
+                      aria-label="Rimuovi domanda"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

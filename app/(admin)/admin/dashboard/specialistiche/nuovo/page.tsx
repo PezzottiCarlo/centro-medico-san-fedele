@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/client'
 import { slugify } from '@/lib/utils'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
 import type { SottoSpecialistica } from '@/types'
@@ -58,6 +59,12 @@ export default function NuovaSpecialisticaPage() {
     update('sottoSpecialistiche', updated)
   }
 
+  function updateSottoSpecialisticaGenere(index: number, value: SottoSpecialistica['genere']) {
+    const updated = [...form.sottoSpecialistiche]
+    updated[index] = { ...updated[index], genere: value }
+    update('sottoSpecialistiche', updated)
+  }
+
   function removeSottoSpecialistica(index: number) {
     update('sottoSpecialistiche', form.sottoSpecialistiche.filter((_, i) => i !== index))
   }
@@ -71,6 +78,7 @@ export default function NuovaSpecialisticaPage() {
     setError('')
     try {
       await addDoc(collection(db, 'specialistiche'), form)
+      await revalidatePublic(['/ambulatori', `/ambulatori/${form.slug}`, '/sport', '/'])
       router.push('/admin/dashboard/specialistiche')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -216,6 +224,22 @@ export default function NuovaSpecialisticaPage() {
                     className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                     placeholder="Breve descrizione della terapia (mostrata nel modale sulla pagina pubblica)..."
                   />
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Genere (per il selettore Donna/Uomo, es. Medicina Estetica)
+                    </label>
+                    <select
+                      value={sotto.genere || 'entrambi'}
+                      onChange={(e) =>
+                        updateSottoSpecialisticaGenere(i, e.target.value as SottoSpecialistica['genere'])
+                      }
+                      className="w-full bg-slate-700 border border-slate-600 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="entrambi">Entrambi</option>
+                      <option value="donna">Donna</option>
+                      <option value="uomo">Uomo</option>
+                    </select>
+                  </div>
                 </div>
               ))}
             </div>

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 
@@ -17,6 +18,7 @@ export default function EditConvenzionePage() {
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     nome: '',
+    sottotitolo: '',
     logo: '',
     url: '',
     descrizione: '',
@@ -35,6 +37,7 @@ export default function EditConvenzionePage() {
         const data = snap.data()
         setForm({
           nome: data.nome || '',
+          sottotitolo: data.sottotitolo || '',
           logo: data.logo || '',
           url: data.url || '',
           descrizione: data.descrizione || '',
@@ -62,6 +65,7 @@ export default function EditConvenzionePage() {
     setError('')
     try {
       await updateDoc(doc(db, 'convenzioni', id), { ...form })
+      await revalidatePublic(['/convenzioni', '/'])
       router.push('/admin/dashboard/convenzioni')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -75,6 +79,7 @@ export default function EditConvenzionePage() {
     setSaving(true)
     try {
       await deleteDoc(doc(db, 'convenzioni', id))
+      await revalidatePublic(['/convenzioni', '/'])
       router.push('/admin/dashboard/convenzioni')
     } catch {
       setError('Errore durante l\'eliminazione.')
@@ -135,6 +140,17 @@ export default function EditConvenzionePage() {
               className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="es. Unisalute"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Sconto / beneficio</label>
+            <input
+              type="text"
+              value={form.sottotitolo}
+              onChange={(e) => update('sottotitolo', e.target.value)}
+              className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="es. Sconto 30% sulle visite"
+            />
+            <p className="text-xs text-slate-400 mt-1">Mostrato sotto il nome nella card e nel dettaglio.</p>
           </div>
           <ImageUpload
             value={form.logo}

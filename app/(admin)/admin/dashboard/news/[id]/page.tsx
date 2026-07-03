@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 
@@ -72,6 +73,7 @@ export default function EditNewsPage() {
         ...form,
         dataPublicazione: new Date(form.dataPublicazione).toISOString(),
       })
+      await revalidatePublic(['/news', `/news/${form.slug}`, '/'])
       router.push('/admin/dashboard/news')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -85,6 +87,7 @@ export default function EditNewsPage() {
     setSaving(true)
     try {
       await deleteDoc(doc(db, 'news_eventi', id))
+      await revalidatePublic(['/news', `/news/${form.slug}`, '/'])
       router.push('/admin/dashboard/news')
     } catch {
       setError('Errore durante l\'eliminazione.')

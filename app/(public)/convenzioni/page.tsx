@@ -6,7 +6,7 @@ import { ConvenzioniGrid } from '@/components/convenzioni/ConvenzioniGrid'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata = generatePageMetadata({
   title: 'Convenzioni',

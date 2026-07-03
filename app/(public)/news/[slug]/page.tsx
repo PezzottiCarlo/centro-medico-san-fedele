@@ -7,7 +7,7 @@ import type { NewsEvento } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateStaticParams() {
   try {

@@ -6,6 +6,7 @@ import { addDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { slugify } from '@/lib/utils'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
 import type { Orario, SottoSpecialistica } from '@/types'
@@ -116,6 +117,7 @@ export default function NuovoMedicoPage() {
     setError('')
     try {
       await addDoc(collection(db, 'medici'), form)
+      await revalidatePublic(['/medici', `/medici/${form.slug}`, '/', '/sport'])
       router.push('/admin/dashboard/medici')
     } catch {
       setError('Errore durante il salvataggio.')

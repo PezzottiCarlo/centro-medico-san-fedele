@@ -83,6 +83,33 @@ export function generateSpecialtyJsonLd(spec: {
   }
 }
 
+/**
+ * JSON-LD ImageGallery per le foto della storia del centro: aiuta Google Immagini
+ * a indicizzare le immagini con nome/didascalia significativi.
+ */
+export function generateStoriaImageGalleryJsonLd(
+  eventi: { titolo: string; descrizione?: string; immagine?: string; anno?: string }[]
+) {
+  const images = eventi
+    .filter((e) => !!e.immagine)
+    .map((e) => ({
+      '@type': 'ImageObject',
+      contentUrl: e.immagine,
+      url: e.immagine,
+      name: e.anno ? `${e.titolo} (${e.anno})` : e.titolo,
+      caption: e.descrizione ? e.descrizione.replace(/<[^>]*>/g, '').trim().slice(0, 200) : e.titolo,
+      creditText: 'Centro Medico San Fedele',
+    }))
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ImageGallery',
+    name: 'La storia del Centro Medico San Fedele',
+    url: `${BASE_URL}/storia`,
+    image: images,
+  }
+}
+
 export function generateOrganizationJsonLd(site?: SiteConfig) {
   return {
     '@context': 'https://schema.org',

@@ -9,7 +9,7 @@ import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 
-export const revalidate = 3600
+export const revalidate = 60
 export const metadata = generatePageMetadata({
   title: 'Area DSA - Disturbi Specifici dell\'Apprendimento',
   description: 'Percorsi specializzati per la diagnosi e il supporto ai DSA. Centro Medico San Fedele, Longone al Segrino.',

@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 
@@ -80,6 +81,7 @@ export default function EditStoriaPage() {
         ? { anno: form.anno, titolo: form.titolo, descrizione: form.descrizione, immagine: form.immagine, order: form.order, pubblicato: form.pubblicato, sportivo: form.sportivo }
         : { anno: form.anno, titolo: form.titolo, descrizione: form.descrizione, pubblicato: form.pubblicato }
       await updateDoc(doc(db, collectionName, id), data)
+      await revalidatePublic(['/storia', '/sport', '/'])
       router.push('/admin/dashboard/storia')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -94,6 +96,7 @@ export default function EditStoriaPage() {
     try {
       const collectionName = tipo === 'evento' ? 'storia_eventi' : 'riconoscimenti'
       await deleteDoc(doc(db, collectionName, id))
+      await revalidatePublic(['/storia', '/sport', '/'])
       router.push('/admin/dashboard/storia')
     } catch {
       setError('Errore durante l\'eliminazione.')

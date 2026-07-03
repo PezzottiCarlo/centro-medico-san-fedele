@@ -24,6 +24,12 @@ export const SITE_CONFIG_DEFAULT: SiteConfig = {
     { giorno: 'Sabato – Domenica', ore: 'Chiuso' },
   ],
   mapsUrl: 'https://maps.google.com/?q=Via+Risorgimento+1+Longone+al+Segrino',
+  chatbotDomande: [
+    'Quali visite specialistiche offrite?',
+    'Come posso prenotare una visita?',
+    'Dove siete e quali sono gli orari?',
+    'Con quali assicurazioni siete convenzionati?',
+  ],
 }
 
 export const SITE_STATS = [

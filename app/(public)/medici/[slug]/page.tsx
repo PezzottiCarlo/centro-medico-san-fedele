@@ -7,8 +7,9 @@ import type { Medico, Specialistica, SottoSpecialistica } from '@/types'
 import { Calendar, Clock, Phone, Mail, ArrowRight, Stethoscope, Sparkles } from 'lucide-react'
 import { specialisticaHref } from '@/lib/utils'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { CollapsibleBio } from '@/components/medici/CollapsibleBio'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateStaticParams() {
   try {
@@ -273,9 +274,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
             {medico.bio && (
               <div className="mb-12">
                 <h2 className="text-2xl md:text-3xl font-extrabold text-text-main mb-5">Biografia</h2>
-                <p className="text-text-main/80 leading-relaxed text-base md:text-lg font-medium whitespace-pre-line">
-                  {medico.bio}
-                </p>
+                <CollapsibleBio text={medico.bio} />
               </div>
             )}
 

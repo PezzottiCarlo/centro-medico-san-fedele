@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react'
 import { HeroGradient } from '@/components/layout/HeroGradient'
 import { getHeroConfig } from '@/lib/firebase/hero'
 
-export const revalidate = 3600
+export const revalidate = 60
 export const metadata = generatePageMetadata({
   title: 'Patologie',
   description: 'Informazioni sulle patologie trattate al Centro Medico San Fedele.',

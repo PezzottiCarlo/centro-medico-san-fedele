@@ -8,7 +8,7 @@ import { ArrowRight } from 'lucide-react'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
 import { SottoSpecialisticheSection } from '@/components/specialistiche/SottoSpecialisticheSection'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateStaticParams() {
   try {
@@ -122,6 +122,7 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
               specSlug={spec.slug}
               specNome={spec.nome}
               icona={spec.icona}
+              enableGenderFilter={spec.slug === 'medicina-estetica'}
             />
           )}
 

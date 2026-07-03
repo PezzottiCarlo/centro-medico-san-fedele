@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
 import type { Orario, SottoSpecialistica } from '@/types'
@@ -143,6 +144,7 @@ export default function EditMedicoPage() {
     setError('')
     try {
       await updateDoc(doc(db, 'medici', id), { ...form })
+      await revalidatePublic(['/medici', `/medici/${form.slug}`, '/', '/sport'])
       router.push('/admin/dashboard/medici')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -156,6 +158,7 @@ export default function EditMedicoPage() {
     setSaving(true)
     try {
       await deleteDoc(doc(db, 'medici', id))
+      await revalidatePublic(['/medici', `/medici/${form.slug}`, '/', '/sport'])
       router.push('/admin/dashboard/medici')
     } catch {
       setError('Errore durante l\'eliminazione.')

@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from 'firebase
 import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 
@@ -86,6 +87,7 @@ export default function EditPatologiaPage() {
     setError('')
     try {
       await updateDoc(doc(db, 'patologie', id), { ...form })
+      await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
       router.push('/admin/dashboard/patologie')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -99,6 +101,7 @@ export default function EditPatologiaPage() {
     setSaving(true)
     try {
       await deleteDoc(doc(db, 'patologie', id))
+      await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
       router.push('/admin/dashboard/patologie')
     } catch {
       setError('Errore durante l\'eliminazione.')

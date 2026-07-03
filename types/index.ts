@@ -6,6 +6,7 @@ export interface SottoSpecialistica {
   id: string
   nome: string
   descrizione?: string // breve descrizione mostrata nel modale sulla pagina specialistica
+  genere?: 'donna' | 'uomo' | 'entrambi' // usato dal selettore Donna/Uomo (es. Medicina Estetica)
 }
 
 export interface Specialistica {
@@ -111,6 +112,7 @@ export interface Lead {
 export interface Convenzione {
   id: string
   nome: string
+  sottotitolo?: string // sconto/beneficio mostrato sotto il nome (es. "Sconto 30%")
   logo?: string
   url?: string
   attiva: boolean
@@ -166,6 +168,7 @@ export interface SiteConfig {
   provincia: string
   orari: SiteConfigOrario[]
   mapsUrl?: string
+  chatbotDomande?: string[] // domande pre-impostate mostrate all'apertura del chatbot
   aggiornatoIl?: string
 }
 

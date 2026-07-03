@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 
-export const revalidate = 3600
+export const revalidate = 60
 export const metadata = generatePageMetadata({
   title: 'I Nostri Medici',
   description: 'Scopri il team di medici specialisti del Centro Medico San Fedele a Longone al Segrino.',

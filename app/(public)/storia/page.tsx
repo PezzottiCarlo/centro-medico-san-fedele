@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { generatePageMetadata } from '@/lib/seo'
+import { generatePageMetadata, generateStoriaImageGalleryJsonLd } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
 import type { StoriaEvento, Riconoscimento } from '@/types'
 import { Award, ArrowRight } from 'lucide-react'
@@ -34,8 +34,18 @@ async function getData() {
 export default async function StoriaPage() {
   const [{ eventi, riconoscimenti }, hero] = await Promise.all([getData(), getHeroConfig('storia')])
 
+  const imageGalleryJsonLd = generateStoriaImageGalleryJsonLd(eventi)
+  const hasGalleryImages =
+    Array.isArray(imageGalleryJsonLd.image) && imageGalleryJsonLd.image.length > 0
+
   return (
     <>
+      {hasGalleryImages && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(imageGalleryJsonLd) }}
+        />
+      )}
       <PageHero config={hero} />
 
       

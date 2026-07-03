@@ -3,3 +3,4 @@ Allow: /
 Disallow: /admin/
 
 Sitemap: https://sanfedele.it/sitemap.xml
+Sitemap: https://sanfedele.it/image-sitemap.xml

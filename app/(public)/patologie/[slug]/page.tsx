@@ -6,7 +6,7 @@ import { generatePageMetadata } from '@/lib/seo'
 import type { Patologia, Medico, Specialistica } from '@/types'
 import { specialisticaHref } from '@/lib/utils'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateStaticParams() {
   try {

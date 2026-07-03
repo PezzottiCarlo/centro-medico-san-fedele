@@ -5,7 +5,7 @@ import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
-export const revalidate = 3600
+export const revalidate = 60
 export const metadata = generatePageMetadata({
   title: 'Lavora con Noi',
   description: 'Opportunità di lavoro al Centro Medico San Fedele. Entra a far parte del nostro team.',

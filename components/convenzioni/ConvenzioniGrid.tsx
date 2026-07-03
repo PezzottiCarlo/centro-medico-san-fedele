@@ -71,9 +71,16 @@ export function ConvenzioniGrid({ convenzioni }: Props) {
               </div>
 
               {/* Nome */}
-              <h3 className="font-semibold text-text-main text-lg mt-3 mb-3 line-clamp-1">
+              <h3 className="font-semibold text-text-main text-lg mt-3 mb-1 line-clamp-1">
                 {c.nome}
               </h3>
+
+              {/* Sconto / beneficio */}
+              {c.sottotitolo && (
+                <span className="inline-block bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-full mb-2 line-clamp-1">
+                  {c.sottotitolo}
+                </span>
+              )}
 
               {/* Azioni — fisse in fondo */}
               <div className="flex items-center gap-3 text-sm">
@@ -164,6 +171,11 @@ export function ConvenzioniGrid({ convenzioni }: Props) {
                 <h3 className="text-2xl md:text-3xl font-extrabold text-text-main">
                   {open.nome}
                 </h3>
+                {open.sottotitolo && (
+                  <span className="inline-block bg-primary/10 text-primary text-sm font-bold px-3 py-1 rounded-full mt-3">
+                    {open.sottotitolo}
+                  </span>
+                )}
               </div>
 
               {/* Descrizione */}

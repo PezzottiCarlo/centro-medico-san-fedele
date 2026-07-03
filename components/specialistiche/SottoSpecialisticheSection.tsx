@@ -10,6 +10,27 @@ interface Props {
   specSlug: string
   specNome: string
   icona: string
+  /** Mostra il selettore Donna/Uomo che filtra le prestazioni (es. Medicina Estetica) */
+  enableGenderFilter?: boolean
+}
+
+// Simboli gender inline (lucide non include Venus/Mars in questa versione)
+function VenusIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="8" r="5" />
+      <path d="M12 13v8M9 18h6" />
+    </svg>
+  )
+}
+
+function MarsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="10" cy="14" r="5" />
+      <path d="M15 9l5-5M15 4h5v5" />
+    </svg>
+  )
 }
 
 export function SottoSpecialisticheSection({
@@ -17,8 +38,14 @@ export function SottoSpecialisticheSection({
   specSlug,
   specNome,
   icona,
+  enableGenderFilter = false,
 }: Props) {
   const [active, setActive] = useState<SottoSpecialistica | null>(null)
+  const [gender, setGender] = useState<'donna' | 'uomo'>('donna')
+
+  const visible = enableGenderFilter
+    ? sottoSpecialistiche.filter((s) => !s.genere || s.genere === 'entrambi' || s.genere === gender)
+    : sottoSpecialistiche
 
   useEffect(() => {
     if (!active) return
@@ -40,13 +67,50 @@ export function SottoSpecialisticheSection({
       <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
         <h2 className="heading-3">Prestazioni e terapie</h2>
         <span className="text-sm text-gray-400">
-          {sottoSpecialistiche.length}{' '}
-          {sottoSpecialistiche.length === 1 ? 'prestazione' : 'prestazioni'}
+          {visible.length}{' '}
+          {visible.length === 1 ? 'prestazione' : 'prestazioni'}
         </span>
       </div>
 
+      {enableGenderFilter && (
+        <div className="mb-8">
+          <p className="text-sm font-medium text-gray-500 mb-3">Seleziona per chi cerchi il trattamento:</p>
+          <div className="inline-flex gap-3">
+            <button
+              type="button"
+              onClick={() => setGender('donna')}
+              aria-pressed={gender === 'donna'}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm border-2 transition-all ${
+                gender === 'donna'
+                  ? 'bg-pink-500 border-pink-500 text-white shadow-card'
+                  : 'bg-white border-pink-200 text-pink-500 hover:border-pink-400'
+              }`}
+            >
+              <VenusIcon className="w-5 h-5" /> Donna
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender('uomo')}
+              aria-pressed={gender === 'uomo'}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm border-2 transition-all ${
+                gender === 'uomo'
+                  ? 'bg-blue-500 border-blue-500 text-white shadow-card'
+                  : 'bg-white border-blue-200 text-blue-500 hover:border-blue-400'
+              }`}
+            >
+              <MarsIcon className="w-5 h-5" /> Uomo
+            </button>
+          </div>
+        </div>
+      )}
+
+      {enableGenderFilter && visible.length === 0 ? (
+        <p className="text-gray-400 text-sm">
+          Nessuna prestazione disponibile per questa selezione al momento.
+        </p>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sottoSpecialistiche.map((sotto, i) => {
+        {visible.map((sotto, i) => {
           const preview = sotto.descrizione?.trim()
           return (
             <button
@@ -78,6 +142,7 @@ export function SottoSpecialisticheSection({
           )
         })}
       </div>
+      )}
 
       {/* Modal */}
       {active && (

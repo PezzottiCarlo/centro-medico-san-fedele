@@ -42,7 +42,7 @@ const botMarkdownComponents: Components = {
   em: ({ children }) => <em className="italic">{children}</em>,
 }
 
-export function ChatbotButton() {
+export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -110,8 +110,8 @@ export function ChatbotButton() {
     }
   }, [open, hasOpened])
 
-  async function handleSend() {
-    const text = input.trim()
+  async function handleSend(presetText?: string) {
+    const text = (presetText ?? input).trim()
     if (!text || isTyping) return
 
     const userMsg: Message = {
@@ -370,6 +370,26 @@ export function ChatbotButton() {
                 </div>
               ))}
 
+              {/* Domande suggerite — mostrate finché l'utente non scrive */}
+              {domande.length > 0 &&
+                !isTyping &&
+                messages.length > 0 &&
+                messages.every((m) => m.sender === 'bot') && (
+                  <div className="flex flex-col items-start gap-2 pt-1 msg-appear">
+                    {domande.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => handleSend(q)}
+                        className="text-left text-sm px-3.5 py-2 rounded-2xl rounded-bl-md bg-white border border-gray-200 text-text-main hover:bg-gray-50 transition-colors shadow-sm"
+                        style={{ color: '#D05241' }}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
               {/* Typing indicator */}
               {isTyping && (
                 <div className="flex justify-start msg-appear">
@@ -399,7 +419,7 @@ export function ChatbotButton() {
                   style={{ '--tw-ring-color': 'rgba(208,82,65,0.3)' } as React.CSSProperties}
                 />
                 <button
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={!input.trim() || isTyping}
                   className="w-10 h-10 rounded-full text-white flex items-center justify-center active:scale-90 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex-shrink-0"
                   style={{ backgroundColor: '#D05241' }}

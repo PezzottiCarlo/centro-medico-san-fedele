@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { addDoc, collection } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 
@@ -14,6 +15,7 @@ export default function NuovaConvenzione() {
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     nome: '',
+    sottotitolo: '',
     logo: '',
     url: '',
     descrizione: '',
@@ -33,6 +35,7 @@ export default function NuovaConvenzione() {
     setError('')
     try {
       await addDoc(collection(db, 'convenzioni'), form)
+      await revalidatePublic(['/convenzioni', '/'])
       router.push('/admin/dashboard/convenzioni')
     } catch {
       setError('Errore durante il salvataggio.')
@@ -77,6 +80,17 @@ export default function NuovaConvenzione() {
               className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="es. Unisalute"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Sconto / beneficio</label>
+            <input
+              type="text"
+              value={form.sottotitolo}
+              onChange={(e) => update('sottotitolo', e.target.value)}
+              className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="es. Sconto 30% sulle visite"
+            />
+            <p className="text-xs text-slate-400 mt-1">Mostrato sotto il nome nella card e nel dettaglio.</p>
           </div>
           <ImageUpload
             value={form.logo}
