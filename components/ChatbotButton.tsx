@@ -18,6 +18,10 @@ const GREETING_TEXT = 'Ciao! Sono **MelaBot**, l\'assistente del Centro Medico S
 
 const TEASER_KEY = 'sanfedele:chat-teaser-visto'
 
+// Distanza dal fondo pagina sotto la quale il bottone si ritira a sola icona,
+// per non coprire i link del footer (social, privacy, contatti).
+const SOGLIA_FONDO_PX = 100
+
 const ERROR_FALLBACK = `Mi dispiace, in questo momento non riesco a rispondere. Puoi chiamarci al ${CENTER_INFO.telefono} (${CENTER_INFO.orari}). 📞`
 
 // Componenti custom per ReactMarkdown nelle bolle del bot — link in rosso brand,
@@ -53,6 +57,7 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
   const [hasOpened, setHasOpened] = useState(false)
   const [chatVisible, setChatVisible] = useState(false)
   const [teaser, setTeaser] = useState(false)
+  const [inFondo, setInFondo] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -70,6 +75,30 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 500)
     return () => clearTimeout(t)
+  }, [])
+
+  // Arrivati in fondo alla pagina il bottone si stringe sull'icona: sul footer
+  // mobile la pill coprirebbe i link social. Misura accodata a un rAF e stato
+  // aggiornato solo al cambio di soglia, così lo scroll resta libero.
+  useEffect(() => {
+    let raf = 0
+    const misura = () => {
+      raf = 0
+      const doc = document.documentElement
+      const distanza = doc.scrollHeight - (window.scrollY + window.innerHeight)
+      setInFondo(distanza < SOGLIA_FONDO_PX)
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(misura)
+    }
+    misura()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      if (raf) cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   // Fumetto di invito: spiega a cosa serve il bottone. Una volta per sessione,
@@ -222,6 +251,23 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
   function formatTime(date: Date) {
     return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
   }
+
+  // Il ritiro a sola icona vale solo da mobile: su desktop il footer è a colonne
+  // e la pill non copre nulla, quindi le varianti `md:` riportano lo stato pieno.
+  const compatto = inFondo && !open
+  const classiEtichetta = open
+    ? 'max-w-0 opacity-0 ml-0'
+    : compatto
+      ? 'max-w-0 opacity-0 ml-0 md:max-w-[13rem] md:opacity-100 md:ml-2.5'
+      : 'max-w-[13rem] opacity-100 ml-2.5'
+  const classiPadding = open
+    ? 'p-4'
+    : compatto
+      ? 'p-4 md:pl-4 md:pr-5 md:py-3'
+      : 'pl-4 pr-5 py-3'
+  const classiMela = compatto
+    ? 'opacity-0 -translate-y-1.5 scale-90 md:opacity-100 md:translate-y-0 md:scale-100'
+    : 'opacity-100 translate-y-0 scale-100'
 
   return (
     <>
@@ -486,7 +532,7 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
         <div className={`relative ${mounted ? 'fab-enter' : 'scale-0'}`}>
           {!chatVisible && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-[calc(100%-6px)] z-10 flex justify-center"
+              className={`pointer-events-none absolute inset-x-0 bottom-[calc(100%-6px)] z-10 flex justify-center origin-bottom transition-all duration-300 ease-out ${classiMela}`}
               aria-hidden
             >
               <Image
@@ -508,9 +554,8 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
             style={{ backgroundColor: '#D05241' }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B6452F')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#D05241')}
-            className={`group flex items-center gap-2.5 text-white shadow-xl rounded-full active:scale-95 transition-all duration-200 ${
-              open ? 'p-4' : 'pl-4 pr-5 py-3'
-            } ${!open && mounted ? 'fab-pulse' : ''}`}
+            className={`group flex items-center text-white shadow-xl rounded-full active:scale-95 transition-[padding,background-color,transform] duration-300 ease-out ${classiPadding} ${!open && mounted ? 'fab-pulse' : ''
+              }`}
             aria-expanded={open}
             aria-label={
               open
@@ -532,14 +577,16 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
                 }`}
               />
             </span>
-            {!open && (
-              <span className="flex flex-col items-start text-left leading-tight">
-                <span className="font-bold text-[15px] whitespace-nowrap">Chiedi a MelaBot</span>
-                <span className="text-[11px] font-medium text-white/80 whitespace-nowrap">
-                  Orari, visite, prenotazioni
-                </span>
+            {/* Sempre montata: si ritira con max-width così la pill si stringe
+                sull'icona invece di sparire di colpo. */}
+            <span
+              className={`flex flex-col items-start text-left leading-tight overflow-hidden transition-all duration-300 ease-out ${classiEtichetta}`}
+            >
+              <span className="font-bold text-[15px] whitespace-nowrap">Chiedi a MelaBot</span>
+              <span className="text-[11px] font-medium text-white/80 whitespace-nowrap">
+                Orari, visite, prenotazioni
               </span>
-            )}
+            </span>
           </button>
         </div>
       </div>
