@@ -15,6 +15,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from './client'
+import { sortMedici } from '@/lib/medici'
 import type {
   Specialistica,
   Medico,
@@ -53,7 +54,7 @@ export async function getMedici(filters?: QueryConstraint[]): Promise<Medico[]> 
   const constraints = [where('pubblicato', '==', true), ...(filters ?? [])]
   const q = query(collection(db, 'medici'), ...constraints)
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Medico))
+  return sortMedici(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Medico)))
 }
 
 export async function getMedicoBySlug(slug: string): Promise<Medico | null> {
@@ -71,7 +72,7 @@ export async function getMediciBySpecialistica(specialisticaId: string): Promise
     where('pubblicato', '==', true)
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Medico))
+  return sortMedici(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Medico)))
 }
 
 // ── Patologie ─────────────────────────────────────────────────

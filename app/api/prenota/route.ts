@@ -12,6 +12,14 @@ const PrenotaSchema = z.object({
   specialistica: z.string().optional(),
   sottoSpecialistica: z.string().optional(),
   medico: z.string().optional(),
+  // Prova del consenso (art. 7 §1 GDPR): senza quello obbligatorio la richiesta
+  // non viene accettata nemmeno se il client aggira la checkbox.
+  consensoDati: z
+    .boolean({
+      required_error: 'Devi acconsentire al trattamento dei dati per inviare la richiesta',
+    })
+    .refine((v) => v, 'Devi acconsentire al trattamento dei dati per inviare la richiesta'),
+  consensoMarketing: z.boolean().optional().default(false),
 })
 
 export async function POST(request: NextRequest) {
@@ -27,9 +35,10 @@ export async function POST(request: NextRequest) {
       fonte: 'form',
     })
 
-    // Send email notification
+    // Send email notification (i consensi restano su Firestore, non servono in mail)
     try {
-      await sendLeadEmail(data)
+      const { consensoDati: _cd, consensoMarketing: _cm, ...emailData } = data
+      await sendLeadEmail(emailData)
     } catch (emailError) {
       console.error('Email sending failed:', emailError)
       // Don't fail the request if email fails
@@ -38,8 +47,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: 'Richiesta inviata con successo' })
   } catch (error) {
     if (error instanceof z.ZodError) {
+      // `message` è il campo che i form mostrano all'utente: senza, un rifiuto
+      // di validazione (es. consenso mancante) apparirebbe come errore generico.
       return NextResponse.json(
-        { success: false, errors: error.errors },
+        {
+          success: false,
+          message: error.errors[0]?.message || 'Controlla i dati inseriti e riprova.',
+          errors: error.errors,
+        },
         { status: 400 }
       )
     }

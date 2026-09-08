@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Loader2, Send, CheckCircle } from 'lucide-react'
 import { usePrenotaForm } from '@/hooks/usePrenotaForm'
+import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
 
 interface FormData {
   nome: string
@@ -11,6 +12,8 @@ interface FormData {
   email: string
   specialistica: string
   messaggio: string
+  consensoDati: boolean
+  consensoMarketing: boolean
 }
 
 export function HomeContactForm({ specialistiche, embedded = false }: { specialistiche: { id: string; nome: string }[]; embedded?: boolean }) {
@@ -22,6 +25,8 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
     email: '',
     specialistica: '',
     messaggio: '',
+    consensoDati: false,
+    consensoMarketing: false,
   })
 
   function update(key: keyof FormData, value: string) {
@@ -37,9 +42,20 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
       email: form.email,
       specialistica: form.specialistica,
       messaggio: form.messaggio,
+      consensoDati: form.consensoDati,
+      consensoMarketing: form.consensoMarketing,
     })
     if (ok) {
-      setForm({ nome: '', cognome: '', telefono: '', email: '', specialistica: '', messaggio: '' })
+      setForm({
+        nome: '',
+        cognome: '',
+        telefono: '',
+        email: '',
+        specialistica: '',
+        messaggio: '',
+        consensoDati: false,
+        consensoMarketing: false,
+      })
     }
   }
 
@@ -142,10 +158,15 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
         />
       </div>
 
+      <ConsensiPrivacy
+        value={{ consensoDati: form.consensoDati, consensoMarketing: form.consensoMarketing }}
+        onChange={(c) => setForm((f) => ({ ...f, ...c }))}
+      />
+
       <button
         type="submit"
-        disabled={loading}
-        className="btn-primary w-full flex items-center justify-center gap-2"
+        disabled={loading || !form.consensoDati}
+        className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {loading ? (
           <><Loader2 size={18} className="animate-spin" /> Invio in corso...</>

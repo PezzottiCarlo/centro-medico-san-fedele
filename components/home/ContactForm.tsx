@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { MelaButton } from '@/components/ui/MelaButton'
+import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
 import { usePrenotaForm } from '@/hooks/usePrenotaForm'
 
 export function ContactForm() {
@@ -13,6 +14,8 @@ export function ContactForm() {
     telefono: '',
     email: '',
     messaggio: '',
+    consensoDati: false,
+    consensoMarketing: false,
   })
 
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
@@ -93,6 +96,11 @@ export function ContactForm() {
         />
       </div>
 
+      <ConsensiPrivacy
+        value={{ consensoDati: form.consensoDati, consensoMarketing: form.consensoMarketing }}
+        onChange={(c) => setForm((f) => ({ ...f, ...c }))}
+      />
+
       {error && (
         <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded p-3">{error}</p>
       )}
@@ -104,7 +112,7 @@ export function ContactForm() {
         melaPosition="left"
         fullWidth
         showArrow={false}
-        disabled={loading}
+        disabled={loading || !form.consensoDati}
         className="mt-2"
       >
         {loading ? (
@@ -115,9 +123,7 @@ export function ContactForm() {
           <>Inviamelo, ti rispondo!</>
         )}
       </MelaButton>
-      <p className="text-xs text-gray-400">
-        * Campi obbligatori. I tuoi dati saranno trattati secondo la nostra Privacy Policy.
-      </p>
+      <p className="text-xs text-gray-400">* Campi obbligatori.</p>
     </form>
   )
 }

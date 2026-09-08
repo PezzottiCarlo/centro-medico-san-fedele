@@ -1,7 +1,16 @@
 import { initializeApp, getApps, App } from 'firebase-admin/app'
-import { getFirestore, Firestore } from 'firebase-admin/firestore'
+import {
+  getFirestore,
+  Firestore,
+  type CollectionReference,
+  type DocumentData,
+  type Query,
+  type QueryDocumentSnapshot,
+  type QuerySnapshot,
+} from 'firebase-admin/firestore'
 import { getAuth, Auth } from 'firebase-admin/auth'
 import { cert } from 'firebase-admin/app'
+import { compareMedicoNames } from '@/lib/medici'
 
 let adminApp: App | null = null
 
@@ -56,12 +65,85 @@ export function getAdminAuth(): Auth {
   return getAuth(getAdminApp())
 }
 
+// ── Ordinamento alfabetico dei medici ─────────────────────────
+//
+// Le pagine leggono la collection `medici` direttamente da `adminDb`, ognuna con
+// la propria query. Invece di aggiungere un ordinamento in ciascuna, lo si applica
+// una volta sola qui: `adminDb.collection('medici')` restituisce una Query avvolta
+// che riordina lo snapshot al momento della `.get()`. Serve un ordinamento in
+// memoria perché il cognome non è un campo a sé (vedi lib/medici.ts).
+
+const MEDICI_COLLECTION = 'medici'
+
+function isQuery(value: unknown): value is Query<DocumentData> {
+  return !!value && typeof (value as Query<DocumentData>).where === 'function'
+}
+
+/** Snapshot con i `docs` riordinati per cognome, per il resto identico. */
+function sortedMediciSnapshot(snap: QuerySnapshot<DocumentData>): QuerySnapshot<DocumentData> {
+  const docs = [...snap.docs].sort((a, b) =>
+    compareMedicoNames(a.get('nome') as string | undefined, b.get('nome') as string | undefined)
+  )
+  return new Proxy(snap, {
+    get(target, prop) {
+      if (prop === 'docs') return docs
+      if (prop === 'forEach') {
+        return (cb: (doc: QueryDocumentSnapshot<DocumentData>) => void, thisArg?: unknown) =>
+          docs.forEach((d) => cb.call(thisArg, d))
+      }
+      const value = (target as unknown as Record<string | symbol, unknown>)[prop]
+      return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value
+    },
+  })
+}
+
+/**
+ * Avvolge una query su `medici` propagando il wrapping ai metodi che restituiscono
+ * una nuova Query (`where`, `limit`, ...), così l'ordinamento sopravvive alle
+ * catene. Un `orderBy` esplicito del chiamante ha la precedenza e disattiva
+ * l'ordinamento alfabetico di default.
+ */
+function withMediciOrder<T extends Query<DocumentData>>(q: T, explicitOrder = false): T {
+  return new Proxy(q, {
+    get(target, prop) {
+      const value = (target as unknown as Record<string | symbol, unknown>)[prop]
+      if (typeof value !== 'function') return value
+      const fn = (value as (...a: unknown[]) => unknown).bind(target)
+
+      if (prop === 'get') {
+        return async (...args: unknown[]) => {
+          const snap = (await fn(...args)) as QuerySnapshot<DocumentData>
+          return explicitOrder ? snap : sortedMediciSnapshot(snap)
+        }
+      }
+
+      return (...args: unknown[]) => {
+        const result = fn(...args)
+        // `doc()`, `add()`, `count()`... non sono Query: passano inalterati.
+        return isQuery(result)
+          ? withMediciOrder(result, explicitOrder || prop === 'orderBy')
+          : result
+      }
+    },
+  }) as T
+}
+
 // Lazy proxies for convenience — throw only when actually called
 export const adminDb = new Proxy({} as Firestore, {
   get(_target, prop) {
     const db = getAdminDb()
     const value = (db as unknown as Record<string | symbol, unknown>)[prop]
-    return typeof value === 'function' ? value.bind(db) : value
+    if (typeof value !== 'function') return value
+    const fn = (value as (...a: unknown[]) => unknown).bind(db)
+
+    if (prop === 'collection') {
+      return (path: string, ...rest: unknown[]) => {
+        const ref = fn(path, ...rest) as CollectionReference<DocumentData>
+        return path === MEDICI_COLLECTION ? withMediciOrder(ref) : ref
+      }
+    }
+
+    return fn
   },
 })
 

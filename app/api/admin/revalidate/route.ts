@@ -18,6 +18,8 @@ const STATIC_PATHS = new Set<string>([
   '/sport',
   '/dsa',
   '/lavora-con-noi',
+  '/privacy',
+  '/cookie-policy',
 ])
 
 // Prefissi di route dinamiche consentiti: es. /ambulatori/<slug>, /medici/<slug>

@@ -28,6 +28,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: '/logo-san-fedele.ico',
+    shortcut: '/logo-san-fedele.ico',
+  },
 }
 
 export default async function RootLayout({

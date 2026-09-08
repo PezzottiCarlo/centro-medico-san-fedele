@@ -16,6 +16,8 @@ interface Message {
 
 const GREETING_TEXT = 'Ciao! Sono **MelaBot**, l\'assistente del Centro Medico San Fedele. Come posso aiutarti? 😊'
 
+const TEASER_KEY = 'sanfedele:chat-teaser-visto'
+
 const ERROR_FALLBACK = `Mi dispiace, in questo momento non riesco a rispondere. Puoi chiamarci al ${CENTER_INFO.telefono} (${CENTER_INFO.orari}). 📞`
 
 // Componenti custom per ReactMarkdown nelle bolle del bot — link in rosso brand,
@@ -50,8 +52,19 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
   const [mounted, setMounted] = useState(false)
   const [hasOpened, setHasOpened] = useState(false)
   const [chatVisible, setChatVisible] = useState(false)
+  const [teaser, setTeaser] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Nasconde il fumetto di invito e lo ricorda per la sessione corrente
+  const dismissTeaser = useCallback(() => {
+    setTeaser(false)
+    try {
+      sessionStorage.setItem(TEASER_KEY, '1')
+    } catch {
+      /* sessionStorage non disponibile: pazienza, riapparirà */
+    }
+  }, [])
 
   // Entrance animation for FAB
   useEffect(() => {
@@ -59,16 +72,33 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
     return () => clearTimeout(t)
   }, [])
 
+  // Fumetto di invito: spiega a cosa serve il bottone. Una volta per sessione,
+  // si mostra dopo qualche secondo e si ritira da solo.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(TEASER_KEY) === '1') return
+    } catch {
+      /* sessionStorage non disponibile: mostriamo comunque il fumetto */
+    }
+    const show = setTimeout(() => setTeaser(true), 3500)
+    const hide = setTimeout(() => setTeaser(false), 16000)
+    return () => {
+      clearTimeout(show)
+      clearTimeout(hide)
+    }
+  }, [])
+
   // Allow other components (e.g. DoctorScroller mela card) to open the chat
   useEffect(() => {
     function openHandler() {
       setOpen(true)
+      dismissTeaser()
       // Autofocus input at bottom once the window is visible
       setTimeout(() => inputRef.current?.focus(), 450)
     }
     window.addEventListener('sanfedele:open-chat', openHandler)
     return () => window.removeEventListener('sanfedele:open-chat', openHandler)
-  }, [])
+  }, [dismissTeaser])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -245,21 +275,26 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
         .typing-dot {
           animation: typingDot 1.4s ease-in-out infinite;
         }
+        @keyframes teaserIn {
+          from { opacity: 0; transform: translateY(10px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .teaser-in {
+          animation: teaserIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          transform-origin: bottom right;
+        }
       `}</style>
 
-      <div className="fixed bottom-20 md:bottom-15 right-5 z-50 flex flex-col items-end">
-        {/* Mela cucù — appesa SOPRA la chat window quando è aperta. Centrata e leggermente staccata. */}
+      <div className="fixed bottom-20 md:bottom-16 right-4 sm:right-5 z-50 flex flex-col items-end">
+        {/* Mela cucù — appesa SOPRA la chat window quando è aperta. In flusso e larga
+            quanto la finestra, così resta centrata a qualsiasi viewport; il margine
+            negativo la fa "aggrappare" al bordo superiore della finestra. */}
         {chatVisible && (
           <div
-            className={`pointer-events-none absolute ${
+            className={`pointer-events-none relative z-[51] -mb-2.5 flex w-[360px] max-w-[calc(100vw-2.5rem)] justify-center ${
               open ? 'chat-window-open' : 'chat-window-close'
             }`}
-            style={{
-              bottom: 'calc(480px + 0.75rem + 50px)',
-              right: 'calc((360px - 128px) / 2)',
-              zIndex: 51,
-              transformOrigin: 'bottom center',
-            }}
+            style={{ transformOrigin: 'bottom center' }}
             aria-hidden
           >
             <Image
@@ -268,27 +303,6 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
               width={1114}
               height={720}
               className="w-32 h-auto drop-shadow-md"
-              priority={false}
-            />
-          </div>
-        )}
-
-        {/* Mela cucù mini — appesa SOPRA il FAB quando la chat è chiusa */}
-        {!chatVisible && mounted && (
-          <div
-            className="pointer-events-none absolute right-8 transition-opacity duration-300 fab-enter"
-            style={{
-              bottom: 'calc(100% - 5px)',
-              zIndex: 51,
-            }}
-            aria-hidden
-          >
-            <Image
-              src="/mela-cucu.png"
-              alt=""
-              width={1114}
-              height={720}
-              className="w-16 h-auto drop-shadow-md"
               priority={false}
             />
           </div>
@@ -434,35 +448,96 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
           </div>
         )}
 
-        {/* FAB toggle — larger + label pill */}
-        <button
-          onClick={() => setOpen((v) => !v)}
-          style={{ backgroundColor: '#D05241' }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B6452F')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#D05241')}
-          className={`group flex items-center gap-3 text-white shadow-xl pl-5 pr-6 py-4 rounded-full active:scale-95 transition-all duration-200 relative ${
-            mounted ? 'fab-enter' : 'scale-0'
-          } ${!open && mounted ? 'fab-pulse' : ''}`}
-          aria-label={open ? 'Chiudi chat' : 'Apri chat con MelaBot'}
-        >
-          <span className="relative w-7 h-7 flex items-center justify-center shrink-0">
-            <MessageCircle
-              size={28}
-              className={`absolute transition-all duration-300 ${
-                open ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
-              }`}
-            />
-            <X
-              size={28}
-              className={`absolute transition-all duration-300 ${
-                open ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'
-              }`}
-            />
-          </span>
-          <span className={`font-bold text-base whitespace-nowrap ${open ? 'hidden' : 'hidden sm:inline'}`}>
-            Chiedimi
-          </span>
-        </button>
+        {/* Fumetto di invito — dice esplicitamente a cosa serve il bottone.
+            Il margine inferiore lascia spazio alla mela appesa sopra il FAB. */}
+        {!chatVisible && mounted && teaser && (
+          <div className="relative z-[52] mb-12 sm:mb-14 max-w-[15rem] teaser-in">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(true)
+                dismissTeaser()
+              }}
+              className="block w-full text-left bg-white rounded-2xl rounded-br-md shadow-2xl border border-gray-100 pl-4 pr-9 py-3 hover:bg-gray-50 transition-colors"
+            >
+              <span className="block text-sm font-bold text-text-main">Hai una domanda?</span>
+              <span className="block text-xs text-text-main/60 mt-0.5 leading-snug">
+                Chiedi a MelaBot: orari, visite, prenotazioni e convenzioni.
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={dismissTeaser}
+              className="absolute top-1.5 right-1.5 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Chiudi il suggerimento"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
+
+        {/* FAB toggle — pill con etichetta esplicita (anche su mobile).
+            Il wrapper relativo àncora la mela cucù: `inset-x-0 + justify-center`
+            la centra sul bottone qualunque sia la sua larghezza. */}
+        <div className={`relative ${mounted ? 'fab-enter' : 'scale-0'}`}>
+          {!chatVisible && (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-[calc(100%-6px)] z-10 flex justify-center"
+              aria-hidden
+            >
+              <Image
+                src="/mela-cucu.png"
+                alt=""
+                width={1114}
+                height={720}
+                className="w-16 sm:w-20 h-auto drop-shadow-md"
+                priority={false}
+              />
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              setOpen((v) => !v)
+              dismissTeaser()
+            }}
+            style={{ backgroundColor: '#D05241' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B6452F')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#D05241')}
+            className={`group flex items-center gap-2.5 text-white shadow-xl rounded-full active:scale-95 transition-all duration-200 ${
+              open ? 'p-4' : 'pl-4 pr-5 py-3'
+            } ${!open && mounted ? 'fab-pulse' : ''}`}
+            aria-expanded={open}
+            aria-label={
+              open
+                ? 'Chiudi la chat'
+                : 'Apri la chat con MelaBot, l’assistente virtuale del Centro Medico San Fedele'
+            }
+          >
+            <span className="relative w-6 h-6 flex items-center justify-center shrink-0">
+              <MessageCircle
+                size={24}
+                className={`absolute transition-all duration-300 ${
+                  open ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
+                }`}
+              />
+              <X
+                size={24}
+                className={`absolute transition-all duration-300 ${
+                  open ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'
+                }`}
+              />
+            </span>
+            {!open && (
+              <span className="flex flex-col items-start text-left leading-tight">
+                <span className="font-bold text-[15px] whitespace-nowrap">Chiedi a MelaBot</span>
+                <span className="text-[11px] font-medium text-white/80 whitespace-nowrap">
+                  Orari, visite, prenotazioni
+                </span>
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     </>
   )

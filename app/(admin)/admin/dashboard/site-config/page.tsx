@@ -100,6 +100,12 @@ export default function SiteConfigPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ slug: 'contatti' }),
           }),
+          // I dati del titolare compaiono nelle pagine legali
+          fetch('/api/admin/revalidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paths: ['/privacy', '/cookie-policy'] }),
+          }),
         ])
       } catch {}
       setSuccess('Configurazione salvata. Le modifiche compaiono entro pochi secondi.')
@@ -271,6 +277,109 @@ export default function SiteConfigPage() {
               placeholder="https://maps.google.com/?q=..."
               className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
             />
+          </div>
+
+          <div className="border-t border-slate-700 pt-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Dati del titolare del trattamento</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Compaiono nella{' '}
+                <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>{' '}
+                e nella Cookie Policy. Finché restano vuoti, le pagine legali mostrano un avviso
+                al posto del dato mancante.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Ragione sociale
+                </label>
+                <input
+                  type="text"
+                  value={form.ragioneSociale || ''}
+                  onChange={(e) => update('ragioneSociale', e.target.value)}
+                  placeholder="Centro Medico San Fedele S.r.l."
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Partita IVA</label>
+                <input
+                  type="text"
+                  value={form.partitaIva || ''}
+                  onChange={(e) => update('partitaIva', e.target.value)}
+                  placeholder="01234567890"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Codice fiscale
+                </label>
+                <input
+                  type="text"
+                  value={form.codiceFiscale || ''}
+                  onChange={(e) => update('codiceFiscale', e.target.value)}
+                  placeholder="Se diverso dalla partita IVA"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  PEC <span className="text-slate-500 font-normal">(facoltativa)</span>
+                </label>
+                <input
+                  type="email"
+                  value={form.pec || ''}
+                  onChange={(e) => update('pec', e.target.value)}
+                  placeholder="centromedico@pec.it"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-700 pt-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-white">
+                Responsabile della Protezione dei Dati (DPO)
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Lascia vuoto se non è stato nominato: la sezione sparisce dalla Privacy Policy.
+                Per chi tratta dati sanitari su larga scala la nomina è spesso obbligatoria
+                (art. 37 GDPR).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Nome del DPO
+                </label>
+                <input
+                  type="text"
+                  value={form.dpoNome || ''}
+                  onChange={(e) => update('dpoNome', e.target.value)}
+                  placeholder="Nome e cognome o società"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Email del DPO
+                </label>
+                <input
+                  type="email"
+                  value={form.dpoEmail || ''}
+                  onChange={(e) => update('dpoEmail', e.target.value)}
+                  placeholder="dpo@esempio.it"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="border-t border-slate-700 pt-5">

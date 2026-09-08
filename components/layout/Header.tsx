@@ -14,10 +14,10 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Storia', href: '/storia' },
   { label: 'Servizi', href: '/ambulatori' },
   { label: 'Medici', href: '/medici' },
   { label: 'Convenzioni', href: '/convenzioni' },
+  { label: 'Storia', href: '/storia' },
   { label: 'News', href: '/news' },
   { label: 'Contatti', href: '/contatti' },
 ]

@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
+import { sortMedici } from '@/lib/medici'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2, Plus } from 'lucide-react'
 import type { SottoSpecialistica } from '@/types'
@@ -66,11 +67,13 @@ export default function EditSpecialisticaPage() {
           immagine: data.immagine || '',
         })
         setAllMedici(
-          mediciSnap.docs.map((d) => ({
-            id: d.id,
-            nome: d.data().nome as string,
-            sottoSpecialisticheIds: (d.data().sottoSpecialisticheIds || []) as string[],
-          }))
+          sortMedici(
+            mediciSnap.docs.map((d) => ({
+              id: d.id,
+              nome: d.data().nome as string,
+              sottoSpecialisticheIds: (d.data().sottoSpecialisticheIds || []) as string[],
+            }))
+          )
         )
       } catch {
         setError('Errore nel caricamento.')

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { addDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { sortMedici } from '@/lib/medici'
 import { slugify } from '@/lib/utils'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
@@ -36,7 +37,9 @@ export default function NuovaPatologiaPage() {
           getDocs(collection(db, 'medici')),
         ])
         setSpecialistiche(specSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
-        setAllMedici(mediciSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
+        setAllMedici(
+          sortMedici(mediciSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
+        )
       } catch {
         setError('Errore nel caricamento delle specialistiche.')
       }

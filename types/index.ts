@@ -107,6 +107,9 @@ export interface Lead {
   evaso?: boolean
   evasoIl?: string // ISO string
   fonte: 'form'
+  // Prova del consenso raccolto al momento dell'invio (art. 7 §1 GDPR)
+  consensoDati?: boolean // obbligatorio: gestione della richiesta, anche dati sanitari
+  consensoMarketing?: boolean // facoltativo: comunicazioni e iniziative del centro
 }
 
 export interface Convenzione {
@@ -169,6 +172,14 @@ export interface SiteConfig {
   orari: SiteConfigOrario[]
   mapsUrl?: string
   chatbotDomande?: string[] // domande pre-impostate mostrate all'apertura del chatbot
+  // ── Dati del titolare del trattamento, usati dalle pagine legali ──
+  ragioneSociale?: string
+  partitaIva?: string
+  codiceFiscale?: string
+  pec?: string
+  // ── Responsabile della Protezione dei Dati (DPO/RPD), se nominato ──
+  dpoNome?: string
+  dpoEmail?: string
   aggiornatoIl?: string
 }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { sortMedici } from '@/lib/medici'
 import type { SearchResult } from '@/types'
 
 function debounce<T extends (...args: Parameters<T>) => void>(fn: T, delay: number) {
@@ -36,15 +37,17 @@ export function useSearch() {
             limit(5)
           )
         )
-        const medici: SearchResult[] = mediciSnap.docs
-          .filter((d) => d.data().nome?.toLowerCase().includes(qLower))
-          .map((d) => ({
-            id: d.id,
-            type: 'medico',
-            nome: d.data().nome,
-            slug: d.data().slug,
-            descrizione: d.data().bio?.substring(0, 80) + '...',
-          }))
+        const medici: SearchResult[] = sortMedici(
+          mediciSnap.docs
+            .filter((d) => d.data().nome?.toLowerCase().includes(qLower))
+            .map((d) => ({
+              id: d.id,
+              type: 'medico' as const,
+              nome: d.data().nome,
+              slug: d.data().slug,
+              descrizione: d.data().bio?.substring(0, 80) + '...',
+            }))
+        )
 
         // Search specialistiche
         const specSnap = await getDocs(

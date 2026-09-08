@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -96,6 +97,7 @@ export function PrenotaForm({
   const [telefono, setTelefono] = useState('')
   const [email, setEmail] = useState('')
   const [messaggio, setMessaggio] = useState('')
+  const [consensi, setConsensi] = useState({ consensoDati: false, consensoMarketing: false })
 
   // Tiene traccia se il medico step è stato saltato (per il back da dati)
   const [skippedMedico, setSkippedMedico] = useState<boolean>(
@@ -234,6 +236,7 @@ export function PrenotaForm({
           telefono,
           email,
           messaggio,
+          ...consensi,
         }),
       })
       const data = await res.json()
@@ -430,6 +433,10 @@ export function PrenotaForm({
             </div>
           </div>
 
+          <div className="mt-5">
+            <ConsensiPrivacy value={consensi} onChange={setConsensi} />
+          </div>
+
           {error && (
             <p className="text-red-600 text-sm mt-3 bg-red-50 border border-red-200 rounded p-3">
               {error}
@@ -442,7 +449,9 @@ export function PrenotaForm({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading || !nome || !cognome || !telefono || !email}
+              disabled={
+                loading || !nome || !cognome || !telefono || !email || !consensi.consensoDati
+              }
               className="btn-primary flex items-center gap-2 disabled:opacity-50"
             >
               {loading ? (
@@ -452,9 +461,7 @@ export function PrenotaForm({
               )}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-3">
-            * Campi obbligatori. I tuoi dati saranno trattati secondo la nostra Privacy Policy.
-          </p>
+          <p className="text-xs text-gray-400 mt-3">* Campi obbligatori.</p>
         </div>
       )}
     </div>

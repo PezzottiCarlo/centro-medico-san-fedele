@@ -12,6 +12,8 @@ export interface PrenotaPayload {
   sottoSpecialistica?: string
   medico?: string
   fonte?: 'form'
+  consensoDati: boolean
+  consensoMarketing?: boolean
 }
 
 interface UsePrenotaFormReturn {
@@ -36,12 +38,16 @@ export function usePrenotaForm(): UsePrenotaFormReturn {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, fonte: payload.fonte ?? 'form' }),
       })
-      const data = (await res.json()) as { success?: boolean; error?: string }
+      const data = (await res.json()) as {
+        success?: boolean
+        error?: string
+        message?: string
+      }
       if (data.success) {
         setSuccess(true)
         return true
       }
-      setError(data.error || "Errore durante l'invio. Riprova.")
+      setError(data.message || data.error || "Errore durante l'invio. Riprova.")
       return false
     } catch {
       setError('Errore di connessione. Riprova.')

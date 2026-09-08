@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { sortMedici } from '@/lib/medici'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
@@ -55,7 +56,9 @@ export default function EditPatologiaPage() {
           immagine: data.immagine || '',
         })
         setSpecialistiche(specSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
-        setAllMedici(mediciSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
+        setAllMedici(
+          sortMedici(mediciSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
+        )
       } catch {
         setError('Errore nel caricamento.')
       } finally {
