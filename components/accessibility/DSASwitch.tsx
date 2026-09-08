@@ -4,7 +4,17 @@ import { useAccessibility } from '@/hooks/useAccessibility'
 import { Eye, Type } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export function DSASwitch({ compact = false }: { compact?: boolean }) {
+/**
+ * @param dark  Palette per i fondali scuri (menu mobile delle pagine dark):
+ *              senza, i titoli in `text-text-main` sparirebbero sullo slate.
+ */
+export function DSASwitch({
+  compact = false,
+  dark = false,
+}: {
+  compact?: boolean
+  dark?: boolean
+}) {
   const { dsaMode, highContrast, toggleDsaMode, toggleHighContrast } = useAccessibility()
 
   if (compact) {
@@ -37,13 +47,19 @@ export function DSASwitch({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="bg-secondary/10 rounded-lg p-6">
-      <h3 className="font-semibold text-text-main mb-4">Accessibilità</h3>
+    <div className={cn('rounded-lg p-6', dark ? 'bg-white/5' : 'bg-secondary/10')}>
+      <h3 className={cn('font-semibold mb-4', dark ? 'text-white' : 'text-text-main')}>
+        Accessibilità
+      </h3>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-text-main">Modalità DSA</p>
-            <p className="text-sm text-gray-500">Font Lexend, spaziatura aumentata</p>
+            <p className={cn('font-medium', dark ? 'text-white' : 'text-text-main')}>
+              Modalità DSA
+            </p>
+            <p className={cn('text-sm', dark ? 'text-white/60' : 'text-gray-500')}>
+              Font Lexend, spaziatura aumentata
+            </p>
           </div>
           <button
             role="switch"
@@ -51,7 +67,7 @@ export function DSASwitch({ compact = false }: { compact?: boolean }) {
             onClick={toggleDsaMode}
             className={cn(
               'relative w-12 h-6 rounded-full overflow-hidden transition-colors focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2',
-              dsaMode ? 'bg-secondary' : 'bg-gray-300'
+              dsaMode ? 'bg-secondary' : dark ? 'bg-white/20' : 'bg-gray-300'
             )}
           >
             <span
@@ -65,8 +81,12 @@ export function DSASwitch({ compact = false }: { compact?: boolean }) {
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-text-main">Alto contrasto</p>
-            <p className="text-sm text-gray-500">Maggior leggibilità del testo</p>
+            <p className={cn('font-medium', dark ? 'text-white' : 'text-text-main')}>
+              Alto contrasto
+            </p>
+            <p className={cn('text-sm', dark ? 'text-white/60' : 'text-gray-500')}>
+              Maggior leggibilità del testo
+            </p>
           </div>
           <button
             role="switch"
@@ -74,7 +94,7 @@ export function DSASwitch({ compact = false }: { compact?: boolean }) {
             onClick={toggleHighContrast}
             className={cn(
               'relative w-12 h-6 rounded-full overflow-hidden transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-              highContrast ? 'bg-primary' : 'bg-gray-300'
+              highContrast ? 'bg-primary' : dark ? 'bg-white/20' : 'bg-gray-300'
             )}
           >
             <span

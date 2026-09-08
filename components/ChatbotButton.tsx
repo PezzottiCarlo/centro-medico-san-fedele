@@ -285,7 +285,11 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
         }
       `}</style>
 
-      <div className="fixed bottom-20 md:bottom-16 right-4 sm:right-5 z-50 flex flex-col items-end">
+      {/* Su mobile il FAB sta a filo del bordo inferiore dell'area sicura: senza
+          `viewport-fit=cover` l'inset vale 0 e il viewport già esclude la zona
+          dell'home indicator, ma tenerlo regge anche se in futuro si passa a
+          cover. Su desktop resta staccato dal fondo. */}
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:bottom-16 right-4 sm:right-5 z-50 flex flex-col items-end">
         {/* Mela cucù — appesa SOPRA la chat window quando è aperta. In flusso e larga
             quanto la finestra, così resta centrata a qualsiasi viewport; il margine
             negativo la fa "aggrappare" al bordo superiore della finestra. */}
