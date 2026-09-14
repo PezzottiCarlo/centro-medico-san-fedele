@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Phone, Calendar, ArrowRight } from 'lucide-react'
+import { Phone, Calendar, ArrowRight, ChevronDown, Pointer } from 'lucide-react'
 import type { HeroConfig, HeroCTA } from '@/types'
 
 function WhatsAppIcon({ size = 18, className = '' }: { size?: number; className?: string }) {
@@ -141,6 +141,19 @@ interface HomeHeroZoomProps {
   config: HeroConfig
 }
 
+/** Dopo quanti millisecondi di inattività compare l'invito a scorrere. */
+const ATTESA_SUGGERIMENTO_MS = 3000
+
+/** Oltre questo avanzamento titolo e bottoni sono già in vista: l'invito non serve. */
+const RIVELAZIONE_QUASI_COMPLETA = 0.9
+
+/**
+ * Evento con cui la hero avvisa il chatbot che l'invito a scorrere è visibile:
+ * nel frattempo il chatbot si stringe e rimanda il suo fumetto, così in basso
+ * c'è un solo invito alla volta.
+ */
+export const EVENTO_SUGGERIMENTO_SCROLL = 'sanfedele:suggerimento-scroll'
+
 /**
  * Hero con rivelazione allo scroll, uguale su mobile e desktop: al primo
  * accesso si vede solo la foto con la mascotte, poi scorrendo il velo si scurisce
@@ -155,6 +168,8 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
   const veloRef = useRef<HTMLDivElement>(null)
   const titoloRef = useRef<HTMLHeadingElement>(null)
   const bottoniRef = useRef<HTMLDivElement>(null)
+  const avanzamentoRef = useRef(0)
+  const [suggerimento, setSuggerimento] = useState(false)
 
   useEffect(() => {
     const limita = (v: number) => Math.max(0, Math.min(1, v))
@@ -173,6 +188,7 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
       // l'animazione.
       const scorrimento = Math.max(0, -traccia.getBoundingClientRect().top)
       const avanzamento = Math.min(1, scorrimento / pannello.offsetHeight)
+      avanzamentoRef.current = avanzamento
       const titoloP = limita((avanzamento - 0.05) / 0.5)
       const bottoniP = limita((avanzamento - 0.45) / 0.5)
 
@@ -201,6 +217,55 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
       if (raf) cancelAnimationFrame(raf)
       window.removeEventListener('scroll', suScroll)
       window.removeEventListener('resize', suScroll)
+    }
+  }, [])
+
+  // Invito a scorrere: compare dopo qualche secondo senza scroll, tocchi o tasti,
+  // e solo finché titolo e bottoni non sono già comparsi. Il movimento del mouse
+  // non conta: chi muove il cursore senza scorrere ha comunque bisogno dell'invito.
+  useEffect(() => {
+    let timer: number | undefined
+    let visibile = false
+    let chatAperta = false
+
+    const imposta = (v: boolean) => {
+      if (v === visibile) return
+      visibile = v
+      setSuggerimento(v)
+      window.dispatchEvent(new CustomEvent(EVENTO_SUGGERIMENTO_SCROLL, { detail: { visibile: v } }))
+    }
+    const pianifica = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        if (!chatAperta && avanzamentoRef.current < RIVELAZIONE_QUASI_COMPLETA) imposta(true)
+      }, ATTESA_SUGGERIMENTO_MS)
+    }
+    const suAttivita = () => {
+      imposta(false)
+      pianifica()
+    }
+    const suChat = (e: Event) => {
+      chatAperta = !!(e as CustomEvent<{ aperta: boolean }>).detail?.aperta
+      if (chatAperta) imposta(false)
+      else pianifica()
+    }
+
+    pianifica()
+    const passivo: AddEventListenerOptions = { passive: true }
+    window.addEventListener('scroll', suAttivita, passivo)
+    window.addEventListener('wheel', suAttivita, passivo)
+    window.addEventListener('touchstart', suAttivita, passivo)
+    window.addEventListener('keydown', suAttivita)
+    window.addEventListener('sanfedele:chat', suChat)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('scroll', suAttivita)
+      window.removeEventListener('wheel', suAttivita)
+      window.removeEventListener('touchstart', suAttivita)
+      window.removeEventListener('keydown', suAttivita)
+      window.removeEventListener('sanfedele:chat', suChat)
+      // Uscendo dalla home il chatbot non deve restare stretto
+      imposta(false)
     }
   }, [])
 
@@ -247,6 +312,42 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
                 {ctaSecondaria && <CtaLink cta={ctaSecondaria} />}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Invito a scorrere. È fissato allo schermo e non alla hero: al primo
+            accesso il fondo della hero sta sotto la piega, di quanto è alta la
+            navbar. Il tipo di invito segue il dispositivo di puntamento, non la
+            larghezza: un tablet vede il dito, una finestra desktop stretta la
+            freccia. */}
+        <div
+          aria-hidden
+          className={`pointer-events-none fixed inset-x-0 bottom-6 md:bottom-8 z-40 flex justify-center transition-all duration-500 ${suggerimento ? 'visible opacity-100' : 'invisible opacity-0'
+            }`}
+        >
+          {/* Schermi touch: un dito che trascina verso l'alto */}
+          <div data-suggerimento="dito" className="hidden [@media(pointer:coarse)]:flex flex-col items-center gap-2">
+            <div className="relative h-16 w-10">
+              <span className="absolute left-1/2 top-0 h-full w-1 -translate-x-1/2 rounded-full bg-gradient-to-t from-white/0 via-white/50 to-white/0" />
+              <Pointer
+                size={34}
+                strokeWidth={1.75}
+                className="absolute bottom-0 left-1/2 -ml-[17px] text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] motion-safe:animate-[dito-scorri_1.8s_ease-in-out_infinite]"
+              />
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white drop-shadow">
+              Scorri
+            </span>
+          </div>
+
+          {/* Mouse e trackpad: una freccia verso il basso */}
+          <div data-suggerimento="freccia" className="flex [@media(pointer:coarse)]:hidden flex-col items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white drop-shadow">
+              Scorri
+            </span>
+            <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/70 bg-white/10 text-white shadow-lg backdrop-blur-sm motion-safe:animate-[freccia-giu_1.6s_ease-in-out_infinite]">
+              <ChevronDown size={26} strokeWidth={2.25} />
+            </span>
           </div>
         </div>
       </div>

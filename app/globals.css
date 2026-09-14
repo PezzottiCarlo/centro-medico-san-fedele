@@ -225,3 +225,16 @@ html.high-contrast .glass-card {
 .grecaptcha-badge {
   visibility: hidden;
 }
+
+/* Invito a scorrere nella hero della home (components/home/HomeHeroZoom.tsx) */
+@keyframes dito-scorri {
+  0%        { transform: translateY(0);     opacity: 0; }
+  15%       { transform: translateY(0);     opacity: 1; }
+  65%       { transform: translateY(-30px); opacity: 1; }
+  85%, 100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes freccia-giu {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
+}

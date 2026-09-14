@@ -58,6 +58,8 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
   const [chatVisible, setChatVisible] = useState(false)
   const [teaser, setTeaser] = useState(false)
   const [inFondo, setInFondo] = useState(false)
+  // Vero mentre la hero della home mostra l'invito a scorrere (vedi HomeHeroZoom)
+  const [suggerimentoScroll, setSuggerimentoScroll] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -70,6 +72,20 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
       /* sessionStorage non disponibile: pazienza, riapparirà */
     }
   }, [])
+
+  // La hero della home avvisa quando mostra l'invito a scorrere: in quel momento
+  // il bottone si stringe e il fumetto aspetta, per non sovrapporsi all'invito.
+  useEffect(() => {
+    const suSuggerimento = (e: Event) =>
+      setSuggerimentoScroll(!!(e as CustomEvent<{ visibile: boolean }>).detail?.visibile)
+    window.addEventListener('sanfedele:suggerimento-scroll', suSuggerimento)
+    return () => window.removeEventListener('sanfedele:suggerimento-scroll', suSuggerimento)
+  }, [])
+
+  // Con la chat aperta l'invito a scorrere non deve comparire
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('sanfedele:chat', { detail: { aperta: open } }))
+  }, [open])
 
   // Entrance animation for FAB
   useEffect(() => {
@@ -254,7 +270,7 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
 
   // Il ritiro a sola icona vale solo da mobile: su desktop il footer è a colonne
   // e la pill non copre nulla, quindi le varianti `md:` riportano lo stato pieno.
-  const compatto = inFondo && !open
+  const compatto = (inFondo || suggerimentoScroll) && !open
   const classiEtichetta = open
     ? 'max-w-0 opacity-0 ml-0'
     : compatto
@@ -500,7 +516,7 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
 
         {/* Fumetto di invito — dice esplicitamente a cosa serve il bottone.
             Il margine inferiore lascia spazio alla mela appesa sopra il FAB. */}
-        {!chatVisible && mounted && teaser && (
+        {!chatVisible && mounted && teaser && !suggerimentoScroll && (
           <div className="relative z-[52] mb-12 sm:mb-14 max-w-[15rem] teaser-in">
             <button
               type="button"
