@@ -86,6 +86,22 @@ env:
     availability:
       - RUNTIME
 
+  # ─── reCAPTCHA v3 (anti-spam sui moduli) ───────────────────────
+  # La site key NON è un segreto: viene compilata dentro il bundle del client e
+  # si legge nel sorgente di ogni pagina con un modulo. Tenerla come `value`
+  # evita un secret da gestire a build time senza togliere nulla alla sicurezza
+  # — a proteggere è la secret key, che resta solo lato server.
+  - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    value: 6LdH6botAAAAAMqLXK6Ea5RuKqiKF48lAAalN2v_
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: RECAPTCHA_SECRET_KEY
+    secret: RECAPTCHA_SECRET_KEY
+    availability:
+      - RUNTIME
+
   # ─── Email per nodemailer (RUNTIME only) ───────────────────────
   - variable: EMAIL_HOST
     secret: EMAIL_HOST

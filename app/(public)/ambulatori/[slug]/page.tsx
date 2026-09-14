@@ -7,6 +7,7 @@ import type { Specialistica, Medico, Patologia } from '@/types'
 import { ArrowRight } from 'lucide-react'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
 import { SottoSpecialisticheSection } from '@/components/specialistiche/SottoSpecialisticheSection'
+import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 
@@ -73,7 +74,7 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdSicuro(jsonLd) }} />
 
       {/* Hero */}
       {spec.immagine ? (
@@ -111,7 +112,7 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
             <h2 className="heading-3 mb-4">Informazioni</h2>
             <div
               className="prose-content text-gray-600 leading-relaxed max-w-3xl"
-              dangerouslySetInnerHTML={{ __html: spec.descrizione }}
+              dangerouslySetInnerHTML={{ __html: pulisciHtml(spec.descrizione) }}
             />
           </div>
 

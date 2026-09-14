@@ -5,6 +5,7 @@ import { adminDb } from '@/lib/firebase/admin'
 import { generatePageMetadata } from '@/lib/seo'
 import type { Patologia, Medico, Specialistica } from '@/types'
 import { specialisticaHref } from '@/lib/utils'
+import { pulisciHtml } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 
@@ -92,7 +93,7 @@ export default async function PatologiaPage({ params }: { params: { slug: string
             <div className="lg:col-span-2">
               <div
                 className="prose-content text-gray-600 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: patologia.descrizione }}
+                dangerouslySetInnerHTML={{ __html: pulisciHtml(patologia.descrizione) }}
               />
             </div>
 

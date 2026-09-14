@@ -218,3 +218,10 @@ html.high-contrast .glass-card {
     @apply border-t border-bg-deep my-6;
   }
 }
+
+/* Badge fluttuante di reCAPTCHA: nascosto perché la dicitura equivalente è
+   stampata sotto ai moduli (vedi components/ui/ConsensiPrivacy.tsx), come
+   consentito dai termini di Google. Coprirebbe il bottone del chatbot. */
+.grecaptcha-badge {
+  visibility: hidden;
+}

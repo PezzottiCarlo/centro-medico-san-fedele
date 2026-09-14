@@ -4,6 +4,7 @@ import { getKnowledgeBase } from '@/lib/chatbot/knowledgeBase'
 import { buildSystemPrompt } from '@/lib/chatbot/systemPrompt'
 import { generateReply } from '@/lib/chatbot/llm'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { ipChiamante, limiteSuperato } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,29 +18,18 @@ const ChatRequestSchema = z.object({
   messages: z.array(ChatMessageSchema).min(1).max(20),
 })
 
-// ─── Rate limit best-effort (per-istanza) ──────────────────────────
+// ─── Rate limit best-effort (vedi lib/rateLimit.ts) ────────────────
 const RATE_LIMIT = 15 // richieste
 const RATE_WINDOW_MS = 60 * 1000 // per minuto
-const hits = new Map<string, number[]>()
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now()
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS)
-  recent.push(now)
-  hits.set(ip, recent)
-  return recent.length > RATE_LIMIT
-}
 
 export async function POST(request: NextRequest) {
   const site = await getSiteConfig().catch(() => null)
   const errorFallback = `Mi dispiace, c'è stato un problema tecnico. Riprova tra poco oppure chiamaci al ${site?.telefono || '031 333 3585'}.`
 
   try {
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      'unknown'
+    const ip = ipChiamante(request.headers)
 
-    if (isRateLimited(ip)) {
+    if (limiteSuperato(`chat:${ip}`, RATE_LIMIT, RATE_WINDOW_MS)) {
       return NextResponse.json(
         {
           success: false,

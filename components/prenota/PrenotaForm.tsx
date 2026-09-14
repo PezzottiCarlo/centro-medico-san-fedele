@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { CheckCircle, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
+import { useRecaptcha } from '@/hooks/useRecaptcha'
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -98,6 +99,7 @@ export function PrenotaForm({
   const [email, setEmail] = useState('')
   const [messaggio, setMessaggio] = useState('')
   const [consensi, setConsensi] = useState({ consensoDati: false, consensoMarketing: false })
+  const recaptcha = useRecaptcha()
 
   // Tiene traccia se il medico step è stato saltato (per il back da dati)
   const [skippedMedico, setSkippedMedico] = useState<boolean>(
@@ -224,6 +226,7 @@ export function PrenotaForm({
     setLoading(true)
     setError('')
     try {
+      const recaptchaToken = await recaptcha('prenota')
       const res = await fetch('/api/prenota', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -237,6 +240,7 @@ export function PrenotaForm({
           email,
           messaggio,
           ...consensi,
+          recaptchaToken,
         }),
       })
       const data = await res.json()

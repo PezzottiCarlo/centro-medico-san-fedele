@@ -110,10 +110,10 @@ export function ContactForm() {
         mela="chiama"
         melaSize="md"
         melaPosition="left"
+        melaAlign="bottom"
         fullWidth
         showArrow={false}
         disabled={loading || !form.consensoDati}
-        className="mt-2"
       >
         {loading ? (
           <>

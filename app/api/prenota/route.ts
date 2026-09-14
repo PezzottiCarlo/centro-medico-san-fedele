@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { adminDb } from '@/lib/firebase/admin'
 import { sendLeadEmail } from '@/lib/email'
+import { ipChiamante, limiteSuperato } from '@/lib/rateLimit'
+import { verificaRecaptcha } from '@/lib/recaptcha'
+
+// Ogni invio scrive un lead e spedisce una mail: senza freno l'endpoint è una
+// leva per riempire la casella della segreteria. Largo per una persona vera.
+const MAX_INVII = 5
+const FINESTRA_MS = 10 * 60 * 1000
 
 const PrenotaSchema = z.object({
   nome: z.string().min(2, 'Nome troppo corto').max(100),
@@ -12,6 +19,7 @@ const PrenotaSchema = z.object({
   specialistica: z.string().optional(),
   sottoSpecialistica: z.string().optional(),
   medico: z.string().optional(),
+  recaptchaToken: z.string().optional(),
   // Prova del consenso (art. 7 §1 GDPR): senza quello obbligatorio la richiesta
   // non viene accettata nemmeno se il client aggira la checkbox.
   consensoDati: z
@@ -23,9 +31,34 @@ const PrenotaSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const ip = ipChiamante(request.headers)
+  if (limiteSuperato(`prenota:${ip}`, MAX_INVII, FINESTRA_MS)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'Hai inviato troppe richieste in poco tempo. Attendi qualche minuto oppure chiamaci.',
+      },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
-    const data = PrenotaSchema.parse(body)
+    const { recaptchaToken, ...data } = PrenotaSchema.parse(body)
+
+    const captcha = await verificaRecaptcha(recaptchaToken, 'prenota')
+    if (!captcha.ok) {
+      console.warn('[prenota] richiesta respinta da reCAPTCHA:', captcha.motivo)
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Non siamo riusciti a verificare la richiesta. Riprova, oppure chiamaci direttamente.',
+        },
+        { status: 403 }
+      )
+    }
 
     // Save to Firestore
     await adminDb.collection('leads').add({

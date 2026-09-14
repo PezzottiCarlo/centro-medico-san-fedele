@@ -8,6 +8,7 @@ import { Calendar, Clock, Phone, Mail, ArrowRight, Stethoscope, Sparkles } from 
 import { specialisticaHref } from '@/lib/utils'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { CollapsibleBio } from '@/components/medici/CollapsibleBio'
+import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 
@@ -97,7 +98,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdSicuro(jsonLd) }} />
 
       {/* HERO — foto sx (rettangolare alta), info dx (allineate top con foto e bottom con foto) */}
       <section className="bg-bg-soft">
@@ -283,7 +284,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                 <h2 className="text-2xl md:text-3xl font-extrabold text-text-main mb-5">Curriculum e formazione</h2>
                 <div
                   className="prose-content text-text-main/80 leading-relaxed text-base md:text-lg font-medium"
-                  dangerouslySetInnerHTML={{ __html: medico.curriculum }}
+                  dangerouslySetInnerHTML={{ __html: pulisciHtml(medico.curriculum) }}
                 />
               </div>
             )}

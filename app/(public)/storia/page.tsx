@@ -6,6 +6,7 @@ import { Award, ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import Link from 'next/link'
+import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 
@@ -43,7 +44,7 @@ export default async function StoriaPage() {
       {hasGalleryImages && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(imageGalleryJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdSicuro(imageGalleryJsonLd) }}
         />
       )}
       <PageHero config={hero} />
@@ -177,7 +178,7 @@ export default async function StoriaPage() {
                         </h3>
                         <div
                           className="prose-content text-text-main/80 text-sm md:text-base max-w-none"
-                          dangerouslySetInnerHTML={{ __html: evento.descrizione }}
+                          dangerouslySetInnerHTML={{ __html: pulisciHtml(evento.descrizione) }}
                         />
                       </div>
                     </div>

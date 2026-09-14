@@ -12,6 +12,17 @@ const MELA_IMAGES = {
 export type MelaType = keyof typeof MELA_IMAGES
 export type MelaSize = 'sm' | 'md' | 'lg' | 'xl'
 
+/** Larghezza in px delle classi `mela` qui sotto: serve a calcolare la sporgenza. */
+const MELA_PX: Record<MelaSize, number> = { sm: 56, md: 112, lg: 144, xl: 176 }
+
+/**
+ * Altezza resa della pill (padY x2 + interlinea del testo). `md` è misurata sul
+ * reso reale, le altre sono derivate dalla stessa formula: servono solo a
+ * calcolare lo spazio da riservare con `melaAlign="bottom"`, dove un paio di px
+ * di scarto non si notano.
+ */
+const PILL_PX: Record<MelaSize, number> = { sm: 34, md: 44, lg: 56, xl: 68 }
+
 interface SizeConfig {
   mela: string
   padLeft: string
@@ -72,6 +83,13 @@ interface MelaButtonBaseProps {
   melaPosition?: 'left' | 'right'
   melaFlip?: boolean
   melaSize?: MelaSize
+  /**
+   * `center` (default) centra la mela sulla pill: sborda sopra e sotto, va bene
+   * quando attorno c'è spazio libero. `bottom` la fa stare in piedi sul bordo
+   * inferiore e riserva nel layout lo spazio che sporge in alto, così non
+   * finisce sopra al contenuto vicino — indispensabile dentro ai moduli.
+   */
+  melaAlign?: 'center' | 'bottom'
   variant?: 'gradient' | 'primary'
   showArrow?: boolean
   fullWidth?: boolean
@@ -105,6 +123,7 @@ export function MelaButton(props: MelaButtonProps) {
     melaPosition = 'left',
     melaFlip = false,
     melaSize = 'md',
+    melaAlign = 'center',
     variant = 'gradient',
     showArrow = true,
     fullWidth = false,
@@ -127,6 +146,12 @@ export function MelaButton(props: MelaButtonProps) {
       ? 'justify-end'
       : 'justify-start'
   const melaPositionClasses = isLeft ? cfg.offsetLeft : cfg.offsetRight
+
+  // Quanto la mela supera la pill verso l'alto, con i piedi appoggiati al bordo
+  const altezzaMela = Math.round((MELA_PX[melaSize] * img.height) / img.width)
+  const sporgenzaSopra = Math.max(0, altezzaMela - PILL_PX[melaSize])
+  const ancoraggio =
+    melaAlign === 'bottom' ? 'bottom-0' : 'top-1/2 -translate-y-1/2'
   const melaHoverRotate = isLeft
     ? 'group-hover:-rotate-6'
     : 'group-hover:rotate-6'
@@ -141,7 +166,7 @@ export function MelaButton(props: MelaButtonProps) {
   const inner = (
     <>
       <div
-        className={`absolute ${melaPositionClasses} top-1/2 -translate-y-1/2 pointer-events-none`}
+        className={`absolute ${melaPositionClasses} ${ancoraggio} pointer-events-none`}
       >
         <Image
           src={img.src}
@@ -160,8 +185,8 @@ export function MelaButton(props: MelaButtonProps) {
     </>
   )
 
-  if ('href' in props && props.href) {
-    return (
+  const elemento =
+    'href' in props && props.href ? (
       <Link
         href={props.href}
         target={props.target}
@@ -170,17 +195,30 @@ export function MelaButton(props: MelaButtonProps) {
       >
         {inner}
       </Link>
+    ) : (
+      <button
+        type={props.type ?? 'button'}
+        onClick={props.onClick}
+        disabled={props.disabled}
+        className={rootClassName}
+      >
+        {inner}
+      </button>
+    )
+
+  // Con l'ancoraggio in basso la mela sporge solo verso l'alto: il padding del
+  // contenitore trasforma quella sporgenza in spazio reale, invece di lasciarla
+  // ricadere sul contenuto sopra.
+  if (melaAlign === 'bottom') {
+    return (
+      <div
+        className={fullWidth ? 'w-full' : 'inline-block'}
+        style={{ paddingTop: sporgenzaSopra }}
+      >
+        {elemento}
+      </div>
     )
   }
 
-  return (
-    <button
-      type={props.type ?? 'button'}
-      onClick={props.onClick}
-      disabled={props.disabled}
-      className={rootClassName}
-    >
-      {inner}
-    </button>
-  )
+  return elemento
 }

@@ -169,7 +169,7 @@ export default async function CookiePolicyPage() {
 
             <h2>4. Servizi di terze parti</h2>
             <p>
-              Due servizi esterni vengono richiamati dalle pagine del sito. In entrambi i casi il
+              Tre servizi esterni vengono richiamati dalle pagine del sito. In tutti i casi il
               fornitore è Google Ireland Ltd, che riceve il tuo indirizzo IP perché è tecnicamente
               necessario a consegnarti il contenuto, e che agisce come titolare autonomo del
               trattamento per quanto riguarda i propri strumenti.
@@ -192,6 +192,17 @@ export default async function CookiePolicyPage() {
                 Privacy Policy di Google
               </a>
               .
+            </p>
+
+            <h3>Google reCAPTCHA — solo all'invio di un modulo</h3>
+            <p>
+              I moduli di prenotazione e contatto sono protetti da reCAPTCHA, che distingue le
+              persone dagli invii automatici ed evita che la casella della segreteria venga
+              sommersa. Lo script <strong>non viene caricato mentre navighi</strong>: parte solo
+              nel momento in cui premi invio su un modulo. Da quel momento Google può installare
+              propri cookie e analizza il modo in cui hai interagito con la pagina per assegnare
+              un punteggio di affidabilità. Non usiamo reCAPTCHA per altri scopi e non riceviamo
+              da Google alcun profilo su di te.
             </p>
 
             <h3>Google Fonts — su tutte le pagine</h3>

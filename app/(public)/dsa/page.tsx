@@ -8,6 +8,7 @@ import { DyslexiaSimulation } from '@/components/accessibility/DyslexiaSimulatio
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import { pulisciHtml } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -72,7 +73,7 @@ export default async function DSAPage() {
             {spec?.descrizione ? (
               <div
                 className="prose-content text-gray-500 text-lg leading-relaxed text-left md:text-center"
-                dangerouslySetInnerHTML={{ __html: spec.descrizione }}
+                dangerouslySetInnerHTML={{ __html: pulisciHtml(spec.descrizione) }}
               />
             ) : (
               <div className="text-gray-500 text-lg leading-relaxed space-y-4">

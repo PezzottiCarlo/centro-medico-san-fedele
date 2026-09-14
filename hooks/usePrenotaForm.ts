@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRecaptcha } from '@/hooks/useRecaptcha'
 
 export interface PrenotaPayload {
   nome: string
@@ -28,15 +29,21 @@ export function usePrenotaForm(): UsePrenotaFormReturn {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const recaptcha = useRecaptcha()
 
   async function submit(payload: PrenotaPayload): Promise<boolean> {
     setLoading(true)
     setError('')
     try {
+      const recaptchaToken = await recaptcha('prenota')
       const res = await fetch('/api/prenota', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, fonte: payload.fonte ?? 'form' }),
+        body: JSON.stringify({
+          ...payload,
+          fonte: payload.fonte ?? 'form',
+          recaptchaToken,
+        }),
       })
       const data = (await res.json()) as {
         success?: boolean

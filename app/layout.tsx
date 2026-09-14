@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { generateOrganizationJsonLd } from '@/lib/seo'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { jsonLdSicuro } from '@/lib/sanitizeHtml'
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +48,7 @@ export default async function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdSicuro(orgJsonLd) }}
         />
       </head>
       <body>{children}</body>

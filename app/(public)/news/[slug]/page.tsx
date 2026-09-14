@@ -6,6 +6,7 @@ import { generatePageMetadata } from '@/lib/seo'
 import type { NewsEvento } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
+import { pulisciHtml } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 
@@ -69,7 +70,7 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
 
         <div
           className="prose-content text-gray-600 leading-relaxed text-lg"
-          dangerouslySetInnerHTML={{ __html: news.corpo }}
+          dangerouslySetInnerHTML={{ __html: pulisciHtml(news.corpo) }}
         />
 
         <div className="border-t border-gray-100 mt-12 pt-8">

@@ -147,7 +147,17 @@ export default async function PrivacyPage() {
               prenotazione o il telefono.
             </p>
 
-            <h3>d) Candidature spontanee</h3>
+            <h3>d) Verifica anti-spam dei moduli</h3>
+            <p>
+              Quando invii un modulo, il servizio reCAPTCHA di Google analizza il tuo indirizzo IP
+              e il modo in cui hai interagito con la pagina per stabilire se l&apos;invio proviene
+              da una persona o da un programma automatico. Ci restituisce solo un punteggio: se è
+              troppo basso l&apos;invio viene rifiutato e ti invitiamo a chiamarci. Lo strumento
+              serve unicamente a proteggere il modulo dagli abusi e si attiva solo al momento
+              dell&apos;invio, non durante la navigazione.
+            </p>
+
+            <h3>e) Candidature spontanee</h3>
             <p>
               Se ci invii un curriculum all&apos;indirizzo email indicato nella pagina{' '}
               <Link href="/lavora-con-noi">Lavora con noi</Link>, trattiamo i dati contenuti nella
@@ -220,6 +230,10 @@ export default async function PrivacyPage() {
                     <strong>Google Ireland Ltd / Google LLC</strong> — hosting del sito, database
                     e archiviazione dei file (Firebase, Google Cloud) e servizio di intelligenza
                     artificiale che alimenta l&apos;assistente virtuale (Vertex AI);
+                  </li>
+                  <li>
+                    <strong>Google Ireland Ltd</strong> anche per reCAPTCHA, il filtro anti-spam
+                    dei moduli;
                   </li>
                   <li>
                     il <strong>fornitore del servizio di posta elettronica</strong> attraverso cui

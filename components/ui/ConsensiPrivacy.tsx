@@ -61,6 +61,31 @@ export function ConsensiPrivacy({ value, onChange }: ConsensiPrivacyProps) {
           Fedele. <span className="text-gray-400">(facoltativo)</span>
         </span>
       </label>
+
+      {/* I termini di Google richiedono questa dicitura quando il badge
+          fluttuante di reCAPTCHA è nascosto (vedi .grecaptcha-badge in
+          globals.css). */}
+      <p className="text-xs text-gray-400 leading-snug">
+        Questo modulo è protetto da reCAPTCHA: si applicano la{' '}
+        <a
+          href="https://policies.google.com/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-gray-600"
+        >
+          Privacy Policy
+        </a>{' '}
+        e i{' '}
+        <a
+          href="https://policies.google.com/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-gray-600"
+        >
+          Termini di servizio
+        </a>{' '}
+        di Google.
+      </p>
     </div>
   )
 }

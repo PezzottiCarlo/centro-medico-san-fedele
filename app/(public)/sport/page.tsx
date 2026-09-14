@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react'
 import { HeroDark } from '@/components/layout/HeroDark'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { SportServiziSection } from '@/components/sport/SportServiziSection'
+import { pulisciHtml } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -259,7 +260,7 @@ export default async function SportPage() {
                   <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
                   <div
                     className="prose prose-invert prose-slate max-w-none text-slate-300 prose-headings:text-white prose-strong:text-white prose-a:text-emerald-400"
-                    dangerouslySetInnerHTML={{ __html: specSport.spec.descrizione }}
+                    dangerouslySetInnerHTML={{ __html: pulisciHtml(specSport.spec.descrizione) }}
                   />
                 </div>
               </div>
@@ -470,7 +471,7 @@ export default async function SportPage() {
                         </h3>
                         <div
                           className="relative text-slate-400 leading-relaxed text-sm md:text-base prose prose-invert prose-sm md:prose-base max-w-none line-clamp-6"
-                          dangerouslySetInnerHTML={{ __html: evento.descrizione }}
+                          dangerouslySetInnerHTML={{ __html: pulisciHtml(evento.descrizione) }}
                         />
                       </div>
                     </div>
