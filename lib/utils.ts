@@ -24,7 +24,9 @@ export function formatDate(dateString: string): string {
   })
 }
 
+// Specialistiche con una pagina dedicata: /ambulatori/<slug> le reindirizza qui
 export function specialisticaHref(slug: string): string {
   if (slug === 'medicina-sportiva') return '/sport'
+  if (slug === 'equipe-dsa') return '/dsa'
   return `/ambulatori/${slug}`
 }
