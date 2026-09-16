@@ -1,5 +1,6 @@
 import Image from 'next/image'
-import { generatePageMetadata, generateStoriaImageGalleryJsonLd } from '@/lib/seo'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { generatePageMetadata, localitaCentro, generateStoriaImageGalleryJsonLd } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
 import type { StoriaEvento, Riconoscimento } from '@/types'
 import { Award, ArrowRight } from 'lucide-react'
@@ -10,12 +11,15 @@ import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
 
-export const metadata = generatePageMetadata({
-  title: 'La Nostra Storia',
-  description:
-    'Scopri la storia del Centro Medico San Fedele: oltre 20 anni al servizio della salute a Longone al Segrino, in Provincia di Como.',
-  slug: 'storia',
-})
+export async function generateMetadata() {
+  const site = await getSiteConfig()
+  return generatePageMetadata({
+    title: 'La Nostra Storia',
+    description:
+      `Scopri la storia del Centro Medico San Fedele: oltre 20 anni al servizio della salute a ${localitaCentro(site)}.`,
+    slug: 'storia',
+  })
+}
 
 async function getData() {
   try {

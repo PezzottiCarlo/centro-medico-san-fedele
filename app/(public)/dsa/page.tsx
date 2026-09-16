@@ -1,4 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { generatePageMetadata } from '@/lib/seo'
 import type { Medico, Specialistica } from '@/types'
 import Image from 'next/image'
@@ -11,11 +12,14 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { pulisciHtml } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
-export const metadata = generatePageMetadata({
-  title: 'Area DSA - Disturbi Specifici dell\'Apprendimento',
-  description: 'Percorsi specializzati per la diagnosi e il supporto ai DSA. Centro Medico San Fedele, Longone al Segrino.',
-  slug: 'dsa',
-})
+export async function generateMetadata() {
+  const site = await getSiteConfig()
+  return generatePageMetadata({
+    title: "Area DSA - Disturbi Specifici dell'Apprendimento",
+    description: `Percorsi specializzati per la diagnosi e il supporto ai DSA. Centro Medico San Fedele, ${site.citta}.`,
+    slug: 'dsa',
+  })
+}
 
 async function getDSAData(): Promise<{ spec: Specialistica | null; medici: Medico[] }> {
   try {

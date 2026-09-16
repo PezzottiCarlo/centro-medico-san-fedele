@@ -1,4 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { generatePageMetadata } from '@/lib/seo'
 import type { Medico, StoriaEvento, Specialistica, Patologia } from '@/types'
 import Image from 'next/image'
@@ -10,11 +11,14 @@ import { SportServiziSection } from '@/components/sport/SportServiziSection'
 import { pulisciHtml } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
-export const metadata = generatePageMetadata({
-  title: 'Medicina Sportiva - Certificazioni e Valutazioni',
-  description: 'Certificazioni medico-sportive agonistiche e non agonistiche, valutazione funzionale e nutrizione sportiva. Centro Medico San Fedele, Longone al Segrino.',
-  slug: 'sport',
-})
+export async function generateMetadata() {
+  const site = await getSiteConfig()
+  return generatePageMetadata({
+    title: 'Medicina Sportiva - Certificazioni e Valutazioni',
+    description: `Certificazioni medico-sportive agonistiche e non agonistiche, valutazione funzionale e nutrizione sportiva. Centro Medico San Fedele, ${site.citta}.`,
+    slug: 'sport',
+  })
+}
 
 async function getStoriaSportiva(): Promise<StoriaEvento[]> {
   try {

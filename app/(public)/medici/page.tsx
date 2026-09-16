@@ -1,4 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { generatePageMetadata } from '@/lib/seo'
 import type { Medico } from '@/types'
 import Image from 'next/image'
@@ -8,11 +9,14 @@ import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 
 export const revalidate = 60
-export const metadata = generatePageMetadata({
-  title: 'I Nostri Medici',
-  description: 'Scopri il team di medici specialisti del Centro Medico San Fedele a Longone al Segrino.',
-  slug: 'medici',
-})
+export async function generateMetadata() {
+  const site = await getSiteConfig()
+  return generatePageMetadata({
+    title: 'I Nostri Medici',
+    description: `Scopri il team di medici specialisti del Centro Medico San Fedele a ${site.citta}.`,
+    slug: 'medici',
+  })
+}
 
 async function getMedici(): Promise<Medico[]> {
   try {

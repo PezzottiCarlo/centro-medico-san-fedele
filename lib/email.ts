@@ -2,6 +2,8 @@ import nodemailer from 'nodemailer'
 import path from 'path'
 import fs from 'fs'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { orariInBreve, SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
+import { SITE_URL } from '@/lib/siteUrl'
 import type { SiteConfig } from '@/types'
 
 // Trim difensivo: secret iniettati via `echo ... | firebase apphosting:secrets:set`
@@ -52,8 +54,6 @@ export interface LeadEmailData {
   medico?: string
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://centromedicosanfedele.it'
-
 const CID_LOGO = 'logo-sanfedele'
 const CID_TITOLO = 'titolo-sanfedele'
 
@@ -90,17 +90,14 @@ interface CentroBrand {
 }
 
 function centroFromSite(site: SiteConfig): CentroBrand {
-  const orari = site.orari
-    .filter((o) => o.giorno && o.ore && o.ore.toLowerCase() !== 'chiuso')
-    .map((o) => `${o.giorno} ${o.ore}`)
-    .join(' · ')
+  const orari = orariInBreve(site)
   return {
     nome: 'Centro Medico San Fedele',
     indirizzo: site.indirizzoCompleto,
     telefono: site.telefono,
     telefonoLink: site.telefonoE164,
     email: site.email,
-    orari: orari || 'Lun–Ven 09:00–19:30',
+    orari: orari || orariInBreve(SITE_CONFIG_DEFAULT),
     sito: SITE_URL.replace(/^https?:\/\//, ''),
   }
 }

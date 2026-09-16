@@ -8,12 +8,15 @@ import { MelaButton } from '@/components/ui/MelaButton'
 import { generatePageMetadata } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
 import { getHeroConfig } from '@/lib/firebase/hero'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { getReviews } from '@/lib/reviews'
 import type { Specialistica, Convenzione, Medico, Patologia } from '@/types'
 
 export const revalidate = 60
 
-export const metadata = generatePageMetadata({})
+export async function generateMetadata() {
+  return generatePageMetadata({ site: await getSiteConfig() })
+}
 
 async function getHomeData() {
   try {

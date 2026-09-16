@@ -1,7 +1,8 @@
 import { adminDb } from '@/lib/firebase/admin'
+import { SITE_URL } from '@/lib/siteUrl'
 import type { StoriaEvento } from '@/types'
 
-const BASE_URL = 'https://sanfedele.it'
+const BASE_URL = SITE_URL
 
 // Rigenera al massimo ogni ora
 export const revalidate = 3600

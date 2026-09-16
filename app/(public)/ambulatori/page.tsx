@@ -1,4 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin'
+import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { generatePageMetadata } from '@/lib/seo'
 import type { Specialistica } from '@/types'
 import Link from 'next/link'
@@ -8,11 +9,14 @@ import { getHeroConfig } from '@/lib/firebase/hero'
 import { specialisticaHref } from '@/lib/utils'
 
 export const revalidate = 60
-export const metadata = generatePageMetadata({
-  title: 'Specialistiche Mediche e Servizi',
-  description: 'Scopri le nostre specialistiche mediche e i servizi dedicati. Centro Medico San Fedele, Longone al Segrino.',
-  slug: 'ambulatori',
-})
+export async function generateMetadata() {
+  const site = await getSiteConfig()
+  return generatePageMetadata({
+    title: 'Specialistiche Mediche e Servizi',
+    description: `Scopri le nostre specialistiche mediche e i servizi dedicati. Centro Medico San Fedele, ${site.citta}.`,
+    slug: 'ambulatori',
+  })
+}
 
 async function getSpecialistiche(): Promise<Specialistica[]> {
   try {

@@ -1,4 +1,4 @@
-import { generatePageMetadata } from '@/lib/seo'
+import { generatePageMetadata, localitaCentro } from '@/lib/seo'
 import { MapPin, Phone, Mail, Clock, Car, Train } from 'lucide-react'
 import { ContactForm } from '@/components/home/ContactForm'
 import { PageHero } from '@/components/layout/PageHero'
@@ -6,12 +6,15 @@ import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
 export const revalidate = 60
-export const metadata = generatePageMetadata({
-  title: 'Contatti — Dove siamo',
-  description:
-    'Contatta il Centro Medico San Fedele. Indirizzo, telefono, email, orari e come raggiungerci a Longone al Segrino (CO).',
-  slug: 'contatti',
-})
+export async function generateMetadata() {
+  const site = await getSiteConfig()
+  return generatePageMetadata({
+    title: 'Contatti — Dove siamo',
+    description:
+      `Contatta il Centro Medico San Fedele. Indirizzo, telefono, email, orari e come raggiungerci a ${localitaCentro(site)}.`,
+    slug: 'contatti',
+  })
+}
 
 export default async function ContattiPage() {
   const [hero, site] = await Promise.all([getHeroConfig('contatti'), getSiteConfig()])
