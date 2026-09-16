@@ -4,7 +4,7 @@ import { AccessibilityProvider } from '@/components/accessibility/AccessibilityP
 import { ChatbotButton } from '@/components/ChatbotButton'
 import { MelaChatCTA } from '@/components/MelaChatCTA'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
-import { SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
+import { orariInBreve, SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
 
 export default async function PublicLayout({
   children,
@@ -22,7 +22,7 @@ export default async function PublicLayout({
         <main className="flex-1">{children}</main>
         <MelaChatCTA />
         <Footer />
-        <ChatbotButton domande={domande} />
+        <ChatbotButton domande={domande} telefono={site.telefono} orari={orariInBreve(site)} />
       </div>
     </AccessibilityProvider>
   )

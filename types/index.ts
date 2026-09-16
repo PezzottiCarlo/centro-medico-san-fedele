@@ -172,6 +172,10 @@ export interface SiteConfig {
   orari: SiteConfigOrario[]
   mapsUrl?: string
   chatbotDomande?: string[] // domande pre-impostate mostrate all'apertura del chatbot
+  // ── Profili social del centro, mostrati nel footer solo se compilati ──
+  instagramUrl?: string
+  facebookUrl?: string
+  linkedinUrl?: string
   // ── Dati del titolare del trattamento, usati dalle pagine legali ──
   ragioneSociale?: string
   partitaIva?: string

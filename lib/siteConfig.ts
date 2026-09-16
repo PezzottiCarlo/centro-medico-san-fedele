@@ -1,18 +1,22 @@
 import { Award, Users, Clock, Shield } from 'lucide-react'
 import type { SiteConfig } from '@/types'
 
-// Fallback statico — usato dal chatbot e quando Firestore non ha doc site_config/main.
-export const CENTER_INFO = {
-  nome: 'Centro Medico San Fedele',
-  telefono: '031 333 3585',
-  indirizzo: 'Longone al Segrino (Como)',
-  orari: 'Lun-Ven 9:00-19:30',
+/** Orari di apertura su una riga, per i messaggi brevi (chatbot, email). */
+export function orariInBreve(site: Pick<SiteConfig, 'orari'>): string {
+  return site.orari
+    .filter((o) => o.giorno && o.ore && o.ore.toLowerCase() !== 'chiuso')
+    .map((o) => `${o.giorno} ${o.ore}`)
+    .join(' · ')
 }
 
+// Usato solo quando Firestore non risponde o non ha il doc site_config/main:
+// i contatti ricalcano quelli salvati da /admin/dashboard/site-config, così
+// anche nel caso peggiore il sito mostra un numero che risponde.
+
 export const SITE_CONFIG_DEFAULT: SiteConfig = {
-  telefono: '031 333 3585',
-  telefonoE164: '+390313333585',
-  whatsappE164: '+390313333585',
+  telefono: '+39 3318001997',
+  telefonoE164: '+393318001997',
+  whatsappE164: '+393318001997',
   email: 'info@sanfedele.it',
   indirizzo: 'Via Risorgimento, 1',
   indirizzoCompleto: 'Via Risorgimento, 1 — 22030 Longone al Segrino (CO)',

@@ -3,10 +3,22 @@ import Image from 'next/image'
 import { Phone, Mail, MapPin, Clock, Instagram, Facebook, Linkedin } from 'lucide-react'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 
+// Accetta solo indirizzi web veri: un campo lasciato a metà o un `javascript:`
+// non diventano un link nel footer.
+function linkSocial(url?: string): string | null {
+  const pulito = url?.trim()
+  return pulito && /^https:\/\/[^\s]+$/i.test(pulito) ? pulito : null
+}
+
 export async function Footer() {
   const site = await getSiteConfig()
-  const telHref = `tel:${site.telefonoE164}`
+  const telHref = `tel:${site.telefonoE164.replace(/[^\d+]/g, '')}`
   const mailHref = `mailto:${site.email}`
+  const social = [
+    { href: linkSocial(site.instagramUrl), label: 'Instagram', Icona: Instagram },
+    { href: linkSocial(site.facebookUrl), label: 'Facebook', Icona: Facebook },
+    { href: linkSocial(site.linkedinUrl), label: 'LinkedIn', Icona: Linkedin },
+  ].flatMap(({ href, ...resto }) => (href ? [{ href, ...resto }] : []))
 
   return (
     <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white">
@@ -28,17 +40,15 @@ export async function Footer() {
           <p className="text-gray-400 text-sm leading-relaxed max-w-md text-center md:text-left">
             Centro medico d&apos;eccellenza a {site.citta}. Cura, competenza e attenzione alla persona dal 2008.
           </p>
-          <div className="flex items-center gap-3">
-            <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors" aria-label="Instagram">
-              <Instagram size={18} />
-            </a>
-            <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors" aria-label="Facebook">
-              <Facebook size={18} />
-            </a>
-            <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors" aria-label="LinkedIn">
-              <Linkedin size={18} />
-            </a>
-          </div>
+          {social.length > 0 && (
+            <div className="flex items-center gap-3">
+              {social.map(({ href, label, Icona }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors" aria-label={label}>
+                  <Icona size={18} />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 border-t border-white/10 pt-8">
@@ -105,11 +115,13 @@ export async function Footer() {
       <div className="border-t border-white/10">
         <div className="container-main py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <p>&copy; {new Date().getFullYear()} Centro Medico San Fedele. Tutti i diritti riservati.</p>
-          <div className="flex items-center gap-4">
-            <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram size={16} /></a>
-            <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><Facebook size={16} /></a>
-            <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn"><Linkedin size={16} /></a>
-          </div>
+          {social.length > 0 && (
+            <div className="flex items-center gap-4">
+              {social.map(({ href, label, Icona }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label={label}><Icona size={16} /></a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </footer>

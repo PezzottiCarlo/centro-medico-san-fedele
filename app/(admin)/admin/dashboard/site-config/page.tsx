@@ -281,6 +281,49 @@ export default function SiteConfigPage() {
 
           <div className="border-t border-slate-700 pt-5 space-y-4">
             <div>
+              <h2 className="text-sm font-semibold text-white">Profili social</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Indirizzo completo della pagina del centro, che inizia con https://. Le icone
+                compaiono nel footer solo per i profili compilati.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Instagram</label>
+                <input
+                  type="url"
+                  value={form.instagramUrl || ''}
+                  onChange={(e) => update('instagramUrl', e.target.value)}
+                  placeholder="https://www.instagram.com/nomeprofilo"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Facebook</label>
+                <input
+                  type="url"
+                  value={form.facebookUrl || ''}
+                  onChange={(e) => update('facebookUrl', e.target.value)}
+                  placeholder="https://www.facebook.com/nomepagina"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">LinkedIn</label>
+                <input
+                  type="url"
+                  value={form.linkedinUrl || ''}
+                  onChange={(e) => update('linkedinUrl', e.target.value)}
+                  placeholder="https://www.linkedin.com/company/nomeazienda"
+                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-700 pt-5 space-y-4">
+            <div>
               <h2 className="text-sm font-semibold text-white">Dati del titolare del trattamento</h2>
               <p className="text-xs text-slate-400 mt-1">
                 Compaiono nella{' '}

@@ -4,6 +4,7 @@ import { getKnowledgeBase } from '@/lib/chatbot/knowledgeBase'
 import { buildSystemPrompt } from '@/lib/chatbot/systemPrompt'
 import { generateReply } from '@/lib/chatbot/llm'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
 import { ipChiamante, limiteSuperato } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
@@ -23,8 +24,8 @@ const RATE_LIMIT = 15 // richieste
 const RATE_WINDOW_MS = 60 * 1000 // per minuto
 
 export async function POST(request: NextRequest) {
-  const site = await getSiteConfig().catch(() => null)
-  const errorFallback = `Mi dispiace, c'è stato un problema tecnico. Riprova tra poco oppure chiamaci al ${site?.telefono || '031 333 3585'}.`
+  const site = await getSiteConfig().catch(() => SITE_CONFIG_DEFAULT)
+  const errorFallback = `Mi dispiace, c'è stato un problema tecnico. Riprova tra poco oppure chiamaci al ${site.telefono || SITE_CONFIG_DEFAULT.telefono}.`
 
   try {
     const ip = ipChiamante(request.headers)
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     const knowledgeBase = await getKnowledgeBase()
-    const systemPrompt = buildSystemPrompt(knowledgeBase)
+    const systemPrompt = buildSystemPrompt(knowledgeBase, site)
     const reply = await generateReply(systemPrompt, messages)
 
     return NextResponse.json({ success: true, reply })

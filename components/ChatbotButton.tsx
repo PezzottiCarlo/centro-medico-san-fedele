@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
-import { CENTER_INFO } from '@/lib/siteConfig'
 
 interface Message {
   id: string
@@ -22,7 +21,10 @@ const TEASER_KEY = 'sanfedele:chat-teaser-visto'
 // per non coprire i link del footer (social, privacy, contatti).
 const SOGLIA_FONDO_PX = 100
 
-const ERROR_FALLBACK = `Mi dispiace, in questo momento non riesco a rispondere. Puoi chiamarci al ${CENTER_INFO.telefono} (${CENTER_INFO.orari}). 📞`
+function messaggioErrore(telefono: string, orari: string): string {
+  const contatto = orari ? `${telefono} (${orari})` : telefono
+  return `Mi dispiace, in questo momento non riesco a rispondere. Puoi chiamarci al ${contatto}. 📞`
+}
 
 // Componenti custom per ReactMarkdown nelle bolle del bot — link in rosso brand,
 // elenchi compatti, niente titoli/tabelle (il system prompt vieta markdown pesante).
@@ -48,7 +50,14 @@ const botMarkdownComponents: Components = {
   em: ({ children }) => <em className="italic">{children}</em>,
 }
 
-export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
+interface ChatbotButtonProps {
+  domande?: string[]
+  /** Contatti da proporre quando la chat non risponde (da site-config) */
+  telefono: string
+  orari: string
+}
+
+export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -232,9 +241,9 @@ export function ChatbotButton({ domande = [] }: { domande?: string[] }) {
       replyText =
         data?.success && data?.reply
           ? data.reply
-          : data?.message || ERROR_FALLBACK
+          : data?.message || messaggioErrore(telefono, orari)
     } catch {
-      replyText = ERROR_FALLBACK
+      replyText = messaggioErrore(telefono, orari)
     } finally {
       setIsTyping(false)
     }
