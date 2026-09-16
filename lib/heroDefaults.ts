@@ -1,4 +1,4 @@
-import type { HeroConfig } from '@/types'
+import type { HeroConfig, HeroCTA, SiteConfig } from '@/types'
 
 export const HERO_PAGE_SLUGS = [
   'home',
@@ -44,6 +44,46 @@ export const HERO_SLUG_TO_PATH: Record<HeroPageSlug, string> = {
   patologie: '/patologie',
 }
 
+/**
+ * Segnaposto per i link dei bottoni della hero. Al posto del numero scritto a
+ * mano, il link punta ai contatti in /admin/dashboard/site-config: cambiando il
+ * numero lì si aggiornano anche i bottoni, senza toccare le hero una per una.
+ */
+export const CTA_SEGNAPOSTO_TELEFONO = '{telefono}'
+export const CTA_SEGNAPOSTO_WHATSAPP = '{whatsapp}'
+export const CTA_SEGNAPOSTO_EMAIL = '{email}'
+export const CTA_LINK_TELEFONO = `tel:${CTA_SEGNAPOSTO_TELEFONO}`
+export const CTA_LINK_WHATSAPP = `https://wa.me/${CTA_SEGNAPOSTO_WHATSAPP}`
+export const CTA_LINK_EMAIL = `mailto:${CTA_SEGNAPOSTO_EMAIL}`
+
+// I link salvati prima dei segnaposto, col vecchio numero del centro scritto a
+// mano: vengono letti come se fossero i segnaposto.
+const CTA_LINK_STORICI: Record<string, string> = {
+  'tel:+390313333585': CTA_LINK_TELEFONO,
+  'https://wa.me/390313333585': CTA_LINK_WHATSAPP,
+}
+
+/** Porta i link storici ai segnaposto; gli altri restano come sono. */
+export function normalizzaLinkCta(href: string): string {
+  return CTA_LINK_STORICI[href.trim()] ?? href
+}
+
+/** Sostituisce i segnaposto con i contatti attuali del sito. */
+export function risolviLinkCta(href: string, site: SiteConfig): string {
+  const soloCifre = (numero: string) => numero.replace(/[^\d+]/g, '')
+  const telefono = soloCifre(site.telefonoE164 || site.telefono)
+  // wa.me vuole il numero internazionale senza "+" né zeri iniziali
+  const whatsapp = soloCifre(site.whatsappE164 || telefono).replace(/^\+|^00/, '')
+  return normalizzaLinkCta(href)
+    .replaceAll(CTA_SEGNAPOSTO_TELEFONO, telefono)
+    .replaceAll(CTA_SEGNAPOSTO_WHATSAPP, whatsapp)
+    .replaceAll(CTA_SEGNAPOSTO_EMAIL, site.email)
+}
+
+export function risolviCta(cta: HeroCTA | undefined, site: SiteConfig): HeroCTA | undefined {
+  return cta && { ...cta, href: risolviLinkCta(cta.href, site) }
+}
+
 export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
   home: {
     pageSlug: 'home',
@@ -51,8 +91,8 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     titoloEvidenziato: 'la nostra missione',
     immagine: '/hero-bg.jpg',
     variant: 'home-zoom',
-    ctaPrimaria: { testo: 'Chiamaci ora', href: 'tel:+390313333585', icona: 'phone' },
-    ctaSecondaria: { testo: 'Chatta ora', href: 'https://wa.me/390313333585', icona: 'whatsapp' },
+    ctaPrimaria: { testo: 'Chiamaci ora', href: CTA_LINK_TELEFONO, icona: 'phone' },
+    ctaSecondaria: { testo: 'Chatta ora', href: CTA_LINK_WHATSAPP, icona: 'whatsapp' },
     pubblicato: true,
   },
   medici: {

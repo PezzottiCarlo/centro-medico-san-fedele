@@ -7,8 +7,28 @@ import { db } from '@/lib/firebase/client'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
-import { HERO_DEFAULTS, HERO_PAGE_LABELS, HERO_PAGE_SLUGS, HeroPageSlug } from '@/lib/heroDefaults'
+import {
+  CTA_LINK_EMAIL,
+  CTA_LINK_TELEFONO,
+  CTA_LINK_WHATSAPP,
+  HERO_DEFAULTS,
+  HERO_PAGE_LABELS,
+  HERO_PAGE_SLUGS,
+  HeroPageSlug,
+  normalizzaLinkCta,
+} from '@/lib/heroDefaults'
 import type { HeroCTA, HeroCtaIcon, HeroConfig } from '@/types'
+
+// Link che seguono i contatti di /admin/dashboard/site-config
+const CTA_LINK_RAPIDI: { label: string; href: string; icona: HeroCtaIcon }[] = [
+  { label: 'Telefono del centro', href: CTA_LINK_TELEFONO, icona: 'phone' },
+  { label: 'WhatsApp del centro', href: CTA_LINK_WHATSAPP, icona: 'whatsapp' },
+  { label: 'Email del centro', href: CTA_LINK_EMAIL, icona: 'none' },
+]
+
+function normalizzaCta(cta?: HeroCTA): HeroCTA | undefined {
+  return cta && { ...cta, href: normalizzaLinkCta(cta.href) }
+}
 
 const CTA_ICONS: { value: HeroCtaIcon; label: string }[] = [
   { value: 'none', label: 'Nessuna' },
@@ -51,6 +71,8 @@ export default function EditHeroPage() {
           setForm({
             ...defaults!,
             ...data,
+            ctaPrimaria: normalizzaCta(data.ctaPrimaria ?? defaults!.ctaPrimaria),
+            ctaSecondaria: normalizzaCta(data.ctaSecondaria ?? defaults!.ctaSecondaria),
             variant: defaults!.variant,
             pageSlug: slug,
           })
@@ -370,6 +392,30 @@ function CtaEditor({
               className="bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
             />
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-500">Collega a:</span>
+            {CTA_LINK_RAPIDI.map((rapido) => (
+              <button
+                key={rapido.href}
+                type="button"
+                onClick={() => {
+                  onChange('href', rapido.href)
+                  if (rapido.icona !== 'none') onChange('icona', rapido.icona)
+                }}
+                className={`text-xs rounded-full border px-3 py-1 transition-colors ${
+                  cta.href === rapido.href
+                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
+                    : 'border-slate-600 text-slate-300 hover:border-slate-400'
+                }`}
+              >
+                {rapido.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500">
+            <code>{'{telefono}'}</code>, <code>{'{whatsapp}'}</code> ed <code>{'{email}'}</code> nel
+            link vengono sostituiti con i dati di Contatti &amp; info, così restano aggiornati.
+          </p>
           <div>
             <label className="block text-xs text-slate-500 mb-1">Icona</label>
             <select

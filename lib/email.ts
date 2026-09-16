@@ -7,19 +7,38 @@ import type { SiteConfig } from '@/types'
 // Trim difensivo: secret iniettati via `echo ... | firebase apphosting:secrets:set`
 // su PowerShell finiscono con \r\n (errore EBADNAME su smtp.gmail.com\r\n).
 const EMAIL_HOST = process.env.EMAIL_HOST?.trim()
-const EMAIL_PORT = process.env.EMAIL_PORT?.trim()
+const EMAIL_PORT = Number(process.env.EMAIL_PORT?.trim()) || 587
 const EMAIL_USER = process.env.EMAIL_USER?.trim()
 const EMAIL_PASS = process.env.EMAIL_PASS?.trim()
 const EMAIL_TO = process.env.EMAIL_TO?.trim()
 
+// Indirizzo mittente. Di solito coincide con la casella con cui ci si autentica,
+// ma non sempre: Brevo, SendGrid e Amazon SES usano username che non sono
+// indirizzi, e con Microsoft 365 si può inviare da una casella condivisa.
+const EMAIL_FROM = process.env.EMAIL_FROM?.trim() || EMAIL_USER
+
+// Porta 465 = TLS implicito (SMTPS, es. Aruba e Register.it); 587 e 25 =
+// STARTTLS, con cui la connessione si cifra dopo il saluto. EMAIL_SECURE
+// permette di forzare la scelta per i server che non seguono la convenzione.
+const EMAIL_SECURE_ENV = process.env.EMAIL_SECURE?.trim().toLowerCase()
+const EMAIL_SECURE = EMAIL_SECURE_ENV ? EMAIL_SECURE_ENV === 'true' : EMAIL_PORT === 465
+
 const transporter = nodemailer.createTransport({
   host: EMAIL_HOST,
-  port: Number(EMAIL_PORT) || 587,
-  secure: false,
+  port: EMAIL_PORT,
+  secure: EMAIL_SECURE,
+  // Su STARTTLS rifiuta di proseguire in chiaro se il server non offre la
+  // cifratura: in queste mail viaggiano credenziali e dati sanitari.
+  requireTLS: !EMAIL_SECURE,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS,
   },
+  // L'API del modulo attende l'invio prima di rispondere: un server SMTP che non
+  // risponde non deve tenere in attesa il paziente. I default arrivano a 2 minuti.
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 20_000,
 })
 
 export interface LeadEmailData {
@@ -365,7 +384,7 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
   const attachments = brandAttachments()
 
   await transporter.sendMail({
-    from: `"Portale ${centro.nome}" <${EMAIL_USER}>`,
+    from: `"Portale ${centro.nome}" <${EMAIL_FROM}>`,
     to: EMAIL_TO,
     replyTo: `"${fullName}" <${data.email}>`,
     subject: `Nuova richiesta — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
@@ -374,7 +393,7 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
   })
 
   await transporter.sendMail({
-    from: `"${centro.nome}" <${EMAIL_USER}>`,
+    from: `"${centro.nome}" <${EMAIL_FROM}>`,
     to: data.email,
     subject: `Abbiamo ricevuto la tua richiesta, ${data.nome} ✓`,
     html: buildPatientHtml(data, centro),

@@ -1,10 +1,21 @@
 import { adminDb } from './admin'
-import { HERO_DEFAULTS, HeroPageSlug } from '@/lib/heroDefaults'
+import { getSiteConfig } from './siteConfig'
+import { HERO_DEFAULTS, HeroPageSlug, risolviCta } from '@/lib/heroDefaults'
 import type { HeroConfig } from '@/types'
 
 const COLLECTION = 'hero_config'
 
+/** La hero da mostrare sul sito, con i link dei bottoni già risolti sui contatti attuali. */
 export async function getHeroConfig(slug: HeroPageSlug): Promise<HeroConfig> {
+  const [hero, site] = await Promise.all([leggiHeroConfig(slug), getSiteConfig()])
+  return {
+    ...hero,
+    ctaPrimaria: risolviCta(hero.ctaPrimaria, site),
+    ctaSecondaria: risolviCta(hero.ctaSecondaria, site),
+  }
+}
+
+async function leggiHeroConfig(slug: HeroPageSlug): Promise<HeroConfig> {
   const fallback = HERO_DEFAULTS[slug]
   try {
     const snap = await adminDb.collection(COLLECTION).doc(slug).get()

@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "npx ts-node --project tsconfig.seed.json scripts/seed-firestore.ts",
+    "verifica-email": "node scripts/verifica-email.mjs",
     "migrate-uploads": "npx ts-node --project tsconfig.seed.json scripts/migrate-uploads-to-storage.ts"
   },
   "dependencies": {
