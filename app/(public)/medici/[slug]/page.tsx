@@ -8,6 +8,7 @@ import { Calendar, Clock, Phone, Mail, ArrowRight, Stethoscope, Sparkles } from 
 import { specialisticaHref } from '@/lib/utils'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { CollapsibleBio } from '@/components/medici/CollapsibleBio'
+import { TerapieMedico, type TerapiaCard } from '@/components/medici/TerapieMedico'
 import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
 
 export const revalidate = 60
@@ -19,14 +20,6 @@ export async function generateStaticParams() {
   } catch {
     return []
   }
-}
-
-interface TerapiaCard {
-  id: string
-  nome: string
-  specSlug: string
-  specNome: string
-  icona: string
 }
 
 async function getData(slug: string) {
@@ -56,6 +49,7 @@ async function getData(slug: string) {
         terapie.push({
           id: sotto.id,
           nome: sotto.nome,
+          descrizione: sotto.descrizione,
           specSlug: spec.slug,
           specNome: spec.nome,
           icona: spec.icona,
@@ -240,30 +234,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                 Tutte le terapie e sotto-specialistiche praticate da {firstName}.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {terapie.map((t) => (
-                <Link
-                  key={t.id}
-                  href={specialisticaHref(t.specSlug)}
-                  className="group relative bg-white rounded-2xl p-6 border border-primary/10 hover:border-primary hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-3xl flex-shrink-0">{t.icona}</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] uppercase tracking-widest text-primary font-bold mb-1">
-                        {t.specNome}
-                      </p>
-                      <h3 className="font-bold text-text-main text-lg leading-snug group-hover:text-primary transition-colors">
-                        {t.nome}
-                      </h3>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-primary text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
-                    Scopri di più <ArrowRight size={12} />
-                  </span>
-                </Link>
-              ))}
-            </div>
+            <TerapieMedico terapie={terapie} medicoSlug={medico.slug} />
           </div>
         </section>
       )}
