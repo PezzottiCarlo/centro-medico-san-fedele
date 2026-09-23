@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { adminDb } from '@/lib/firebase/admin'
 import { sendLeadEmail } from '@/lib/email'
+import { inviaNotificaWhatsApp } from '@/lib/whatsapp'
 import { ipChiamante, limiteSuperato } from '@/lib/rateLimit'
 import { verificaRecaptcha } from '@/lib/recaptcha'
 
@@ -77,13 +78,24 @@ export async function POST(request: NextRequest) {
       fonte: 'form',
     })
 
-    // Send email notification (i consensi restano su Firestore, non servono in mail)
-    try {
-      const { consensoDati: _cd, consensoMarketing: _cm, ...emailData } = data
-      await sendLeadEmail(emailData)
-    } catch (emailError) {
-      console.error('Email sending failed:', emailError)
-      // Don't fail the request if email fails
+    // Notifiche alla segreteria: mail e, se configurato, WhatsApp. In parallelo
+    // e senza far fallire la richiesta, che è già salvata su Firestore.
+    // I consensi restano su Firestore, non servono nei messaggi.
+    const { consensoDati: _cd, consensoMarketing: _cm, ...emailData } = data
+    const [esitoEmail, esitoWhatsApp] = await Promise.allSettled([
+      sendLeadEmail(emailData),
+      inviaNotificaWhatsApp({
+        tipo: data.consultoTelefonico ? 'richiesta di consulto telefonico' : 'richiesta',
+        nome: `${data.nome} ${data.cognome}`,
+        telefono: data.telefono,
+        servizio:
+          [data.specialistica, data.sottoSpecialistica, data.medico].filter(Boolean).join(' · ') ||
+          'non indicato',
+      }),
+    ])
+    if (esitoEmail.status === 'rejected') console.error('Email sending failed:', esitoEmail.reason)
+    if (esitoWhatsApp.status === 'rejected') {
+      console.error('WhatsApp notification failed:', esitoWhatsApp.reason)
     }
 
     return NextResponse.json({ success: true, message: 'Richiesta inviata con successo' })
