@@ -7,6 +7,7 @@ import { CheckCircle, ChevronRight, ChevronLeft, Loader2, Phone, MessageCircle }
 import { cn } from '@/lib/utils'
 import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
 import { useRecaptcha } from '@/hooks/useRecaptcha'
+import { prendiPrecompilazione } from '@/lib/prenotaPrecompilata'
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -34,15 +35,61 @@ interface Medico {
 
 type Step = 'spec' | 'sotto' | 'medico' | 'dati'
 
+const STEPS: Step[] = ['spec', 'sotto', 'medico', 'dati']
+
+function normalizzaNome(testo: string): string {
+  return testo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function trovaSotto(elenco: SottoSpec[], chiave: string): SottoSpec | undefined {
+  if (!chiave) return undefined
+  const nome = normalizzaNome(chiave)
+  return elenco.find((s) => s.id === chiave) ?? elenco.find((s) => normalizzaNome(s.nome) === nome)
+}
+
+/** Voce della cronologia del browser creata da un passo del modulo. */
+interface StatoCronologia {
+  prenotaPasso?: Step
+  /** Quanti passi del modulo ci sono prima di questa voce (0 = ingresso nella pagina) */
+  prenotaProfondita?: number
+}
+
+function statoCorrente(): StatoCronologia {
+  return (window.history.state ?? {}) as StatoCronologia
+}
+
+/** URL attuale con `passo` aggiornato (o tolto, per il passo iniziale). */
+function urlConPasso(passo: Step | null): string {
+  const url = new URL(window.location.href)
+  if (passo) url.searchParams.set('passo', passo)
+  else url.searchParams.delete('passo')
+  return url.pathname + url.search + url.hash
+}
+
 /* ── Component ─────────────────────────────────────────────── */
 
-export function PrenotaForm({
-  specialistiche,
-  medici,
-}: {
+interface PrenotaFormProps {
   specialistiche: Specialistica[]
   medici: Medico[]
-}) {
+}
+
+/**
+ * Il modulo parte dalle scelte nell'URL (servizio, medico...). Se cambiano
+ * mentre è già aperto, per esempio con un link di MelaBot, riparte da capo;
+ * `passo`, che cambia a ogni step, non conta.
+ */
+export function PrenotaForm(props: PrenotaFormProps) {
+  const searchParams = useSearchParams()
+  const chiave = ['specialistica', 'sottoSpecialistica', 'medico', 'step']
+    .map((k) => searchParams.get(k) ?? '')
+    .join('|')
+  return <PrenotaFormInterno key={chiave} {...props} />
+}
+
+function PrenotaFormInterno({
+  specialistiche,
+  medici,
+}: PrenotaFormProps) {
   const searchParams = useSearchParams()
 
   const preselectedMedico = searchParams.get('medico') || ''
@@ -60,11 +107,13 @@ export function PrenotaForm({
   const preselectedSpec =
     searchParams.get('specialistica') || (specDelMedico.length === 1 ? specDelMedico[0].slug : '')
 
-  // Oggetto sotto-specialistica preselezionato (se la spec lo contiene)
+  // Sotto-specialistica preselezionata, cercata per id oppure per nome: i link
+  // di MelaBot usano il nome, che un modello linguistico copia senza errori
   const preselectedSottoObj = preselectedSpec
-    ? specialistiche
-        .find((s) => s.slug === preselectedSpec)
-        ?.sottoSpecialistiche?.find((s) => s.id === preselectedSotto)
+    ? trovaSotto(
+        specialistiche.find((s) => s.slug === preselectedSpec)?.sottoSpecialistiche ?? [],
+        preselectedSotto
+      )
     : undefined
 
   // Calcola lo step iniziale saltando quelli che sarebbero vuoti dato il preselect
@@ -96,7 +145,39 @@ export function PrenotaForm({
   }
 
   const [step, setStep] = useState<Step>(() => computeInitial().step)
+  const stepIniziale = useRef(step)
   const primoRender = useRef(true)
+
+  // Ogni passo è una voce della cronologia: il tasto indietro del browser (e lo
+  // swipe su telefono) torna al passo precedente invece di lasciare la pagina.
+  useEffect(() => {
+    // Ricaricando a metà modulo i dati scelti sono persi: si riparte dall'inizio
+    // e l'URL perde il `passo` rimasto da prima
+    window.history.replaceState(
+      { ...statoCorrente(), prenotaPasso: stepIniziale.current, prenotaProfondita: 0 },
+      '',
+      urlConPasso(null)
+    )
+    function suPopState(e: PopStateEvent) {
+      const stato = (e.state ?? {}) as StatoCronologia
+      const passo = stato.prenotaPasso && STEPS.includes(stato.prenotaPasso) ? stato.prenotaPasso : stepIniziale.current
+      setStep(passo)
+      if (passo !== 'dati') setConsulto(false)
+    }
+    window.addEventListener('popstate', suPopState)
+    return () => window.removeEventListener('popstate', suPopState)
+  }, [])
+
+  /** Avanza a un passo nuovo, aggiungendolo alla cronologia. */
+  function vai(prossimo: Step) {
+    const profondita = (statoCorrente().prenotaProfondita ?? 0) + 1
+    window.history.pushState(
+      { prenotaPasso: prossimo, prenotaProfondita: profondita },
+      '',
+      urlConPasso(prossimo)
+    )
+    setStep(prossimo)
+  }
 
   // A ogni cambio di step la pagina torna in cima: il passo nuovo inizia
   // dall'alto e non resta a metà dello schermo dove si trovava il precedente.
@@ -127,6 +208,17 @@ export function PrenotaForm({
   const [email, setEmail] = useState('')
   const [messaggio, setMessaggio] = useState('')
   const [consensi, setConsensi] = useState({ consensoDati: false, consensoMarketing: false })
+
+  // Dati passati da MelaBot (nome, telefono, motivo...): letti una volta sola
+  useEffect(() => {
+    const dati = prendiPrecompilazione()
+    if (!dati) return
+    if (dati.nome) setNome(dati.nome)
+    if (dati.cognome) setCognome(dati.cognome)
+    if (dati.telefono) setTelefono(dati.telefono)
+    if (dati.email) setEmail(dati.email)
+    if (dati.messaggio) setMessaggio(dati.messaggio)
+  }, [])
   const recaptcha = useRecaptcha()
 
   // Tiene traccia se il medico step è stato saltato (per il back da dati)
@@ -191,16 +283,16 @@ export function PrenotaForm({
     // resta scelto e il paziente passa direttamente ai dati
     if (spec && medicoPreselezionato?.specialisticheIds.includes(spec.id)) {
       setMedicoSlug(medicoPreselezionato.slug)
-      setStep('dati')
+      vai('dati')
       return
     }
     setMedicoSlug('')
 
     if (spec && spec.sottoSpecialistiche && spec.sottoSpecialistiche.length > 0) {
-      setStep('sotto')
+      vai('sotto')
     } else {
       // No sotto-spec → vai a medico
-      setStep('medico')
+      vai('medico')
     }
   }
 
@@ -218,9 +310,9 @@ export function PrenotaForm({
     if (mediciDisponibili.length === 0) {
       // Nessun medico disponibile → salta al form dati
       setSkippedMedico(true)
-      setStep('dati')
+      vai('dati')
     } else {
-      setStep('medico')
+      vai('medico')
     }
   }
 
@@ -232,38 +324,48 @@ export function PrenotaForm({
     setMedicoSlug('')
     setConsulto(true)
     setConsultoDa(step)
-    setStep('dati')
+    vai('dati')
   }
 
   function selectMedico(slug: string) {
     setMedicoSlug(slug)
     setConsulto(false)
-    setStep('dati')
+    vai('dati')
   }
 
   // Nessun medico disponibile per la selezione: si prosegue senza sceglierlo
   function skipMedico() {
     setMedicoSlug('')
-    setStep('dati')
+    vai('dati')
   }
 
-  function goBack() {
-    if (step === 'dati' && consulto) {
-      setConsulto(false)
-      setStep(consultoDa)
-    } else if (step === 'dati') {
-      if (skippedMedico) {
-        // Il medico era stato saltato → torna a sotto-spec (o spec)
-        setStep(hasSottoSpecs ? 'sotto' : 'spec')
-      } else {
-        setStep('medico')
-      }
-    } else if (step === 'medico') {
-      setStep(hasSottoSpecs ? 'sotto' : 'spec')
-    } else if (step === 'sotto') {
-      setStep('spec')
-    }
+  /** Passo precedente secondo le scelte fatte (serve quando si è entrati a metà) */
+  function passoPrecedente(): Step {
+    if (step === 'dati' && consulto) return consultoDa
+    if (step === 'dati') return skippedMedico ? (hasSottoSpecs ? 'sotto' : 'spec') : 'medico'
+    if (step === 'medico') return hasSottoSpecs ? 'sotto' : 'spec'
+    return 'spec'
   }
+
+  // "Indietro" della pagina fa lo stesso del browser. Se si è entrati già a metà
+  // (es. dal DSA dritti ai dati) non c'è una voce da cui tornare: si ricostruisce
+  // il passo precedente e lo si scrive sulla voce attuale.
+  function goBack() {
+    if ((statoCorrente().prenotaProfondita ?? 0) > 0) {
+      window.history.back()
+      return
+    }
+    const passo = passoPrecedente()
+    if (step === 'dati') setConsulto(false)
+    window.history.replaceState(
+      { ...statoCorrente(), prenotaPasso: passo, prenotaProfondita: 0 },
+      '',
+      urlConPasso(passo)
+    )
+    stepIniziale.current = passo
+    setStep(passo)
+  }
+
 
   /* ── Submit ────────────────────────────────────────────── */
 
@@ -416,7 +518,7 @@ export function PrenotaForm({
             })}
           </div>
           <div className="mt-6">
-            <button onClick={() => setStep('spec')} className="btn-ghost flex items-center gap-2">
+            <button onClick={goBack} className="btn-ghost flex items-center gap-2">
               <ChevronLeft size={18} /> Indietro
             </button>
           </div>

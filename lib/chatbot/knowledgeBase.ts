@@ -6,7 +6,10 @@ import type {
   Patologia,
   NewsEvento,
   Convenzione,
+  StoriaEvento,
+  Riconoscimento,
 } from '@/types'
+import { specialisticaHref } from '@/lib/utils'
 
 /**
  * Base di conoscenza del chatbot: testo semplice compilato dai contenuti
@@ -40,14 +43,17 @@ function truncate(text: string, max: number): string {
 
 /** Costruisce la knowledge base interrogando Firestore. */
 async function buildKnowledgeBase(): Promise<string> {
-  const [specSnap, mediciSnap, patSnap, newsSnap, convSnap, site] = await Promise.all([
-    adminDb.collection('specialistiche').get(),
-    adminDb.collection('medici').get(),
-    adminDb.collection('patologie').get(),
-    adminDb.collection('news_eventi').get(),
-    adminDb.collection('convenzioni').get(),
-    getSiteConfig(),
-  ])
+  const [specSnap, mediciSnap, patSnap, newsSnap, convSnap, storiaSnap, ricSnap, site] =
+    await Promise.all([
+      adminDb.collection('specialistiche').get(),
+      adminDb.collection('medici').get(),
+      adminDb.collection('patologie').get(),
+      adminDb.collection('news_eventi').get(),
+      adminDb.collection('convenzioni').get(),
+      adminDb.collection('storia_eventi').get(),
+      adminDb.collection('riconoscimenti').get(),
+      getSiteConfig(),
+    ])
 
   const specialistiche = specSnap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Specialistica, 'id'>) }))
@@ -72,6 +78,15 @@ async function buildKnowledgeBase(): Promise<string> {
   const convenzioni = convSnap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Convenzione, 'id'>) }))
     .filter((c) => c.attiva)
+
+  const storia = storiaSnap.docs
+    .map((d) => ({ id: d.id, ...(d.data() as Omit<StoriaEvento, 'id'>) }))
+    .filter((e) => e.pubblicato === true)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+  const riconoscimenti = ricSnap.docs
+    .map((d) => ({ id: d.id, ...(d.data() as Omit<Riconoscimento, 'id'>) }))
+    .filter((r) => r.pubblicato === true)
 
   // Mappe id -> nome per risolvere le relazioni
   const specById = new Map(specialistiche.map((s) => [s.id, s.nome]))
@@ -104,7 +119,8 @@ async function buildKnowledgeBase(): Promise<string> {
   // ─── Specialistiche ──────────────────────────────────────────
   if (specialistiche.length > 0) {
     const lines = specialistiche.map((s) => {
-      const parts = [`• ${s.nome}`]
+      // Lo slug serve al bot per costruire i link di prenotazione precompilati
+      const parts = [`• ${s.nome} [slug: ${s.slug}] — pagina: ${specialisticaHref(s.slug)}`]
       if (s.descrizioneBreve) parts.push(`  Sintesi: ${s.descrizioneBreve}`)
       const desc = stripHtml(s.descrizione)
       if (desc) parts.push(`  Descrizione: ${truncate(desc, 600)}`)
@@ -124,7 +140,9 @@ async function buildKnowledgeBase(): Promise<string> {
   // ─── Medici ──────────────────────────────────────────────────
   if (medici.length > 0) {
     const lines = medici.map((m) => {
-      const parts = [`• ${m.nome}${m.mansione ? ` — ${m.mansione}` : ''}`]
+      const parts = [
+        `• ${m.nome}${m.mansione ? ` — ${m.mansione}` : ''} [slug: ${m.slug}] — pagina: /medici/${m.slug}`,
+      ]
       const aree = (m.specialisticheIds ?? [])
         .map((id) => specById.get(id))
         .filter(Boolean)
@@ -181,10 +199,35 @@ async function buildKnowledgeBase(): Promise<string> {
   // ─── Convenzioni ─────────────────────────────────────────────
   if (convenzioni.length > 0) {
     const lines = convenzioni.map((c) => {
-      const desc = c.descrizione ? ` — ${c.descrizione}` : ''
-      return `• ${c.nome}${desc}`
+      const parts = [`• ${c.nome}`]
+      if (c.sottotitolo) parts.push(`  Vantaggio: ${c.sottotitolo}`)
+      const desc = stripHtml(c.descrizione)
+      if (desc) parts.push(`  Dettagli: ${truncate(desc, 400)}`)
+      if (c.url) parts.push(`  Sito dell'ente: ${c.url}`)
+      return parts.join('\n')
     })
-    sections.push(`=== CONVENZIONI ATTIVE ===\n${lines.join('\n')}`)
+    sections.push(
+      `=== CONVENZIONI ATTIVE (pagina: /convenzioni) ===\n` +
+        'Per sapere se una convenzione copre una prestazione specifica, invitare a contattare il centro.\n' +
+        lines.join('\n')
+    )
+  }
+
+  // ─── Storia del centro ───────────────────────────────────────
+  if (storia.length > 0 || riconoscimenti.length > 0) {
+    const lines: string[] = []
+    for (const e of storia) {
+      const desc = stripHtml(e.descrizione)
+      lines.push(`• ${e.anno ? `${e.anno} — ` : ''}${e.titolo}${desc ? `: ${truncate(desc, 300)}` : ''}`)
+    }
+    if (riconoscimenti.length > 0) {
+      lines.push('Riconoscimenti:')
+      for (const r of riconoscimenti) {
+        const desc = stripHtml(r.descrizione)
+        lines.push(`• ${r.anno ? `${r.anno} — ` : ''}${r.titolo}${desc ? `: ${truncate(desc, 200)}` : ''}`)
+      }
+    }
+    sections.push(`=== STORIA DEL CENTRO (pagina: /storia) ===\n${lines.join('\n')}`)
   }
 
   return sections.join('\n\n')

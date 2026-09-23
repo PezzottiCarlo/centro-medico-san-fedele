@@ -4,6 +4,8 @@ import Image from 'next/image'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
+import { useRouter } from 'next/navigation'
+import { datiDaFrammento, salvaPrecompilazione } from '@/lib/prenotaPrecompilata'
 
 interface Message {
   id: string
@@ -28,21 +30,47 @@ function messaggioErrore(telefono: string, orari: string): string {
 
 // Componenti custom per ReactMarkdown nelle bolle del bot — link in rosso brand,
 // elenchi compatti, niente titoli/tabelle (il system prompt vieta markdown pesante).
+const EVENTO_CHIUDI_CHAT = 'sanfedele:chiudi-chat'
+
+/**
+ * Link nelle risposte del bot. Quelli interni navigano senza ricaricare la
+ * pagina; quello di prenotazione porta con sé, dopo il "#", i dati emersi in
+ * chat: vengono passati al modulo e tolti dall'URL (vedi lib/prenotaPrecompilata).
+ */
+function LinkBot({ href, children }: { href?: string; children?: React.ReactNode }) {
+  const router = useRouter()
+  const isExternal = !!href && /^https?:\/\//i.test(href)
+  const isInterno = !!href && href.startsWith('/')
+
+  function suClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (!isInterno || !href || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    e.preventDefault()
+    const url = new URL(href, window.location.origin)
+    if (url.pathname === '/prenota') {
+      salvaPrecompilazione(datiDaFrammento(url.hash))
+      // Il modulo deve essere visibile: la chat si chiude
+      window.dispatchEvent(new CustomEvent(EVENTO_CHIUDI_CHAT))
+    }
+    router.push(url.pathname + url.search)
+  }
+
+  return (
+    <a
+      // Il frammento con i dati personali resta fuori anche dall'href mostrato
+      href={isInterno && href ? href.split('#')[0] : href}
+      onClick={suClick}
+      target={isExternal ? '_blank' : undefined}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
+      className="font-medium underline underline-offset-2 hover:opacity-80 break-words"
+      style={{ color: '#D05241' }}
+    >
+      {children}
+    </a>
+  )
+}
+
 const botMarkdownComponents: Components = {
-  a: ({ href, children }) => {
-    const isExternal = !!href && /^https?:\/\//i.test(href)
-    return (
-      <a
-        href={href}
-        target={isExternal ? '_blank' : undefined}
-        rel={isExternal ? 'noopener noreferrer' : undefined}
-        className="font-medium underline underline-offset-2 hover:opacity-80 break-words"
-        style={{ color: '#D05241' }}
-      >
-        {children}
-      </a>
-    )
-  },
+  a: ({ href, children }) => <LinkBot href={href}>{children}</LinkBot>,
   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
   ul: ({ children }) => <ul className="list-disc pl-5 my-2 space-y-0.5">{children}</ul>,
   ol: ({ children }) => <ol className="list-decimal pl-5 my-2 space-y-0.5">{children}</ol>,
@@ -150,8 +178,13 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
       // Autofocus input at bottom once the window is visible
       setTimeout(() => inputRef.current?.focus(), 450)
     }
+    const chiudi = () => setOpen(false)
     window.addEventListener('sanfedele:open-chat', openHandler)
-    return () => window.removeEventListener('sanfedele:open-chat', openHandler)
+    window.addEventListener(EVENTO_CHIUDI_CHAT, chiudi)
+    return () => {
+      window.removeEventListener('sanfedele:open-chat', openHandler)
+      window.removeEventListener(EVENTO_CHIUDI_CHAT, chiudi)
+    }
   }, [dismissTeaser])
 
   const scrollToBottom = useCallback(() => {
@@ -530,8 +563,14 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
 
         {/* Fumetto di invito — dice esplicitamente a cosa serve il bottone.
             Il margine inferiore lascia spazio alla mela appesa sopra il FAB. */}
-        {!chatVisible && mounted && teaser && !suggerimentoScroll && (
-          <div className="relative z-[52] mb-12 sm:mb-14 max-w-[15rem] teaser-in">
+        {/* Su mobile aspetta che sparisca l'invito a scorrere della home, che sta
+            nello stesso spazio in basso; su desktop c'è posto per entrambi. */}
+        {!chatVisible && mounted && teaser && (
+          <div
+            className={`relative z-[52] mb-12 sm:mb-14 max-w-[15rem] teaser-in ${
+              suggerimentoScroll ? 'max-md:hidden' : ''
+            }`}
+          >
             <button
               type="button"
               onClick={() => {

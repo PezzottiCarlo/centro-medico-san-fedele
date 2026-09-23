@@ -72,11 +72,20 @@ export async function generateReply(
     contents,
     config: {
       systemInstruction: systemPrompt,
-      maxOutputTokens: 1024,
+      // Nei modelli Gemini che "ragionano" i token del ragionamento contano nel
+      // limite di output: con 1024 il ragionamento se li mangiava e le risposte
+      // (link di prenotazione compresi) si interrompevano a metà. Il ragionamento
+      // ha un tetto suo, la risposta tutto lo spazio che le serve.
+      maxOutputTokens: 4096,
+      thinkingConfig: { thinkingBudget: 1024 },
       temperature: 0.3,
     },
   })
 
+  const fine = response.candidates?.[0]?.finishReason
+  if (fine && fine !== 'STOP') {
+    console.warn('[chatbot] risposta interrotta:', fine, JSON.stringify(response.usageMetadata))
+  }
   const text = response.text?.trim()
   if (!text) {
     throw new Error('Risposta vuota dal modello')
