@@ -15,10 +15,12 @@ const PrenotaSchema = z.object({
   cognome: z.string().min(2, 'Cognome troppo corto').max(100),
   telefono: z.string().min(6, 'Telefono non valido').max(20),
   email: z.string().email('Email non valida'),
-  messaggio: z.string().min(5, 'Messaggio troppo corto').max(1000),
+  messaggio: z.string().trim().max(1000).default(''),
   specialistica: z.string().optional(),
   sottoSpecialistica: z.string().optional(),
   medico: z.string().optional(),
+  // Il paziente non ha scelto servizio o medico e chiede di essere richiamato
+  consultoTelefonico: z.boolean().optional().default(false),
   recaptchaToken: z.string().optional(),
   // Prova del consenso (art. 7 §1 GDPR): senza quello obbligatorio la richiesta
   // non viene accettata nemmeno se il client aggira la checkbox.
@@ -29,6 +31,13 @@ const PrenotaSchema = z.object({
     .refine((v) => v, 'Devi acconsentire al trattamento dei dati per inviare la richiesta'),
   consensoMarketing: z.boolean().optional().default(false),
 })
+  // Il messaggio è facoltativo solo quando la richiesta dice già di cosa si
+  // tratta (prenotazione di un servizio o consulto telefonico); dal modulo
+  // contatti, invece, è l'unico contenuto.
+  .refine((d) => d.messaggio.length >= 5 || !!d.specialistica || d.consultoTelefonico, {
+    message: 'Messaggio troppo corto',
+    path: ['messaggio'],
+  })
 
 export async function POST(request: NextRequest) {
   const ip = ipChiamante(request.headers)

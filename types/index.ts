@@ -102,6 +102,7 @@ export interface Lead {
   specialistica?: string
   sottoSpecialistica?: string
   medico?: string
+  consultoTelefonico?: boolean // chiede di essere richiamato senza scegliere servizio o medico
   timestamp: string // ISO string
   letto: boolean
   evaso?: boolean

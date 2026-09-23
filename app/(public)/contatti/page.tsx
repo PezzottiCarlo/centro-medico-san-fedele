@@ -115,7 +115,8 @@ export default async function ContattiPage() {
             </div>
           </div>
 
-          <div>
+          {/* Ancora dei link "Contattaci" (es. dal modulo di prenotazione) */}
+          <div id="modulo-contatti" className="scroll-mt-28">
             <h2 className="heading-2 mb-2">Scrivici</h2>
             <p className="text-gray-500 mb-6 sm:mb-8">
               Per qualsiasi informazione — orari, servizi, convenzioni o altro — compila il modulo

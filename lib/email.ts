@@ -52,6 +52,7 @@ export interface LeadEmailData {
   specialistica?: string
   sottoSpecialistica?: string
   medico?: string
+  consultoTelefonico?: boolean
 }
 
 const CID_LOGO = 'logo-sanfedele'
@@ -204,6 +205,7 @@ function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string 
     </tr>`
 
   const serviceRows = [
+    data.consultoTelefonico && detailRow('Tipo di richiesta', '<strong>Consulto telefonico</strong> — richiamare il paziente'),
     data.specialistica && detailRow('Specialistica', escape(data.specialistica)),
     data.sottoSpecialistica && detailRow('Sotto-specialistica', escape(data.sottoSpecialistica)),
     data.medico && detailRow('Medico richiesto', escape(data.medico)),
@@ -249,12 +251,13 @@ function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string 
       </td>
     </tr>` : ''}
 
+    ${data.messaggio ? `
     <tr>
       <td style="padding:24px 32px 0 32px;">
         <p style="margin:0 0 8px 0;font-size:11px;font-weight:700;color:${C.textSoft};letter-spacing:0.06em;text-transform:uppercase;">Messaggio</p>
         <div style="padding:16px 18px;background:${C.bgSoft};border-left:3px solid ${C.primary};border-radius:6px;font-size:14px;color:${C.text};line-height:1.6;white-space:pre-wrap;">${nl2br(data.messaggio)}</div>
       </td>
-    </tr>
+    </tr>` : ''}
 
     <tr>
       <td style="padding:28px 32px 32px 32px;">
@@ -283,6 +286,7 @@ function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string 
 
 function buildPatientHtml(data: LeadEmailData, centro: CentroBrand): string {
   const summary = [
+    data.consultoTelefonico && `<li style="padding:4px 0;color:${C.text};"><strong>Richiesta:</strong> consulto telefonico</li>`,
     data.specialistica && `<li style="padding:4px 0;color:${C.text};"><strong>Specialistica:</strong> ${escape(data.specialistica)}</li>`,
     data.sottoSpecialistica && `<li style="padding:4px 0;color:${C.text};"><strong>Servizio:</strong> ${escape(data.sottoSpecialistica)}</li>`,
     data.medico && `<li style="padding:4px 0;color:${C.text};"><strong>Medico richiesto:</strong> ${escape(data.medico)}</li>`,
@@ -386,7 +390,7 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
     from: `"Portale ${centro.nome}" <${EMAIL_FROM}>`,
     to: EMAIL_TO,
     replyTo: `"${fullName}" <${data.email}>`,
-    subject: `Nuova richiesta — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
+    subject: `${data.consultoTelefonico ? 'Consulto telefonico' : 'Nuova richiesta'} — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
     html: buildSecretariatHtml(data, centro),
     attachments,
   })

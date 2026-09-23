@@ -149,6 +149,11 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
                       </a>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
+                      {lead.consultoTelefonico && (
+                        <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full">
+                          Consulto telefonico
+                        </span>
+                      )}
                       {lead.specialistica && (
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           {lead.specialistica}

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
+import { CheckCircle, ChevronRight, ChevronLeft, Loader2, Phone, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
 import { useRecaptcha } from '@/hooks/useRecaptcha'
@@ -31,6 +32,8 @@ interface Medico {
   suChiamata: boolean
 }
 
+type Step = 'spec' | 'sotto' | 'medico' | 'dati'
+
 /* ── Component ─────────────────────────────────────────────── */
 
 export function PrenotaForm({
@@ -42,9 +45,20 @@ export function PrenotaForm({
 }) {
   const searchParams = useSearchParams()
 
-  const preselectedSpec = searchParams.get('specialistica') || ''
   const preselectedMedico = searchParams.get('medico') || ''
   const preselectedSotto = searchParams.get('sottoSpecialistica') || ''
+  // `step=dati` porta subito ai dati personali (es. "Prenota ora" della pagina
+  // DSA): la specialistica è già decisa, il resto lo chiarisce la segreteria.
+  const direttoAiDati = searchParams.get('step') === 'dati'
+
+  // Dalla pagina di un medico arriva solo il medico: se lavora in una sola
+  // specialistica si può dedurre, e il paziente salta dritto ai suoi dati.
+  const medicoPreselezionato = medici.find((m) => m.slug === preselectedMedico)
+  const specDelMedico = medicoPreselezionato
+    ? specialistiche.filter((s) => medicoPreselezionato.specialisticheIds.includes(s.id))
+    : []
+  const preselectedSpec =
+    searchParams.get('specialistica') || (specDelMedico.length === 1 ? specDelMedico[0].slug : '')
 
   // Oggetto sotto-specialistica preselezionato (se la spec lo contiene)
   const preselectedSottoObj = preselectedSpec
@@ -55,13 +69,14 @@ export function PrenotaForm({
 
   // Calcola lo step iniziale saltando quelli che sarebbero vuoti dato il preselect
   function computeInitial(): {
-    step: 'spec' | 'sotto' | 'medico' | 'dati'
+    step: Step
     skippedMedico: boolean
   } {
     if (!preselectedSpec) return { step: 'spec', skippedMedico: false }
     const spec = specialistiche.find((s) => s.slug === preselectedSpec)
     if (!spec) return { step: 'spec', skippedMedico: false }
-    if (preselectedMedico) return { step: 'dati', skippedMedico: false }
+    if (medicoPreselezionato) return { step: 'dati', skippedMedico: false }
+    if (direttoAiDati) return { step: 'dati', skippedMedico: true }
     if (preselectedSottoObj) {
       const mediciDisponibili = medici.filter(
         (m) => m.sottoSpecialisticheIds.includes(preselectedSottoObj.id) && !m.suChiamata
@@ -80,10 +95,20 @@ export function PrenotaForm({
     return { step: 'dati', skippedMedico: true }
   }
 
-  // step: 'spec' | 'sotto' | 'medico' | 'dati'
-  const [step, setStep] = useState<'spec' | 'sotto' | 'medico' | 'dati'>(
-    () => computeInitial().step
-  )
+  const [step, setStep] = useState<Step>(() => computeInitial().step)
+  const primoRender = useRef(true)
+
+  // A ogni cambio di step la pagina torna in cima: il passo nuovo inizia
+  // dall'alto e non resta a metà dello schermo dove si trovava il precedente.
+  useEffect(() => {
+    if (primoRender.current) {
+      primoRender.current = false
+      return
+    }
+    const ridotto = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top: 0, behavior: ridotto ? 'auto' : 'smooth' })
+  }, [step])
+
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -92,7 +117,10 @@ export function PrenotaForm({
   const [specSlug, setSpecSlug] = useState(preselectedSpec)
   const [sottoNome, setSottoNome] = useState(preselectedSottoObj?.nome ?? '')
   const [sottoId, setSottoId] = useState(preselectedSottoObj?.id ?? '')
-  const [medicoSlug, setMedicoSlug] = useState(preselectedMedico)
+  const [medicoSlug, setMedicoSlug] = useState(medicoPreselezionato ? preselectedMedico : '')
+  // Il paziente non sceglie servizio o medico: vuole essere richiamato
+  const [consulto, setConsulto] = useState(false)
+  const [consultoDa, setConsultoDa] = useState<Step>('spec')
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [telefono, setTelefono] = useState('')
@@ -152,13 +180,22 @@ export function PrenotaForm({
   /* ── Navigation ────────────────────────────────────────── */
 
   function selectSpecialistica(slug: string) {
+    const spec = specialistiche.find((s) => s.slug === slug)
     setSpecSlug(slug)
     setSottoNome('')
     setSottoId('')
-    setMedicoSlug('')
     setSkippedMedico(false)
+    setConsulto(false)
 
-    const spec = specialistiche.find((s) => s.slug === slug)
+    // Medico arrivato dalla sua pagina: se lavora in questa specialistica
+    // resta scelto e il paziente passa direttamente ai dati
+    if (spec && medicoPreselezionato?.specialisticheIds.includes(spec.id)) {
+      setMedicoSlug(medicoPreselezionato.slug)
+      setStep('dati')
+      return
+    }
+    setMedicoSlug('')
+
     if (spec && spec.sottoSpecialistiche && spec.sottoSpecialistiche.length > 0) {
       setStep('sotto')
     } else {
@@ -187,26 +224,34 @@ export function PrenotaForm({
     }
   }
 
-  function skipSottoSpecialistica() {
+  // Al posto di "nessuna preferenza": niente servizio né medico, la segreteria
+  // richiama il paziente e lo indirizza. Si passa subito ai dati personali.
+  function richiediConsulto() {
     setSottoId('')
     setSottoNome('')
     setMedicoSlug('')
-    setSkippedMedico(false)
-    setStep('medico')
+    setConsulto(true)
+    setConsultoDa(step)
+    setStep('dati')
   }
 
   function selectMedico(slug: string) {
     setMedicoSlug(slug)
+    setConsulto(false)
     setStep('dati')
   }
 
+  // Nessun medico disponibile per la selezione: si prosegue senza sceglierlo
   function skipMedico() {
     setMedicoSlug('')
     setStep('dati')
   }
 
   function goBack() {
-    if (step === 'dati') {
+    if (step === 'dati' && consulto) {
+      setConsulto(false)
+      setStep(consultoDa)
+    } else if (step === 'dati') {
       if (skippedMedico) {
         // Il medico era stato saltato → torna a sotto-spec (o spec)
         setStep(hasSottoSpecs ? 'sotto' : 'spec')
@@ -234,6 +279,7 @@ export function PrenotaForm({
           specialistica: specSlug,
           sottoSpecialistica: sottoNome,
           medico: medicoSlug,
+          consultoTelefonico: consulto,
           nome,
           cognome,
           telefono,
@@ -265,7 +311,7 @@ export function PrenotaForm({
         <h2 className="heading-3 mb-2">Richiesta inviata!</h2>
         <p className="text-gray-500 max-w-md mx-auto">
           Grazie {nome} {cognome}! Ti contatteremo al numero {telefono} entro 24 ore lavorative
-          per confermare la tua prenotazione.
+          {consulto ? ' per il consulto telefonico.' : ' per confermare la tua prenotazione.'}
         </p>
       </div>
     )
@@ -275,6 +321,21 @@ export function PrenotaForm({
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Via d'uscita per chi non trova il servizio: prima cosa della pagina */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-primary/15 bg-bg-soft px-5 py-4">
+        <MessageCircle size={22} className="text-primary flex-shrink-0 hidden sm:block" aria-hidden />
+        <p className="text-sm text-text-main/80 flex-1">
+          <strong className="text-text-main">Non trovi quello che cerchi?</strong> Scrivici e ti
+          aiutiamo a scegliere il servizio o lo specialista giusto.
+        </p>
+        <Link
+          href="/contatti#modulo-contatti"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark transition-colors whitespace-nowrap"
+        >
+          Contattaci <ChevronRight size={16} />
+        </Link>
+      </div>
+
       {/* Stepper */}
       <div className="flex items-center justify-center mb-10">
         {visibleSteps.map((s, i) => (
@@ -330,15 +391,11 @@ export function PrenotaForm({
       {step === 'sotto' && (
         <div>
           <h2 className="heading-3 mb-2">Scegli la sotto-specialistica</h2>
-          <p className="text-gray-400 text-sm mb-6">Opzionale — puoi anche saltare questo passaggio.</p>
+          <p className="text-gray-400 text-sm mb-6">
+            Non sai quale scegliere? Richiedi un consulto telefonico: ti richiamiamo noi.
+          </p>
           <div className="space-y-3">
-            <button
-              onClick={skipSottoSpecialistica}
-              className="w-full flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-gray-200 hover:border-primary hover:bg-primary/5"
-            >
-              <span className="font-medium text-gray-500">Nessuna preferenza, salta</span>
-              <ChevronRight size={16} className="ml-auto text-gray-300" />
-            </button>
+            <ConsultoButton onClick={richiediConsulto} />
             {sottoSpecs.map((s) => {
               const count = medici.filter((m) => m.sottoSpecialisticheIds.includes(s.id)).length
               return (
@@ -372,6 +429,7 @@ export function PrenotaForm({
           medici={availableMedici}
           onSelect={selectMedico}
           onSkip={skipMedico}
+          onConsulto={richiediConsulto}
           onBack={goBack}
         />
       )}
@@ -379,7 +437,13 @@ export function PrenotaForm({
       {/* ── Step: Dati personali ─────────────────────────── */}
       {step === 'dati' && (
         <div>
-          <h2 className="heading-3 mb-6">I tuoi dati</h2>
+          <h2 className="heading-3 mb-4">I tuoi dati</h2>
+          <RiepilogoScelta
+            consulto={consulto}
+            specialistica={selectedSpec?.nome}
+            sotto={sottoNome}
+            medico={medici.find((m) => m.slug === medicoSlug)?.nome}
+          />
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -478,11 +542,13 @@ function MedicoStep({
   medici,
   onSelect,
   onSkip,
+  onConsulto,
   onBack,
 }: {
   medici: { id: string; nome: string; slug: string }[]
   onSelect: (slug: string) => void
   onSkip: () => void
+  onConsulto: () => void
   onBack: () => void
 }) {
   if (medici.length === 0) {
@@ -513,13 +579,7 @@ function MedicoStep({
     <div>
       <h2 className="heading-3 mb-6">Scegli il medico (opzionale)</h2>
       <div className="space-y-3">
-        <button
-          onClick={onSkip}
-          className="w-full flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-gray-200 hover:border-primary hover:bg-primary/5"
-        >
-          <span className="font-medium text-gray-500">Nessuna preferenza</span>
-          <ChevronRight size={16} className="ml-auto text-gray-300" />
-        </button>
+        <ConsultoButton onClick={onConsulto} />
         {medici.map((m) => (
           <button
             key={m.id}
@@ -539,6 +599,57 @@ function MedicoStep({
           <ChevronLeft size={18} /> Indietro
         </button>
       </div>
+    </div>
+  )
+}
+
+/* ── Consulto telefonico ───────────────────────────────────── */
+
+function ConsultoButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10"
+    >
+      <span className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0">
+        <Phone size={18} aria-hidden />
+      </span>
+      <span>
+        <span className="block font-semibold text-text-main">Richiedi consulto telefonico</span>
+        <span className="block text-xs text-gray-500">
+          Non sai cosa scegliere? Lasciaci i tuoi dati, ti richiamiamo noi.
+        </span>
+      </span>
+      <ChevronRight size={16} className="ml-auto text-primary flex-shrink-0" />
+    </button>
+  )
+}
+
+/** Ricorda nel passo finale cosa si sta prenotando (o che è un consulto). */
+function RiepilogoScelta({
+  consulto,
+  specialistica,
+  sotto,
+  medico,
+}: {
+  consulto: boolean
+  specialistica?: string
+  sotto?: string
+  medico?: string
+}) {
+  const voci = consulto
+    ? ['Consulto telefonico', specialistica].filter(Boolean)
+    : [specialistica, sotto, medico].filter(Boolean)
+  if (voci.length === 0) return null
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-gray-500">{consulto ? 'Richiesta:' : 'Stai prenotando:'}</span>
+      {voci.map((v) => (
+        <span key={v} className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
+          {v}
+        </span>
+      ))}
     </div>
   )
 }
