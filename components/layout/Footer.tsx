@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Phone, Mail, MapPin, Clock, Instagram, Facebook, Linkedin } from 'lucide-react'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { ANNO_FONDAZIONE } from '@/lib/siteConfig'
 
 // Accetta solo indirizzi web veri: un campo lasciato a metà o un `javascript:`
 // non diventano un link nel footer.
@@ -38,7 +39,7 @@ export async function Footer() {
             </div>
           </div>
           <p className="text-gray-400 text-sm leading-relaxed max-w-md text-center md:text-left">
-            Centro medico d&apos;eccellenza a {site.citta}. Cura, competenza e attenzione alla persona dal 2008.
+            Centro medico d&apos;eccellenza a {site.citta}. Cura, competenza e attenzione alla persona dal {ANNO_FONDAZIONE}.
           </p>
           {social.length > 0 && (
             <div className="flex items-center gap-3">

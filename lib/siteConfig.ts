@@ -1,5 +1,12 @@
-import { Award, Users, Clock, Shield } from 'lucide-react'
 import type { SiteConfig } from '@/types'
+
+/** Anno di apertura del centro: da qui si contano gli anni di attività. */
+export const ANNO_FONDAZIONE = 2008
+
+/** Anni compiuti dall'apertura, aggiornati da soli ogni anno. */
+export function anniDiAttivita(): number {
+  return new Date().getFullYear() - ANNO_FONDAZIONE
+}
 
 /** Orari di apertura su una riga, per i messaggi brevi (chatbot, email). */
 export function orariInBreve(site: Pick<SiteConfig, 'orari'>): string {
@@ -43,10 +50,3 @@ export const SITE_CONFIG_DEFAULT: SiteConfig = {
     'Con quali assicurazioni siete convenzionati?',
   ],
 }
-
-export const SITE_STATS = [
-  { icon: Award, label: 'Anni di eccellenza', value: '20+' },
-  { icon: Users, label: 'Pazienti assistiti', value: '50.000+' },
-  { icon: Clock, label: 'Specialistiche', value: '80+' },
-  { icon: Shield, label: 'Medici specialisti', value: '30+' },
-]

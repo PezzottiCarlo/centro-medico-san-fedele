@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { ANNO_FONDAZIONE, anniDiAttivita } from '@/lib/siteConfig'
 import { generatePageMetadata, localitaCentro, generateStoriaImageGalleryJsonLd } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
 import type { StoriaEvento, Riconoscimento } from '@/types'
@@ -16,7 +17,7 @@ export async function generateMetadata() {
   return generatePageMetadata({
     title: 'La Nostra Storia',
     description:
-      `Scopri la storia del Centro Medico San Fedele: oltre 20 anni al servizio della salute a ${localitaCentro(site)}.`,
+      `Scopri la storia del Centro Medico San Fedele: dal ${ANNO_FONDAZIONE}, ${anniDiAttivita()} anni al servizio della salute a ${localitaCentro(site)}.`,
     slug: 'storia',
   })
 }
@@ -125,7 +126,7 @@ export default async function StoriaPage() {
                           aria-hidden
                           className="select-none block text-[6rem] md:text-[10rem] leading-none font-black tracking-tighter"
                           style={{
-                            WebkitTextStroke: '2px rgba(26,123,181,0.18)',
+                            WebkitTextStroke: '2px rgba(45,83,123,0.18)',
                             color: 'transparent',
                           }}
                         >
@@ -152,7 +153,7 @@ export default async function StoriaPage() {
                     {/* Contenuto — col-span 7, immagine + testo bento */}
                     <div className="md:col-span-7">
                       <div
-                        className={`relative bg-white/90 backdrop-blur rounded-2xl p-6 md:p-7 border border-primary/10 shadow-[0_8px_30px_-12px_rgba(26,123,181,0.18)] hover:shadow-[0_16px_40px_-12px_rgba(26,123,181,0.28)] hover:-translate-y-1 transition-all duration-300`}
+                        className={`relative bg-white/90 backdrop-blur rounded-2xl p-6 md:p-7 border border-primary/10 shadow-[0_8px_30px_-12px_rgba(45,83,123,0.18)] hover:shadow-[0_16px_40px_-12px_rgba(45,83,123,0.28)] hover:-translate-y-1 transition-all duration-300`}
                       >
                         {evento.immagine && (
                           <div className="relative w-full max-h-80 rounded-xl overflow-hidden mb-5 ring-1 ring-primary/10 bg-bg-soft flex items-center justify-center">

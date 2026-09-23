@@ -10,6 +10,7 @@ import { adminDb } from '@/lib/firebase/admin'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { getGoogleRiepilogo, getReviews } from '@/lib/reviews'
+import { ANNO_FONDAZIONE, anniDiAttivita } from '@/lib/siteConfig'
 import { GoogleRiepilogoBadge } from '@/components/home/GoogleRiepilogoBadge'
 import type { Specialistica, Convenzione, Medico, Patologia } from '@/types'
 
@@ -62,6 +63,9 @@ export default async function HomePage() {
       getSiteConfig(),
       getGoogleRiepilogo(),
     ])
+
+  // Dati reali: anni dall'apertura, medici e specialistiche pubblicati
+  const anni = anniDiAttivita()
 
   return (
     <>
@@ -132,9 +136,11 @@ export default async function HomePage() {
               <p className="text-primary-dark uppercase text-xs tracking-widest font-bold mb-2">
                 La nostra storia
               </p>
-              <h2 className="heading-2 mb-4 text-text-main">Oltre 20 anni al servizio della salute</h2>
+              <h2 className="heading-2 mb-4 text-text-main">
+                {anni} anni al servizio della salute
+              </h2>
               <p className="text-text-main/70 leading-relaxed mb-6 text-base sm:text-lg">
-                Nati a Longone al Segrino nel 2008, siamo cresciuti per diventare un punto di
+                Nati a {site.citta} nel {ANNO_FONDAZIONE}, siamo cresciuti per diventare un punto di
                 riferimento nella Provincia di Como per la cura e il benessere della persona.
               </p>
               <div className="mt-2">
@@ -150,18 +156,22 @@ export default async function HomePage() {
             </div>
             <div className="flex-shrink-0 grid grid-cols-2 gap-4 md:gap-6">
               <div className="bg-white rounded-lg p-6 text-center shadow-card">
-                <div className="text-4xl font-black text-primary">20+</div>
-                <div className="text-sm text-text-main/60 mt-1 font-medium">Anni di esperienza</div>
+                <div className="text-4xl font-black text-primary">{anni}</div>
+                <div className="text-sm text-text-main/60 mt-1 font-medium">
+                  Anni di esperienza
+                  <span className="block text-xs text-text-main/50">dal {ANNO_FONDAZIONE}</span>
+                </div>
               </div>
               <div className="bg-white rounded-lg p-6 text-center shadow-card mt-6">
-                <div className="text-4xl font-black text-primary">12</div>
+                <div className="text-4xl font-black text-primary">{medici.length}</div>
                 <div className="text-sm text-text-main/60 mt-1 font-medium">Medici specialisti</div>
               </div>
               <div className="bg-white rounded-lg p-6 text-center shadow-card">
-                <div className="text-4xl font-black text-primary">6</div>
+                <div className="text-4xl font-black text-primary">{specialistiche.length}</div>
                 <div className="text-sm text-text-main/60 mt-1 font-medium">Specialistiche</div>
               </div>
               <div className="bg-white rounded-lg p-6 text-center shadow-card mt-6">
+                {/* Unico dato fisso: non c'è una fonte da cui calcolarlo */}
                 <div className="text-4xl font-black text-primary">98%</div>
                 <div className="text-sm text-text-main/60 mt-1 font-medium">Soddisfazione</div>
               </div>
