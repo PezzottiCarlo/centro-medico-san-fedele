@@ -1,7 +1,7 @@
 import { ReviewsSlider } from '@/components/home/ReviewsSlider'
 import { ConvenzioniScroller } from '@/components/home/ConvenzioniScroller'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
-import { HomeContactForm } from '@/components/home/HomeContactForm'
+import { InfoRapide } from '@/components/home/InfoRapide'
 import { HomeHeroZoom } from '@/components/home/HomeHeroZoom'
 import { SpecialtySearchGrid } from '@/components/home/SpecialtySearchGrid'
 import { MelaButton } from '@/components/ui/MelaButton'
@@ -9,7 +9,8 @@ import { generatePageMetadata } from '@/lib/seo'
 import { adminDb } from '@/lib/firebase/admin'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
-import { getReviews } from '@/lib/reviews'
+import { getGoogleRiepilogo, getReviews } from '@/lib/reviews'
+import { GoogleRiepilogoBadge } from '@/components/home/GoogleRiepilogoBadge'
 import type { Specialistica, Convenzione, Medico, Patologia } from '@/types'
 
 export const revalidate = 60
@@ -54,35 +55,24 @@ async function getHomeData() {
 }
 
 export default async function HomePage() {
-  const [{ specialistiche, reviews, convenzioni, medici, patologie }, hero] = await Promise.all([
-    getHomeData(),
-    getHeroConfig('home'),
-  ])
+  const [{ specialistiche, reviews, convenzioni, medici, patologie }, hero, site, google] =
+    await Promise.all([
+      getHomeData(),
+      getHeroConfig('home'),
+      getSiteConfig(),
+      getGoogleRiepilogo(),
+    ])
 
   return (
     <>
-      {/* 1. Hero scroll-reveal: bg pulito → titolo → bottoni */}
+      {/* Hero: foto con la mascotte, titolo e bottoni che entrano da soli */}
       <HomeHeroZoom config={hero} />
 
-      {/* 3. Convenzioni scroller infinito */}
-      {convenzioni.length > 0 && (
-        <section className="py-12 bg-white border-y border-bg-soft overflow-hidden">
-          <div className="container-main mb-8">
-            <p className="text-center text-xs font-bold text-primary uppercase tracking-widest mb-2">
-              Convenzioni &amp; Partner
-            </p>
-            <h2 className="text-center text-2xl md:text-3xl font-light text-text-main">
-              Lavoriamo con i principali enti assicurativi
-            </h2>
-          </div>
-          <ConvenzioniScroller convenzioni={convenzioni} />
-          <div className="flex justify-center mt-12 md:mt-16">
-            <MelaButton href="/convenzioni" mela="welcome">
-              Scopri i nostri partner
-            </MelaButton>
-          </div>
-        </section>
-      )}
+      {/* Orari, modulo di contatto e chiamata: le prime cose che si cercano */}
+      <InfoRapide
+        site={site}
+        specialistiche={specialistiche.map((s) => ({ id: s.id, nome: s.nome }))}
+      />
 
       {/* 4. Specialistiche con search bar */}
       {specialistiche.length > 0 && (
@@ -180,8 +170,28 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Convenzioni scroller infinito — dopo la storia */}
+      {convenzioni.length > 0 && (
+        <section className="py-12 bg-white border-y border-bg-soft overflow-hidden">
+          <div className="container-main mb-8">
+            <p className="text-center text-xs font-bold text-primary uppercase tracking-widest mb-2">
+              Convenzioni &amp; Partner
+            </p>
+            <h2 className="text-center text-2xl md:text-3xl font-light text-text-main">
+              Lavoriamo con i principali enti assicurativi
+            </h2>
+          </div>
+          <ConvenzioniScroller convenzioni={convenzioni} />
+          <div className="flex justify-center mt-12 md:mt-16">
+            <MelaButton href="/convenzioni" mela="welcome">
+              Scopri i nostri partner
+            </MelaButton>
+          </div>
+        </section>
+      )}
+
       {/* 7. Recensioni — cosa dicono di noi */}
-      {reviews.length > 0 && (
+      {(reviews.length > 0 || google) && (
         <section className="section bg-white">
           <div className="container-main">
             <div className="text-center mb-12">
@@ -193,31 +203,12 @@ export default async function HomePage() {
                 La soddisfazione dei pazienti è la nostra ricompensa più grande.
               </p>
             </div>
+            {google && <GoogleRiepilogoBadge riepilogo={google} />}
             <ReviewsSlider reviews={reviews} />
           </div>
         </section>
       )}
 
-      {/* 8. Modulo contatto — bottom of page */}
-      <section className="section bg-gradient-to-br from-bg-soft via-white to-bg-soft">
-        <div className="container-main max-w-3xl">
-          <div className="text-center mb-10">
-            <p className="text-primary uppercase text-xs tracking-widest font-bold mb-2">
-              Modulo contatto
-            </p>
-            <h2 className="heading-2 mb-4">Contattaci subito</h2>
-            <p className="text-text-main/60 text-base sm:text-lg max-w-xl mx-auto">
-              Compila il modulo e ti risponderemo il prima possibile.
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-card-hover border border-primary/10 p-6 md:p-10">
-            <HomeContactForm
-              specialistiche={specialistiche.map((s) => ({ id: s.id, nome: s.nome }))}
-              embedded
-            />
-          </div>
-        </div>
-      </section>
     </>
   )
 }
