@@ -319,6 +319,8 @@ function PrenotaFormInterno({
   // Al posto di "nessuna preferenza": niente servizio né medico, la segreteria
   // richiama il paziente e lo indirizza. Si passa subito ai dati personali.
   function richiediConsulto() {
+    // Dal primo step non c'è ancora una specialistica: resta una richiesta generica
+    if (step === 'spec') setSpecSlug('')
     setSottoId('')
     setSottoNome('')
     setMedicoSlug('')
@@ -473,6 +475,9 @@ function PrenotaFormInterno({
       {step === 'spec' && (
         <div>
           <h2 className="heading-3 mb-6">Scegli la specialistica</h2>
+          <div className="mb-3">
+            <ConsultoButton onClick={richiediConsulto} />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {specialistiche.map((s) => (
               <button
