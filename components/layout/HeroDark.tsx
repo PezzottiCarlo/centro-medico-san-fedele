@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { CtaIcon } from '@/components/ui/CtaIcon'
 import type { HeroConfig, HeroCTA } from '@/types'
 
 interface HeroDarkProps {
@@ -19,10 +19,12 @@ function CTAButton({ cta, variant }: { cta: HeroCTA; variant: 'primary' | 'secon
       ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold hover:shadow-lg hover:shadow-emerald-500/25'
       : 'border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white'
 
+  // La freccia segue il testo, le altre icone (WhatsApp, telefono, calendario) lo precedono
   const content = (
     <>
+      {cta.icona !== 'arrow' && <CtaIcon kind={cta.icona} size={20} />}
       {cta.testo}
-      {cta.icona === 'arrow' && <ArrowRight className="w-5 h-5" />}
+      {cta.icona === 'arrow' && <CtaIcon kind="arrow" size={20} />}
     </>
   )
 
