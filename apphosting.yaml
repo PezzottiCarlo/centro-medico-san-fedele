@@ -127,3 +127,17 @@ env:
     secret: EMAIL_TO
     availability:
       - RUNTIME
+
+  # ─── Recensioni Google (RUNTIME only) ──────────────────────────
+  # Voto, totale e ultime recensioni della scheda Google del centro
+  # (lib/reviews.ts). La chiave resta un secret, solo lato server.
+  - variable: GOOGLE_PLACES_API_KEY
+    secret: GOOGLE_PLACES_API_KEY
+    availability:
+      - RUNTIME
+
+  # L'ID della scheda Google del centro non è un segreto
+  - variable: GOOGLE_PLACE_ID
+    value: ChIJgQik4WGghkcRiUorySo28zA
+    availability:
+      - RUNTIME
