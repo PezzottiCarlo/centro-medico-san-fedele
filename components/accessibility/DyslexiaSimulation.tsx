@@ -6,26 +6,18 @@ import { Eye, EyeOff } from 'lucide-react'
 const SAMPLE_TEXT =
   'Leggere non è sempre lineare. Per chi vive con la dislessia, le lettere possono sembrare in movimento, accavallarsi o cambiare forma sotto gli occhi.'
 
-interface LetterStyle {
-  transform: string
-  letterSpacing: string
-  fontSize: string
-  color?: string
-}
-
-function randomStyle(intensity: number): LetterStyle {
+// Solo `transform`: cambiando dimensione o spaziatura delle lettere il testo
+// andrebbe a capo in modo diverso a ogni ciclo e il riquadro cambierebbe
+// altezza, trascinando su e giù tutta la pagina. Le trasformazioni invece non
+// toccano l'impaginazione, quindi il box resta fermo.
+function randomTransform(intensity: number): string {
   const tx = (Math.random() - 0.5) * 8 * intensity
   const ty = (Math.random() - 0.5) * 8 * intensity
   const rot = (Math.random() - 0.5) * 20 * intensity
-  const scale = 1 + (Math.random() - 0.5) * 0.6 * intensity
+  // Scala della lettera e variazione di "corpo" del carattere, in un solo fattore
+  const scale = (1 + (Math.random() - 0.5) * 0.6 * intensity) * (1 + (Math.random() - 0.5) * 0.5 * intensity)
   const skew = (Math.random() - 0.5) * 15 * intensity
-  const spacing = (Math.random() - 0.5) * 0.3 * intensity
-  const fontScale = 1 + (Math.random() - 0.5) * 0.5 * intensity
-  return {
-    transform: `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${scale.toFixed(2)}) skewX(${skew.toFixed(1)}deg)`,
-    letterSpacing: `${spacing.toFixed(2)}em`,
-    fontSize: `${fontScale.toFixed(2)}em`,
-  }
+  return `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${scale.toFixed(2)}) skewX(${skew.toFixed(1)}deg)`
 }
 
 export function DyslexiaSimulation() {
@@ -42,7 +34,7 @@ export function DyslexiaSimulation() {
   // Regenerate styles on every tick
   const styles = useMemo(
     () =>
-      letters.map((ch) => (ch === ' ' ? null : randomStyle(active ? 1 : 0))),
+      letters.map((ch) => (ch === ' ' ? null : randomTransform(active ? 1 : 0))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tick, active, letters.length]
   )
@@ -87,13 +79,8 @@ export function DyslexiaSimulation() {
               <span
                 key={i}
                 aria-hidden="true"
-                className="inline-block transition-all duration-[2600ms] ease-in-out"
-                style={{
-                  transform: styles[i]?.transform,
-                  letterSpacing: styles[i]?.letterSpacing,
-                  fontSize: styles[i]?.fontSize,
-                  willChange: 'transform',
-                }}
+                className="inline-block transition-transform duration-[2600ms] ease-in-out"
+                style={{ transform: styles[i] ?? undefined, willChange: 'transform' }}
               >
                 {ch}
               </span>

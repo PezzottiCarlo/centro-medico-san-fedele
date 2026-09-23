@@ -10,6 +10,7 @@ import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { pulisciHtml } from '@/lib/sanitizeHtml'
+import { SottoSpecialisticheSection } from '@/components/specialistiche/SottoSpecialisticheSection'
 
 export const revalidate = 60
 export async function generateMetadata() {
@@ -158,6 +159,20 @@ export default async function DSAPage() {
         </div>
       </section>
 
+      {/* Sotto-servizi dell'area DSA: ognuno apre la sua scheda */}
+      {spec && (spec.sottoSpecialistiche?.length ?? 0) > 0 && (
+        <section className="section bg-white pt-0">
+          <div className="container-main">
+            <SottoSpecialisticheSection
+              sottoSpecialistiche={spec.sottoSpecialistiche ?? []}
+              specSlug={spec.slug}
+              specNome={spec.nome}
+              icona={spec.icona}
+            />
+          </div>
+        </section>
+      )}
+
       {/* Come funziona il percorso */}
       <section className="section bg-muted/50">
         <div className="container-main">
@@ -268,7 +283,7 @@ export default async function DSAPage() {
           <p className="text-white/80 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
             Il percorso inizia con una valutazione specialistica. I nostri esperti ti guideranno in ogni fase.
           </p>
-          <Link href="/prenota?specialistica=equipe-dsa" className="bg-white text-primary font-medium px-6 sm:px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-base sm:text-lg min-h-[44px]">
+          <Link href={`/prenota?specialistica=${spec?.slug ?? 'equipe-dsa'}&step=dati`} className="bg-white text-primary font-medium px-6 sm:px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-base sm:text-lg min-h-[44px]">
             Prenota adesso <ArrowRight size={18} />
           </Link>
         </div>
