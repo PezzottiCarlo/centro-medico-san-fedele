@@ -11,7 +11,7 @@ function ctaClasses(cta: HeroCTA): string {
     case 'whatsapp':
       return 'text-white bg-[#25D366] hover:bg-[#1ebe57] shadow-lg shadow-[#25D366]/30'
     case 'phone':
-      return 'text-white bg-sky-500 hover:bg-sky-400 shadow-lg shadow-sky-500/30'
+      return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
     case 'calendar':
       return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
     case 'arrow':
