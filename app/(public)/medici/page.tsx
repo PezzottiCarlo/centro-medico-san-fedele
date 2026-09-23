@@ -65,7 +65,12 @@ export default async function MediciPage() {
                   </div>
                   {/* Info */}
                   <div className="p-6">
-                    <h2 className="font-semibold text-text-main text-lg mb-2">{m.nome}</h2>
+                    <div className="mb-2">
+                      <h2 className="font-semibold text-text-main text-lg">{m.nome}</h2>
+                      {m.mansione && (
+                        <p className="text-primary font-semibold text-sm mt-0.5">{m.mansione}</p>
+                      )}
+                    </div>
                     <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-3">{m.bio}</p>
                     <span className="inline-flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
                       Visualizza profilo <ArrowRight size={14} />

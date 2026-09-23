@@ -1,5 +1,5 @@
 import { generatePageMetadata, localitaCentro } from '@/lib/seo'
-import { MapPin, Phone, Mail, Clock, Car, Train } from 'lucide-react'
+import { MapPin, Phone, Mail, Clock, Car, Train, Navigation } from 'lucide-react'
 import { ContactForm } from '@/components/home/ContactForm'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
@@ -10,18 +10,22 @@ export async function generateMetadata() {
   const site = await getSiteConfig()
   return generatePageMetadata({
     title: 'Contatti — Dove siamo',
-    description:
-      `Contatta il Centro Medico San Fedele. Indirizzo, telefono, email, orari e come raggiungerci a ${localitaCentro(site)}.`,
+    description: `Contatta il Centro Medico San Fedele. Indirizzo, telefono, email, orari e come raggiungerci a ${localitaCentro(site)}.`,
     slug: 'contatti',
   })
 }
 
 export default async function ContattiPage() {
   const [hero, site] = await Promise.all([getHeroConfig('contatti'), getSiteConfig()])
-  const telHref = `tel:${site.telefonoE164}`
+  const telHref = `tel:${site.telefonoE164.replace(/[^\d+]/g, '')}`
+  // Percorso dalla posizione attuale al centro: su telefono apre l'app Google
+  // Maps già in navigazione, su computer il calcolo del percorso sul sito
+  const navigazioneHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    `${site.indirizzo}, ${site.cap} ${site.citta} ${site.provincia}`,
+  )}`
   const mailHref = `mailto:${site.email}`
   const mapsEmbed = `https://www.google.com/maps?q=${encodeURIComponent(
-    `${site.indirizzo}, ${site.cap} ${site.citta}`
+    `${site.indirizzo}, ${site.cap} ${site.citta}`,
   )}&output=embed`
 
   return (
@@ -31,17 +35,37 @@ export default async function ContattiPage() {
       <div className="section">
         <div className="container-main space-y-12 sm:space-y-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-            <div className="bg-white rounded-lg shadow-card border border-gray-100 overflow-hidden min-h-[320px] sm:min-h-[400px]">
-              <iframe
-                src={mapsEmbed}
-                width="100%"
-                height="100%"
-                style={{ border: 0, display: 'block', minHeight: '320px' }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Mappa Centro Medico San Fedele"
-              />
+            <div className="flex flex-col gap-4">
+              <a
+                href={navigazioneHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-primary-dark px-6 py-5 text-white shadow-card-hover transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 transition-transform group-hover:scale-110">
+                  <Navigation size={24} className="fill-white/20" aria-hidden />
+                </span>
+                <span className="text-left">
+                  <span className="block text-xl sm:text-2xl font-bold leading-tight">
+                    Avvia navigazione
+                  </span>
+                  <span className="block text-sm text-white/80">
+                    Percorso con Google Maps fino al centro
+                  </span>
+                </span>
+              </a>
+              <div className="flex-1 bg-white rounded-lg shadow-card border border-gray-100 overflow-hidden min-h-[320px] sm:min-h-[400px]">
+                <iframe
+                  src={mapsEmbed}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, display: 'block', minHeight: '320px' }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Mappa Centro Medico San Fedele"
+                />
+              </div>
             </div>
 
             <div className="space-y-4 sm:space-y-6">
@@ -119,8 +143,8 @@ export default async function ContattiPage() {
           <div id="modulo-contatti" className="scroll-mt-28">
             <h2 className="heading-2 mb-2">Scrivici</h2>
             <p className="text-gray-500 mb-6 sm:mb-8">
-              Per qualsiasi informazione — orari, servizi, convenzioni o altro — compila il modulo
-              e ti risponderemo nel più breve tempo possibile.
+              Per qualsiasi informazione — orari, servizi, convenzioni o altro — compila il modulo e
+              ti risponderemo nel più breve tempo possibile.
             </p>
             <div className="bg-white rounded-lg p-5 sm:p-6 shadow-card border border-gray-100">
               <ContactForm />
@@ -147,7 +171,9 @@ function InfoCard({
   return (
     <div className="bg-white rounded-lg p-5 sm:p-6 shadow-card border border-gray-100">
       <div className="flex items-start gap-4">
-        <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
+        <div
+          className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}
+        >
           {icon}
         </div>
         <div className="flex-1 min-w-0">
