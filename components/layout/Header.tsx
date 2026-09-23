@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronRight, ArrowRight } from 'lucide-react'
 import { DSASwitch } from '@/components/accessibility/DSASwitch'
 import { MelaButton } from '../ui/MelaButton'
+import { paginaScura } from '@/lib/temaPagine'
 
 interface NavItem {
   label: string
@@ -23,8 +24,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Contatti', href: '/contatti' },
 ]
 
-// Pagine che usano il tema scuro per la navbar (estetica accattivante)
-const DARK_PAGES = ['/sport']
 
 function isActive(href: string, pathname: string): boolean {
   if (href === '/') return pathname === '/'
@@ -48,7 +47,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
-  const dark = DARK_PAGES.includes(pathname)
+  const dark = paginaScura(pathname)
 
   // Il menu resta aperto se si naviga verso la pagina già attiva: chiudiamolo
   // a ogni cambio di rotta invece di affidarci al solo onClick delle voci.
