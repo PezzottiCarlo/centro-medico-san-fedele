@@ -229,12 +229,36 @@ html.high-contrast .glass-card {
   visibility: hidden;
 }
 
+/* Hero della home alta quanto lo schermo meno la navbar. --altezza-header la
+   scrive Header.tsx dopo averla misurata; prima vale la stima per breakpoint. */
+:root {
+  --altezza-header-stima: 88px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --altezza-header-stima: 149px;
+  }
+}
+.hero-schermo {
+  height: calc(100vh - var(--altezza-header, var(--altezza-header-stima)));
+}
+@supports (height: 100svh) {
+  .hero-schermo {
+    height: calc(100svh - var(--altezza-header, var(--altezza-header-stima)));
+  }
+}
+
 /* Invito a scorrere nella hero della home (components/home/HomeHeroZoom.tsx) */
 @keyframes dito-scorri {
   0%        { transform: translateY(0);     opacity: 0; }
   15%       { transform: translateY(0);     opacity: 1; }
   65%       { transform: translateY(-30px); opacity: 1; }
   85%, 100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes hero-compari {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes freccia-giu {

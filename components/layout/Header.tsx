@@ -14,6 +14,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/' },
   { label: 'Servizi', href: '/ambulatori' },
   { label: 'Medici', href: '/medici' },
   { label: 'Convenzioni', href: '/convenzioni' },
@@ -70,6 +71,22 @@ export function Header() {
     return () => ro.disconnect()
   }, [])
 
+  // Altezza della navbar "grande" (in cima alla pagina) esposta come variabile
+  // CSS: la hero della home la sottrae allo schermo, così titolo, bottoni e
+  // invito a scorrere stanno sopra la piega. Si misura solo da non scrollati,
+  // perché mentre la barra si riduce la hero non deve cambiare altezza.
+  const headerRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el || scrolled) return
+    const misura = () =>
+      document.documentElement.style.setProperty('--altezza-header', `${el.offsetHeight}px`)
+    misura()
+    const ro = new ResizeObserver(misura)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [scrolled])
+
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY
@@ -90,6 +107,7 @@ export function Header() {
 
   return (
     <header
+      ref={headerRef}
       className={`sticky top-0 z-[60] backdrop-blur-xl transition-all duration-300 ${dark
         ? 'bg-slate-950/90 shadow-[0_1px_0_0_rgba(255,255,255,0.06)]'
         : 'bg-white/90 shadow-sm'
@@ -141,10 +159,25 @@ export function Header() {
           />
         </Link>
 
+        {/* Telefono e tablet: quando il titolo grande sparisce con lo scroll, al
+            suo posto compare "Prenota ora", così la prenotazione è sempre a un tocco */}
+        <Link
+          href="/prenota"
+          aria-hidden={!scrolled}
+          tabIndex={scrolled ? undefined : -1}
+          className={`lg:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold shadow-sm transition-all duration-300 ${dark
+            ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
+            : 'bg-primary text-white hover:bg-primary-dark'
+            } ${scrolled && !mobileOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}
+        >
+          Prenota ora
+          <ArrowRight size={16} aria-hidden />
+        </Link>
+
         {/* Voci menu inline — appaiono solo quando si scrolla (desktop) */}
         <div
           aria-hidden={!scrolled}
-          className={`hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-7 transition-all duration-300 ${scrolled ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          className={`hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-5 xl:gap-7 transition-all duration-300 ${scrolled ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             }`}
         >
           {NAV_ITEMS.map((item) => {
