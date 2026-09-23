@@ -60,7 +60,7 @@ export default async function PrenotaPage() {
         <div className="text-center mb-12">
           <h1 className="heading-1 mb-4">Prenota la tua visita</h1>
           <p className="text-gray-500 text-xl max-w-xl mx-auto">
-            Pochi semplici passi per prenotare. Ti contatteremo entro 24 ore per confermare.
+            Pochi semplici passi per prenotare. Ti contatteremo entro 24 ore lavorative per confermare.
           </p>
         </div>
         <Suspense fallback={<div className="text-center py-12 text-gray-400">Caricamento...</div>}>
