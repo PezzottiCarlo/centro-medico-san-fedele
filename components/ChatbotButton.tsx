@@ -360,7 +360,13 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
           `viewport-fit=cover` l'inset vale 0 e il viewport già esclude la zona
           dell'home indicator, ma tenerlo regge anche se in futuro si passa a
           cover. Su desktop resta staccato dal fondo. */}
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:bottom-16 right-4 sm:right-5 z-50 flex flex-col items-end">
+      {/* Da chiusa sta sotto la navbar (z-[60]), così il menu mobile la copre;
+          aperta sale sopra, e la chat con la sua mela non viene tagliata dall'header. */}
+      <div
+        className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:bottom-16 right-4 sm:right-5 flex flex-col items-end ${
+          chatVisible ? 'z-[70]' : 'z-50'
+        }`}
+      >
         {/* Mela cucù — appesa SOPRA la chat window quando è aperta. In flusso e larga
             quanto la finestra, così resta centrata a qualsiasi viewport; il margine
             negativo la fa "aggrappare" al bordo superiore della finestra. */}
@@ -389,7 +395,8 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
             className={`mb-3 w-[360px] max-w-[calc(100vw-2.5rem)] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
               open ? 'chat-window-open' : 'chat-window-close'
             }`}
-            style={{ height: '480px', transformOrigin: 'bottom right' }}
+            // Sui telefoni bassi si accorcia per lasciare in vista la mela e il bottone
+            style={{ height: 'min(480px, calc(100svh - 13rem))', transformOrigin: 'bottom right' }}
           >
             {/* Header */}
             <div
@@ -510,10 +517,8 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
                 <button
                   onClick={() => handleSend()}
                   disabled={!input.trim() || isTyping}
-                  className="w-10 h-10 rounded-full text-white flex items-center justify-center active:scale-90 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex-shrink-0"
-                  style={{ backgroundColor: '#D05241' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B6452F')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#D05241')}
+                  // Verde (come la foglia della mela): si stacca dal rosso della chat
+                  className="w-10 h-10 rounded-full text-white bg-secondary hover:bg-secondary-dark flex items-center justify-center active:scale-90 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex-shrink-0"
                   aria-label="Invia messaggio"
                 >
                   <Send size={16} className="ml-0.5" />

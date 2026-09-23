@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { MelaButton } from '@/components/ui/MelaButton'
+import { ArrowRight, MessageCircle } from 'lucide-react'
 
 function openChatbot() {
   if (typeof window === 'undefined') return
@@ -32,9 +32,16 @@ export function MelaChatCTA() {
               Il nostro assistente virtuale MelaBot ti risponde subito: prenotazioni, orari,
               specialistiche e convenzioni.
             </p>
-            <MelaButton mela="indica" melaSize="md" onClick={openChatbot} showArrow>
+            {/* Bottone senza mela: la sezione ha già la sua, accanto al titolo */}
+            <button
+              type="button"
+              onClick={openChatbot}
+              className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/70 via-primary to-primary-dark px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+            >
+              <MessageCircle size={18} aria-hidden />
               Chiedi al nostro assistente
-            </MelaButton>
+              <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </button>
           </div>
         </div>
       </div>

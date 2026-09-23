@@ -241,3 +241,16 @@ html.high-contrast .glass-card {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(8px); }
 }
+
+/* ── Niente zoom automatico sui campi (telefoni) ──────────────────
+   Safari su iPhone ingrandisce la pagina quando si tocca un campo con testo
+   sotto i 16px (chat, moduli con text-sm). Sui dispositivi touch i campi
+   restano a 16px; lo zoom con due dita resta libero, per l'accessibilità.
+   La specificità dei :not() supera le utility tipo .text-sm senza !important. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
