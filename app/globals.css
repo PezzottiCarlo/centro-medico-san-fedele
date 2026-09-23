@@ -98,8 +98,93 @@ html.high-contrast .bg-primary {
 html.high-contrast .glass,
 html.high-contrast .glass-card {
   background: #FFFFFF !important;
-  border-color: #D1D5DB !important;
+  border-color: #6B7280 !important;
   backdrop-filter: none !important;
+}
+
+/* Il blu di Tailwind è un colore fisso, non la variabile qui sopra: testi e
+   bordi blu vanno scuriti a parte per arrivare a un contrasto pieno (9:1). */
+html.high-contrast .text-primary,
+html.high-contrast .text-primary-dark,
+html.high-contrast .text-accent {
+  color: #274B6E !important;
+}
+html.high-contrast .border-primary {
+  border-color: #274B6E !important;
+}
+html.high-contrast .hover\:bg-primary-dark:hover {
+  background-color: #1B3550 !important;
+}
+
+/* Testo: niente grigi chiari né trasparenze nel contenuto delle pagine.
+   Solo dentro <main>, perché footer e sezioni scure hanno sfondo scuro. */
+html.high-contrast main :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600, [class*='text-text-main\/']) {
+  color: #1F2937 !important;
+}
+html.high-contrast :is([class*='text-white\/']) {
+  color: #FFFFFF !important;
+}
+html.high-contrast footer :is(.text-gray-400, .text-gray-500) {
+  color: #E5E7EB !important;
+}
+html.high-contrast ::placeholder {
+  color: #4B5563 !important;
+  opacity: 1;
+}
+
+/* Leggibilità: niente testo minuscolo, righe più ariose */
+html.high-contrast main :is(.text-xs, .text-\[10px\], .text-\[11px\]) {
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+html.high-contrast main .text-sm {
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+}
+html.high-contrast main :is(p, li, label, blockquote) {
+  line-height: 1.75;
+}
+/* I titoli sottili (font-light) su schermi poco nitidi quasi spariscono */
+html.high-contrast :is(.font-light, .font-extralight, .font-thin) {
+  font-weight: 500 !important;
+}
+html.high-contrast main p a:not([class*='bg-']) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Spazi: sezioni e card più larghe, controlli più grandi da toccare */
+html.high-contrast .section {
+  padding-top: 5.5rem;
+  padding-bottom: 5.5rem;
+}
+@media (min-width: 768px) {
+  html.high-contrast .section {
+    padding-top: 7.5rem;
+    padding-bottom: 7.5rem;
+  }
+}
+/* Solo le card "di testo": quelle con foto a filo (medici, mappa) resterebbero rientrate */
+html.high-contrast main :is(.glass-card, .card) {
+  padding: 2rem;
+}
+html.high-contrast main :is(.gap-3, .gap-4) {
+  gap: 1.25rem;
+}
+html.high-contrast main :is(.gap-5, .gap-6) {
+  gap: 2rem;
+}
+html.high-contrast :is(main, footer) :is(button, a[class*='rounded-full'], a[class*='btn-'], input, select, textarea) {
+  min-height: 48px;
+}
+
+/* Bordi e focus ben visibili */
+html.high-contrast main :is(.border-gray-100, .border-gray-200, .border-gray-300, [class*='border-primary\/']) {
+  border-color: #6B7280 !important;
+}
+html.high-contrast :focus-visible {
+  outline: 3px solid #111827 !important;
+  outline-offset: 3px !important;
 }
 
 /* ── Utility classes ─────────────────────────────────────────── */
