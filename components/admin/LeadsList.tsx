@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/client'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth, db } from '@/lib/firebase/client'
 import type { Lead } from '@/types'
 import { formatDate } from '@/lib/utils'
-import { Phone, Mail, MessageSquare, CheckCircle2, RotateCcw, Loader2 } from 'lucide-react'
+import { Phone, Mail, MessageSquare, CheckCircle2, RotateCcw, Loader2, BellRing, X } from 'lucide-react'
 
 type Filter = 'tutti' | 'da-evadere' | 'evasi'
 
@@ -14,6 +15,43 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
   const [filter, setFilter] = useState<Filter>('da-evadere')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
+  // Richieste arrivate mentre la pagina è aperta: evidenziate e annunciate
+  const [nuove, setNuove] = useState<string[]>([])
+  const [dalVivo, setDalVivo] = useState(false)
+  const idNoti = useRef(new Set(initial.map((l) => l.id)))
+
+  // Aggiornamento in tempo reale: appena arriva una prenotazione compare in
+  // lista, senza ricaricare. Serve la sessione Firebase del browser (la stessa
+  // con cui si segnano le richieste come evase).
+  useEffect(() => {
+    let smetti: (() => void) | undefined
+    const smettiAuth = onAuthStateChanged(auth, (utente) => {
+      smetti?.()
+      smetti = undefined
+      if (!utente) {
+        setDalVivo(false)
+        return
+      }
+      smetti = onSnapshot(
+        collection(db, 'leads'),
+        (snap) => {
+          const tutti = snap.docs
+            .map((d) => ({ id: d.id, ...(d.data() as Omit<Lead, 'id'>) }))
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          const arrivati = tutti.filter((l) => !idNoti.current.has(l.id)).map((l) => l.id)
+          arrivati.forEach((id) => idNoti.current.add(id))
+          if (arrivati.length > 0) setNuove((prev) => [...arrivati, ...prev])
+          setLeads(tutti)
+          setDalVivo(true)
+        },
+        () => setDalVivo(false)
+      )
+    })
+    return () => {
+      smetti?.()
+      smettiAuth()
+    }
+  }, [])
 
   const counts = useMemo(
     () => ({
@@ -23,6 +61,12 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
     }),
     [leads]
   )
+
+  // Il numero da evadere anche nel titolo della scheda del browser
+  useEffect(() => {
+    const base = 'Leads & Prenotazioni | Admin'
+    document.title = counts['da-evadere'] > 0 ? `(${counts['da-evadere']}) ${base}` : base
+  }, [counts])
 
   const visible = useMemo(() => {
     if (filter === 'tutti') return leads
@@ -83,10 +127,38 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 mb-5">
+      {nuove.length > 0 && (
+        <div
+          role="status"
+          className="mb-5 flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+        >
+          <BellRing size={18} className="flex-shrink-0 animate-bounce" />
+          <span className="flex-1">
+            {nuove.length === 1
+              ? 'È arrivata una nuova richiesta.'
+              : `Sono arrivate ${nuove.length} nuove richieste.`}
+          </span>
+          <button
+            onClick={() => setNuove([])}
+            className="rounded-full p-1 hover:bg-emerald-500/20"
+            aria-label="Chiudi avviso"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 mb-5">
         {filterButton('da-evadere', 'Da evadere')}
         {filterButton('evasi', 'Evasi')}
         {filterButton('tutti', 'Tutti')}
+        <span
+          className={`ml-auto inline-flex items-center gap-1.5 text-xs ${dalVivo ? 'text-emerald-400' : 'text-slate-500'}`}
+          title={dalVivo ? 'Le nuove richieste compaiono da sole' : 'Ricarica la pagina per vedere le nuove richieste'}
+        >
+          <span className={`h-2 w-2 rounded-full ${dalVivo ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+          {dalVivo ? 'In tempo reale' : 'Non in tempo reale'}
+        </span>
       </div>
 
       {error && (
@@ -114,7 +186,9 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
                 key={lead.id}
                 className={`bg-slate-800 rounded-lg border border-slate-700 p-4 sm:p-5 transition-opacity ${
                   evaso ? 'opacity-60' : ''
-                } ${!lead.letto && !evaso ? 'border-l-4 border-l-primary' : ''}`}
+                } ${!lead.letto && !evaso ? 'border-l-4 border-l-primary' : ''} ${
+                  nuove.includes(lead.id) ? 'ring-2 ring-emerald-400/60' : ''
+                }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">

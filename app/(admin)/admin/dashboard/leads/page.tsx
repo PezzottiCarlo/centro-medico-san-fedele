@@ -28,8 +28,7 @@ export default async function LeadsPage() {
     /* empty */
   }
 
-  const daEvadere = leads.filter((l) => !l.evaso).length
-
+  // Il conteggio "da evadere" lo mostra LeadsList, che resta aggiornato in tempo reale
   return (
     <div className="min-h-screen bg-slate-900">
       <header className="bg-slate-800 border-b border-slate-700">
@@ -38,11 +37,6 @@ export default async function LeadsPage() {
             <ArrowLeft size={20} />
           </Link>
           <h1 className="font-semibold text-white">Leads &amp; Prenotazioni</h1>
-          {daEvadere > 0 && (
-            <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">
-              {daEvadere} da evadere
-            </span>
-          )}
         </div>
       </header>
 
