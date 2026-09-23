@@ -9,17 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#2E9BDA',
-        'primary-dark': '#1A7BB5',
+        // Blu coerente col logo: base R64 G110 B160 (#406EA0), con le
+        // stesse tonalità/luminosità della vecchia palette (vedi globals.css).
+        primary: '#406EA0',
+        'primary-dark': '#2D537B',
         secondary: '#5AAE4B',
         'secondary-dark': '#479A38',
         bg: '#FFFFFF',
-        'bg-soft': '#E8F3FB',
-        'bg-deep': '#C9E2F2',
+        'bg-soft': '#EDF2F8',
+        'bg-deep': '#D1DDEA',
         'text-main': '#2A3642',
         'high-contrast': '#1A1A1A',
-        accent: '#2E9BDA',
-        muted: '#E8F3FB',
+        accent: '#406EA0',
+        muted: '#EDF2F8',
       },
       borderRadius: {
         DEFAULT: '24px',

@@ -64,7 +64,7 @@ export default async function StoriaPage() {
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
             style={{
               backgroundImage:
-                'radial-gradient(circle, var(--color-primary, #1A7BB5) 1px, transparent 1px)',
+                'radial-gradient(circle, var(--color-primary, #2D537B) 1px, transparent 1px)',
               backgroundSize: '32px 32px',
             }}
           />
@@ -96,7 +96,7 @@ export default async function StoriaPage() {
                 />
                 <defs>
                   <linearGradient id="storiaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-primary, #1A7BB5)" stopOpacity="0.6" />
+                    <stop offset="0%" stopColor="var(--color-primary, #2D537B)" stopOpacity="0.6" />
                     <stop offset="100%" stopColor="var(--color-secondary, #5BBE49)" stopOpacity="0.4" />
                   </linearGradient>
                 </defs>

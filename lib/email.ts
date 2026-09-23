@@ -102,14 +102,16 @@ function centroFromSite(site: SiteConfig): CentroBrand {
   }
 }
 
+// Stessa palette del sito (vedi tailwind.config.ts e globals.css): blu
+// coerente col logo, base R64 G110 B160.
 const C = {
-  primary: '#2E9BDA',
-  primaryDark: '#1A7BB5',
+  primary: '#406EA0',
+  primaryDark: '#2D537B',
   text: '#2A3642',
   textSoft: '#6b7280',
   border: '#dbeafe',
-  bgSoft: '#E8F3FB',
-  bgDeep: '#C9E2F2',
+  bgSoft: '#EDF2F8',
+  bgDeep: '#D1DDEA',
   white: '#ffffff',
 }
 

@@ -28,15 +28,18 @@ html {
 
 /* ── CSS Variables ───────────────────────────────────────────── */
 :root {
-  --color-primary: #2E9BDA;
-  --color-primary-dark: #1A7BB5;
+  /* Blu coerente col logo: base R64 G110 B160 (#406EA0). Le altre tinte
+     mantengono la stessa tonalità e luminosità della vecchia palette,
+     solo più tenue (vedi tailwind.config.ts). */
+  --color-primary: #406EA0;
+  --color-primary-dark: #2D537B;
   --color-secondary: #5AAE4B;
   --color-bg: #FFFFFF;
-  --color-bg-soft: #E8F3FB;
-  --color-bg-deep: #C9E2F2;
+  --color-bg-soft: #EDF2F8;
+  --color-bg-deep: #D1DDEA;
   --color-text: #2A3642;
-  --color-accent: #2E9BDA;
-  --color-muted: #E8F3FB;
+  --color-accent: #406EA0;
+  --color-muted: #EDF2F8;
   --font-base: 'Inter', system-ui, sans-serif;
   --radius: 24px;
 }
@@ -80,7 +83,7 @@ html.dsa-mode body {
 html.high-contrast {
   --color-text: #1A1A1A;
   --color-bg: #FFFFFF;
-  --color-primary: #1A6B9A;
+  --color-primary: #274B6E;
 }
 
 html.high-contrast body {
@@ -89,7 +92,7 @@ html.high-contrast body {
 }
 
 html.high-contrast .bg-primary {
-  background-color: #1A6B9A !important;
+  background-color: #274B6E !important;
 }
 
 html.high-contrast .glass,
