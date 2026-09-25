@@ -17,7 +17,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Il sito gira su [http://localhost:3000](http://localhost:3000).
+Il sito gira su [http://localhost:3000](http://localhost:3000)
 
 ## Struttura
 
