@@ -2,6 +2,7 @@ import { ReviewsSlider } from '@/components/home/ReviewsSlider'
 import { ConvenzioniScroller } from '@/components/home/ConvenzioniScroller'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
 import { InfoRapide } from '@/components/home/InfoRapide'
+import { ScriviciSection } from '@/components/home/ScriviciSection'
 import { HomeHeroZoom } from '@/components/home/HomeHeroZoom'
 import { SpecialtySearchGrid } from '@/components/home/SpecialtySearchGrid'
 import { MelaButton } from '@/components/ui/MelaButton'
@@ -72,11 +73,8 @@ export default async function HomePage() {
       {/* Hero: foto con la mascotte, titolo e bottoni che entrano da soli */}
       <HomeHeroZoom config={hero} />
 
-      {/* Orari, modulo di contatto e chiamata: le prime cose che si cercano */}
-      <InfoRapide
-        site={site}
-        specialistiche={specialistiche.map((s) => ({ id: s.id, nome: s.nome }))}
-      />
+      {/* Orari e chiamata: le prime cose che si cercano */}
+      <InfoRapide site={site} />
 
       {/* 4. Specialistiche con search bar */}
       {specialistiche.length > 0 && (
@@ -218,6 +216,12 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Modulo di contatto, dopo le recensioni */}
+      <ScriviciSection
+        site={site}
+        specialistiche={specialistiche.map((s) => ({ id: s.id, nome: s.nome }))}
+      />
 
     </>
   )
