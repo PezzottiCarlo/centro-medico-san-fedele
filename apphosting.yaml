@@ -80,9 +80,10 @@ env:
     availability:
       - RUNTIME
 
-  # Alias che punta sempre all'ultimo Flash disponibile.
+  # Versione precisa, non un alias: "gemini-flash-latest" è stato ritirato da
+  # Google a inizio ottobre 2026 e il chatbot ha smesso di rispondere.
   - variable: VERTEX_MODEL
-    value: gemini-flash-latest
+    value: gemini-2.5-flash
     availability:
       - RUNTIME
 

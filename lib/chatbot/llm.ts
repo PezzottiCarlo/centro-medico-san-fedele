@@ -20,7 +20,8 @@ export interface LlmMessage {
   content: string
 }
 
-const MODEL = process.env.VERTEX_MODEL || 'gemini-flash-latest'
+// Versione precisa: gli alias "-latest" possono sparire (vedi apphosting.yaml)
+const MODEL = process.env.VERTEX_MODEL || 'gemini-2.5-flash'
 
 // Cache del client (la parte costosa è il setup auth).
 let client: GoogleGenAI | null = null
