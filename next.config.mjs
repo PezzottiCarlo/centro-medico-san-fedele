@@ -66,6 +66,15 @@ const nextConfig = {
   },
 
   images: {
+    // Esplicito di proposito: se manca, l'adattatore di Firebase App Hosting
+    // riscrive la config in build con `unoptimized: true` e ogni immagine
+    // arriva al browser nel peso originale (la hero da sola sono 12 MB, le foto
+    // dei medici caricate dall'admin ~2 MB l'una). Così Next le ridimensiona e
+    // converte in WebP sul server, senza toccare i file originali.
+    unoptimized: false,
+    // Le immagini ridotte restano in cache 30 giorni: i file caricati dall'admin
+    // hanno nomi sempre nuovi, quindi una cache lunga non mostra mai foto vecchie.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     // Il `pathname` è la parte che conta: senza, `storage.googleapis.com`
     // autorizzerebbe qualunque bucket pubblico del mondo, e quindi qualunque
     // file scelto da un estraneo, a passare per l'ottimizzatore di immagini.
