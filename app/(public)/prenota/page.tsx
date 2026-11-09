@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { adminDb } from '@/lib/firebase/admin'
 import { generatePageMetadata } from '@/lib/seo'
 import { PrenotaForm } from '@/components/prenota/PrenotaForm'
+import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
 export const metadata = generatePageMetadata({
   title: 'Prenota una Visita',
@@ -25,10 +26,9 @@ async function getData() {
           slug: data.slug as string,
           icona: data.icona as string,
           order: (data.order ?? 999) as number,
-          sottoSpecialistiche: (data.sottoSpecialistiche || []) as {
-            id: string
-            nome: string
-          }[],
+          sottoSpecialistiche: ordinaSotto(
+            (data.sottoSpecialistiche || []) as { id: string; nome: string; ordine?: number }[]
+          ),
         }
       })
       .sort((a, b) => a.order - b.order)

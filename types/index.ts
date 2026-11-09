@@ -7,6 +7,7 @@ export interface SottoSpecialistica {
   nome: string
   descrizione?: string // breve descrizione mostrata nel modale sulla pagina specialistica
   genere?: 'donna' | 'uomo' | 'entrambi' // usato dal selettore Donna/Uomo (es. Medicina Estetica)
+  ordine?: number // posizione sul sito (1 = prima); assente nei dati salvati prima del campo
 }
 
 export interface Specialistica {

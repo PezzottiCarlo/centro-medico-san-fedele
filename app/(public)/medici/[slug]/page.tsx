@@ -10,6 +10,7 @@ import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { CollapsibleBio } from '@/components/medici/CollapsibleBio'
 import { TerapieMedico, type TerapiaCard } from '@/components/medici/TerapieMedico'
 import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
+import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
 export const revalidate = 60
 
@@ -43,7 +44,7 @@ async function getData(slug: string) {
   const terapie: TerapiaCard[] = []
   const sottoIdsMedico = medico.sottoSpecialisticheIds || []
   for (const spec of allSpec) {
-    const sottoList = (spec.sottoSpecialistiche || []) as SottoSpecialistica[]
+    const sottoList = ordinaSotto((spec.sottoSpecialistiche || []) as SottoSpecialistica[])
     for (const sotto of sottoList) {
       if (sottoIdsMedico.includes(sotto.id)) {
         terapie.push({

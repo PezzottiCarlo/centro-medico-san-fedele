@@ -10,6 +10,7 @@ import type {
   Riconoscimento,
 } from '@/types'
 import { specialisticaHref } from '@/lib/utils'
+import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
 /**
  * Base di conoscenza del chatbot: testo semplice compilato dai contenuti
@@ -124,7 +125,7 @@ async function buildKnowledgeBase(): Promise<string> {
       if (s.descrizioneBreve) parts.push(`  Sintesi: ${s.descrizioneBreve}`)
       const desc = stripHtml(s.descrizione)
       if (desc) parts.push(`  Descrizione: ${truncate(desc, 600)}`)
-      const sotto = s.sottoSpecialistiche ?? []
+      const sotto = ordinaSotto(s.sottoSpecialistiche ?? [])
       if (sotto.length > 0) {
         parts.push('  Prestazioni / sotto-specialistiche:')
         for (const ss of sotto) {

@@ -9,13 +9,18 @@ import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Plus, Trash2, ArrowUpDown } from 'lucide-react'
 import type { SottoSpecialistica } from '@/types'
+import { numeraSotto, spostaSotto } from '@/lib/sottoSpecialistiche'
+import { OrdineSottoControlli, RigaRiordino } from '@/components/admin/OrdineSottoControlli'
+import { ListaOrdinabile } from '@/components/admin/ListaOrdinabile'
 
 export default function NuovaSpecialisticaPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Lista compatta (solo i nomi) per riordinare comodamente
+  const [riordino, setRiordino] = useState(false)
   const [form, setForm] = useState({
     nome: '',
     slug: '',
@@ -65,6 +70,10 @@ export default function NuovaSpecialisticaPage() {
     update('sottoSpecialistiche', updated)
   }
 
+  function moveSottoSpecialistica(da: number, a: number) {
+    update('sottoSpecialistiche', spostaSotto(form.sottoSpecialistiche, da, a))
+  }
+
   function removeSottoSpecialistica(index: number) {
     update('sottoSpecialistiche', form.sottoSpecialistiche.filter((_, i) => i !== index))
   }
@@ -77,7 +86,10 @@ export default function NuovaSpecialisticaPage() {
     setLoading(true)
     setError('')
     try {
-      await addDoc(collection(db, 'specialistiche'), form)
+      await addDoc(collection(db, 'specialistiche'), {
+        ...form,
+        sottoSpecialistiche: numeraSotto(form.sottoSpecialistiche),
+      })
       await revalidatePublic(['/ambulatori', `/ambulatori/${form.slug}`, '/sport', '/'])
       router.push('/admin/dashboard/specialistiche')
     } catch {
@@ -184,31 +196,69 @@ export default function NuovaSpecialisticaPage() {
         <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
           <div className="flex items-center justify-between mb-1">
             <h2 className="font-semibold text-white">Sotto-Specialistiche / Terapie</h2>
-            <button
-              onClick={addSottoSpecialistica}
-              className="text-primary text-sm flex items-center gap-1 hover:text-primary/80 transition-colors"
-            >
-              <Plus size={16} /> Aggiungi
-            </button>
+            <div className="flex items-center gap-4">
+              {form.sottoSpecialistiche.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setRiordino((v) => !v)}
+                  aria-pressed={riordino}
+                  className={`text-sm flex items-center gap-1.5 rounded-full px-3 py-1 transition-colors ${
+                    riordino
+                      ? 'bg-primary text-white'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                  }`}
+                >
+                  <ArrowUpDown size={15} /> {riordino ? 'Fine riordino' : 'Riordina'}
+                </button>
+              )}
+              {!riordino && (
+                <button
+                  onClick={addSottoSpecialistica}
+                  className="text-primary text-sm flex items-center gap-1 hover:text-primary/80 transition-colors"
+                >
+                  <Plus size={16} /> Aggiungi
+                </button>
+              )}
+            </div>
           </div>
           <p className="text-xs text-slate-400 mb-4">
             I medici si abbinano direttamente nella scheda di ogni medico (sezione &quot;Terapie / Sotto-specialistiche&quot;).
             La descrizione breve viene mostrata nel modale che si apre cliccando la terapia sulla pagina pubblica.
+            L&apos;ordine qui è quello del sito: trascina dalla maniglia ⋮⋮ o usa le frecce.
           </p>
 
           {form.sottoSpecialistiche.length === 0 ? (
             <p className="text-slate-400 text-sm">Nessuna sotto-specialistica aggiunta.</p>
           ) : (
-            <div className="space-y-3">
-              {form.sottoSpecialistiche.map((sotto, i) => (
-                <div key={sotto.id} className="bg-slate-700/50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
+            <ListaOrdinabile
+              elementi={form.sottoSpecialistiche}
+              onRiordina={(nuove) => update('sottoSpecialistiche', nuove)}
+              className={riordino ? 'space-y-1.5' : 'space-y-3'}
+              renderElemento={(sotto, i, maniglia) =>
+                riordino ? (
+                  <RigaRiordino
+                    maniglia={maniglia}
+                    posizione={i}
+                    totale={form.sottoSpecialistiche.length}
+                    nome={sotto.nome}
+                    onSposta={(a) => moveSottoSpecialistica(i, a)}
+                  />
+                ) : (
+                <div className="bg-slate-700/50 rounded-lg p-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    {maniglia}
                     <input
                       type="text"
                       value={sotto.nome}
                       onChange={(e) => updateSottoSpecialisticaNome(i, e.target.value)}
-                      className="flex-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="flex-1 min-w-[12rem] bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="Nome sotto-specialistica / terapia"
+                    />
+                    <OrdineSottoControlli
+                      posizione={i}
+                      totale={form.sottoSpecialistiche.length}
+                      nome={sotto.nome}
+                      onSposta={(a) => moveSottoSpecialistica(i, a)}
                     />
                     <button
                       onClick={() => removeSottoSpecialistica(i)}
@@ -241,8 +291,9 @@ export default function NuovaSpecialisticaPage() {
                     </select>
                   </div>
                 </div>
-              ))}
-            </div>
+                )
+              }
+            />
           )}
         </div>
 

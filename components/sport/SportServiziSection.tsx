@@ -4,13 +4,16 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { X, ArrowUpRight, ArrowRight } from 'lucide-react'
 import type { SottoSpecialistica } from '@/types'
+import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
 interface Props {
   sottoSpecialistiche: SottoSpecialistica[]
   specSlug: string
 }
 
-export function SportServiziSection({ sottoSpecialistiche, specSlug }: Props) {
+export function SportServiziSection({ sottoSpecialistiche: grezze, specSlug }: Props) {
+  // Nell'ordine scelto dall'admin
+  const sottoSpecialistiche = ordinaSotto(grezze)
   const [active, setActive] = useState<SottoSpecialistica | null>(null)
 
   useEffect(() => {

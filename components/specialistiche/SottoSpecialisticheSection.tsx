@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { ArrowUpRight, BadgeCheck } from 'lucide-react'
 import { SottoSpecialisticaModal } from './SottoSpecialisticaModal'
 import type { SottoSpecialistica } from '@/types'
+import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
 interface Props {
   sottoSpecialistiche: SottoSpecialistica[]
@@ -43,9 +44,11 @@ export function SottoSpecialisticheSection({
   const [active, setActive] = useState<SottoSpecialistica | null>(null)
   const [gender, setGender] = useState<'donna' | 'uomo'>('donna')
 
+  // Nell'ordine scelto dall'admin
+  const ordinate = ordinaSotto(sottoSpecialistiche)
   const visible = enableGenderFilter
-    ? sottoSpecialistiche.filter((s) => !s.genere || s.genere === 'entrambi' || s.genere === gender)
-    : sottoSpecialistiche
+    ? ordinate.filter((s) => !s.genere || s.genere === 'entrambi' || s.genere === gender)
+    : ordinate
 
   const chiudi = useCallback(() => setActive(null), [])
 
