@@ -416,6 +416,7 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
               alt=""
               width={1114}
               height={720}
+              sizes="128px"
               className="w-32 h-auto drop-shadow-md"
               priority={false}
             />
@@ -609,6 +610,7 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
                 alt=""
                 width={1114}
                 height={720}
+                sizes="80px"
                 className="w-16 sm:w-20 h-auto drop-shadow-md"
                 priority={false}
               />

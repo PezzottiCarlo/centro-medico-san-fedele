@@ -51,7 +51,7 @@ function FeaturedCard({ item }: { item: NewsEvento }) {
         {/* Image */}
         <div className="relative aspect-video md:aspect-auto md:w-2/5 bg-gradient-to-br from-primary/10 to-secondary/10 flex-shrink-0">
           {item.immagine ? (
-            <Image src={item.immagine} alt={item.titolo} fill className="object-cover" />
+            <Image src={item.immagine} alt={item.titolo} fill sizes="(max-width: 768px) 100vw, 520px" className="object-cover" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <Newspaper size={48} className="text-primary/30" />
@@ -87,7 +87,7 @@ function NewsCard({ item }: { item: NewsEvento }) {
       {/* Image */}
       <div className="relative h-48 bg-gradient-to-br from-primary/10 to-secondary/10">
         {item.immagine ? (
-          <Image src={item.immagine} alt={item.titolo} fill className="object-cover" />
+          <Image src={item.immagine} alt={item.titolo} fill sizes="(max-width: 768px) 100vw, 420px" className="object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Newspaper size={32} className="text-primary/30" />

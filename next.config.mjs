@@ -75,6 +75,11 @@ const nextConfig = {
     // Le immagini ridotte restano in cache 30 giorni: i file caricati dall'admin
     // hanno nomi sempre nuovi, quindi una cache lunga non mostra mai foto vecchie.
     minimumCacheTTL: 60 * 60 * 24 * 30,
+    // Come il default di Next ma senza la variante da 3840 px: su un portatile
+    // Retina la hero a tutta larghezza la chiedeva, e generarla dall'originale
+    // da 12 MB su 1 CPU costava secondi. 2560 px restano nitidi a qualsiasi
+    // schermo reale.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 2560],
     // Il `pathname` è la parte che conta: senza, `storage.googleapis.com`
     // autorizzerebbe qualunque bucket pubblico del mondo, e quindi qualunque
     // file scelto da un estraneo, a passare per l'ottimizzatore di immagini.

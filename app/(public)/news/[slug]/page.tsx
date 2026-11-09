@@ -54,7 +54,7 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
 
         {news.immagine && (
           <div className="relative h-64 md:h-96 rounded-lg overflow-hidden mb-8">
-            <Image src={news.immagine} alt={news.titolo} fill className="object-cover" />
+            <Image src={news.immagine} alt={news.titolo} fill sizes="(max-width: 896px) 100vw, 896px" className="object-cover" />
           </div>
         )}
 

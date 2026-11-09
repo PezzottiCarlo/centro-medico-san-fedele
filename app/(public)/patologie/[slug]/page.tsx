@@ -73,6 +73,7 @@ export default async function PatologiaPage({ params }: { params: { slug: string
               src={patologia.immagine}
               alt=""
               fill
+              sizes="100vw"
               className="object-cover opacity-20"
             />
           </div>

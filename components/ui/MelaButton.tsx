@@ -173,6 +173,8 @@ export function MelaButton(props: MelaButtonProps) {
           alt=""
           width={img.width}
           height={img.height}
+          // Larghezza reale a schermo: senza `sizes` si scaricava la variante da 2048 px
+          sizes={`${MELA_PX[melaSize]}px`}
           className={`${cfg.mela} h-auto drop-shadow-xl group-hover:scale-110 ${melaHoverRotate} transition-transform duration-300 ${melaFlip ? 'scale-x-[-1]' : ''}`}
         />
       </div>

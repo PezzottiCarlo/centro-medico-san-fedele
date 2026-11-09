@@ -53,6 +53,9 @@ export default async function MediciPage() {
                         src={m.foto}
                         alt={m.nome}
                         fill
+                        // Senza `sizes` Next assume 100vw: su uno schermo Retina il
+                        // browser chiedeva la variante da 3840 px di ogni foto
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                         className="object-cover object-top"
                       />
                     ) : (

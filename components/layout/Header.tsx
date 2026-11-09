@@ -134,6 +134,8 @@ export function Header() {
               alt="Centro Medico San Fedele"
               width={1521}
               height={1320}
+              // Mostrato al massimo a 64 px: senza `sizes` il browser scaricava la variante da 3840
+              sizes="64px"
               className={`h-auto object-contain transition-all duration-300 ${scrolled ? 'w-10 md:w-11' : 'w-14 md:w-16'
                 }`}
               priority
@@ -153,6 +155,7 @@ export function Header() {
             alt="Centro Medico San Fedele"
             width={1640}
             height={300}
+            sizes="(min-width: 1024px) 350px, (min-width: 768px) 310px, 220px"
             className={`h-10 md:h-14 lg:h-16 w-auto object-contain max-w-full ${dark ? 'brightness-0 invert' : ''}`}
             priority
           />
