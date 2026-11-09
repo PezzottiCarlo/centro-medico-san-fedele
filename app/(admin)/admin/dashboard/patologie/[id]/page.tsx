@@ -10,6 +10,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { confrontaSpecialistiche } from '@/lib/specialistiche'
 
 export default function EditPatologiaPage() {
   const router = useRouter()
@@ -55,7 +56,7 @@ export default function EditPatologiaPage() {
           metaDescription: data.metaDescription || '',
           immagine: data.immagine || '',
         })
-        setSpecialistiche(specSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
+        setSpecialistiche([...specSnap.docs].sort((a, b) => confrontaSpecialistiche(a.data(), b.data())).map((d) => ({ id: d.id, nome: d.data().nome as string })))
         setAllMedici(
           sortMedici(mediciSnap.docs.map((d) => ({ id: d.id, nome: d.data().nome as string })))
         )

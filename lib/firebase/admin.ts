@@ -11,6 +11,7 @@ import {
 import { getAuth, Auth } from 'firebase-admin/auth'
 import { cert } from 'firebase-admin/app'
 import { compareMedicoNames } from '@/lib/medici'
+import { confrontaSpecialistiche } from '@/lib/specialistiche'
 
 let adminApp: App | null = null
 
@@ -65,25 +66,40 @@ export function getAdminAuth(): Auth {
   return getAuth(getAdminApp())
 }
 
-// ── Ordinamento alfabetico dei medici ─────────────────────────
+// ── Ordinamento di default di alcune collection ───────────────
 //
-// Le pagine leggono la collection `medici` direttamente da `adminDb`, ognuna con
-// la propria query. Invece di aggiungere un ordinamento in ciascuna, lo si applica
-// una volta sola qui: `adminDb.collection('medici')` restituisce una Query avvolta
-// che riordina lo snapshot al momento della `.get()`. Serve un ordinamento in
-// memoria perché il cognome non è un campo a sé (vedi lib/medici.ts).
+// Le pagine leggono `medici` e `specialistiche` direttamente da `adminDb`, ognuna
+// con la propria query. Invece di aggiungere un ordinamento in ciascuna, lo si
+// applica una volta sola qui: `adminDb.collection(...)` restituisce una Query
+// avvolta che riordina lo snapshot al momento della `.get()`.
+// - medici: per cognome, in memoria perché il cognome non è un campo a sé
+//   (vedi lib/medici.ts);
+// - specialistiche: per il campo `order` scelto dall'admin, poi per nome. In
+//   memoria e non con `orderBy`, che escluderebbe i documenti senza `order` e
+//   chiederebbe un indice composto per ogni `where`.
 
-const MEDICI_COLLECTION = 'medici'
+type Confronto = (a: QueryDocumentSnapshot<DocumentData>, b: QueryDocumentSnapshot<DocumentData>) => number
+
+const ORDINAMENTI: Record<string, Confronto> = {
+  medici: (a, b) =>
+    compareMedicoNames(a.get('nome') as string | undefined, b.get('nome') as string | undefined),
+  specialistiche: (a, b) =>
+    confrontaSpecialistiche(
+      { order: a.get('order'), nome: a.get('nome') },
+      { order: b.get('order'), nome: b.get('nome') }
+    ),
+}
 
 function isQuery(value: unknown): value is Query<DocumentData> {
   return !!value && typeof (value as Query<DocumentData>).where === 'function'
 }
 
-/** Snapshot con i `docs` riordinati per cognome, per il resto identico. */
-function sortedMediciSnapshot(snap: QuerySnapshot<DocumentData>): QuerySnapshot<DocumentData> {
-  const docs = [...snap.docs].sort((a, b) =>
-    compareMedicoNames(a.get('nome') as string | undefined, b.get('nome') as string | undefined)
-  )
+/** Snapshot con i `docs` riordinati, per il resto identico. */
+function sortedSnapshot(
+  snap: QuerySnapshot<DocumentData>,
+  confronto: Confronto
+): QuerySnapshot<DocumentData> {
+  const docs = [...snap.docs].sort(confronto)
   return new Proxy(snap, {
     get(target, prop) {
       if (prop === 'docs') return docs
@@ -98,12 +114,16 @@ function sortedMediciSnapshot(snap: QuerySnapshot<DocumentData>): QuerySnapshot<
 }
 
 /**
- * Avvolge una query su `medici` propagando il wrapping ai metodi che restituiscono
- * una nuova Query (`where`, `limit`, ...), così l'ordinamento sopravvive alle
- * catene. Un `orderBy` esplicito del chiamante ha la precedenza e disattiva
- * l'ordinamento alfabetico di default.
+ * Avvolge una query propagando il wrapping ai metodi che restituiscono una nuova
+ * Query (`where`, `limit`, ...), così l'ordinamento sopravvive alle catene. Un
+ * `orderBy` esplicito del chiamante ha la precedenza e disattiva l'ordinamento
+ * di default.
  */
-function withMediciOrder<T extends Query<DocumentData>>(q: T, explicitOrder = false): T {
+function withOrder<T extends Query<DocumentData>>(
+  q: T,
+  confronto: Confronto,
+  explicitOrder = false
+): T {
   return new Proxy(q, {
     get(target, prop) {
       const value = (target as unknown as Record<string | symbol, unknown>)[prop]
@@ -113,7 +133,7 @@ function withMediciOrder<T extends Query<DocumentData>>(q: T, explicitOrder = fa
       if (prop === 'get') {
         return async (...args: unknown[]) => {
           const snap = (await fn(...args)) as QuerySnapshot<DocumentData>
-          return explicitOrder ? snap : sortedMediciSnapshot(snap)
+          return explicitOrder ? snap : sortedSnapshot(snap, confronto)
         }
       }
 
@@ -121,7 +141,7 @@ function withMediciOrder<T extends Query<DocumentData>>(q: T, explicitOrder = fa
         const result = fn(...args)
         // `doc()`, `add()`, `count()`... non sono Query: passano inalterati.
         return isQuery(result)
-          ? withMediciOrder(result, explicitOrder || prop === 'orderBy')
+          ? withOrder(result, confronto, explicitOrder || prop === 'orderBy')
           : result
       }
     },
@@ -139,7 +159,8 @@ export const adminDb = new Proxy({} as Firestore, {
     if (prop === 'collection') {
       return (path: string, ...rest: unknown[]) => {
         const ref = fn(path, ...rest) as CollectionReference<DocumentData>
-        return path === MEDICI_COLLECTION ? withMediciOrder(ref) : ref
+        const confronto = ORDINAMENTI[path]
+        return confronto ? withOrder(ref, confronto) : ref
       }
     }
 

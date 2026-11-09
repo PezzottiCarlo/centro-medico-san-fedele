@@ -10,6 +10,8 @@ import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
 import type { Orario, SottoSpecialistica } from '@/types'
+import { ordinaSotto } from '@/lib/sottoSpecialistiche'
+import { confrontaSpecialistiche } from '@/lib/specialistiche'
 
 const GIORNI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
 
@@ -29,13 +31,13 @@ export default function NuovoMedicoPage() {
   useEffect(() => {
     getDocs(collection(db, 'specialistiche')).then((snap) => {
       setAllSpecialistiche(
-        snap.docs.map((d) => {
+        [...snap.docs].sort((a, b) => confrontaSpecialistiche(a.data(), b.data())).map((d) => {
           const dd = d.data()
           return {
             id: d.id,
             nome: dd.nome as string,
             icona: dd.icona as string,
-            sottoSpecialistiche: (dd.sottoSpecialistiche || []) as SottoSpecialistica[],
+            sottoSpecialistiche: ordinaSotto((dd.sottoSpecialistiche || []) as SottoSpecialistica[]),
           }
         })
       )
