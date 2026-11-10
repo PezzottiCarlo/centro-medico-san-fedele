@@ -9,6 +9,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { htmlVuoto } from '@/lib/admin'
 
 export default function EditStoriaPage() {
   const router = useRouter()
@@ -69,7 +70,7 @@ export default function EditStoriaPage() {
   }
 
   async function handleSave() {
-    if (!form.titolo || !form.descrizione) {
+    if (!form.titolo.trim() || htmlVuoto(form.descrizione)) {
       setError('Titolo e descrizione sono obbligatori.')
       return
     }
@@ -83,10 +84,10 @@ export default function EditStoriaPage() {
       await updateDoc(doc(db, collectionName, id), data)
       await revalidatePublic(['/storia', '/sport', '/'])
       router.push('/admin/dashboard/storia')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setSaving(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
@@ -98,6 +99,7 @@ export default function EditStoriaPage() {
       await deleteDoc(doc(db, collectionName, id))
       await revalidatePublic(['/storia', '/sport', '/'])
       router.push('/admin/dashboard/storia')
+      router.refresh()
     } catch {
       setError('Errore durante l\'eliminazione.')
       setSaving(false)

@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from 'firebase/firestore'
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+  arrayRemove,
+} from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
@@ -11,8 +20,9 @@ import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
 import type { Orario, SottoSpecialistica } from '@/types'
 import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 import { confrontaSpecialistiche } from '@/lib/specialistiche'
+import { GIORNI, normalizzaGiorno, verificaSlug } from '@/lib/admin'
+import { InterruttorePubblicazione } from '@/components/admin/InterruttorePubblicazione'
 
-const GIORNI = ['Lunedi', 'Martedi', 'Mercoledi', 'Giovedi', 'Venerdi', 'Sabato']
 
 interface SpecialisticaOpt {
   id: string
@@ -70,7 +80,8 @@ export default function EditMedicoPage() {
           specialisticheIds: data.specialisticheIds || [],
           sottoSpecialisticheIds: data.sottoSpecialisticheIds || [],
           patologieIds: data.patologieIds || [],
-          orari: data.orari || [],
+          // Stessa forma per tutti i giorni (i dati vecchi erano senza accento)
+          orari: ((data.orari || []) as Orario[]).map((o) => ({ ...o, giorno: normalizzaGiorno(o.giorno) })),
         })
         const specSnap = await getDocs(collection(db, 'specialistiche'))
         setAllSpecialistiche(
@@ -124,7 +135,7 @@ export default function EditMedicoPage() {
   }
 
   function addOrario() {
-    update('orari', [...form.orari, { giorno: 'Lunedi', ore: '09:00 - 13:00', tipo: 'appuntamento' as const }])
+    update('orari', [...form.orari, { giorno: 'Lunedì', ore: '09:00 - 13:00', tipo: 'appuntamento' as const }])
   }
 
   function updateOrario(index: number, field: keyof Orario, value: string) {
@@ -138,30 +149,59 @@ export default function EditMedicoPage() {
   }
 
   async function handleSave() {
-    if (!form.nome) {
-      setError('Il nome e obbligatorio.')
+    if (!form.nome.trim()) {
+      setError('Il nome è obbligatorio.')
       return
     }
     setSaving(true)
     setError('')
     try {
-      await updateDoc(doc(db, 'medici', id), { ...form })
+      const esito = await verificaSlug(db, 'medici', form.slug || form.nome, id)
+      if ('errore' in esito) {
+        setSaving(false)
+        setError(esito.errore)
+        return
+      }
+      // Solo riferimenti esistenti: gli id di specialistiche o terapie eliminate
+      // non si vedono nel form e altrimenti verrebbero riscritti all'infinito
+      const specEsistenti = new Set(allSpecialistiche.map((s) => s.id))
+      const sottoEsistenti = new Set(
+        allSpecialistiche.flatMap((s) => s.sottoSpecialistiche.map((ss) => ss.id))
+      )
+      const batch = writeBatch(db)
+      batch.update(doc(db, 'medici', id), {
+        ...form,
+        nome: form.nome.trim(),
+        slug: esito.slug,
+        specialisticheIds: form.specialisticheIds.filter((x) => specEsistenti.has(x)),
+        sottoSpecialisticheIds: form.sottoSpecialisticheIds.filter((x) => sottoEsistenti.has(x)),
+      })
+      await batch.commit()
       await revalidatePublic(['/medici', `/medici/${form.slug}`, '/', '/sport'])
       router.push('/admin/dashboard/medici')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setSaving(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
   async function handleDelete() {
-    if (!confirm('Sei sicuro di voler eliminare questo medico?')) return
+    if (!confirm('Sei sicuro di voler eliminare questo medico? Verrà tolto anche dalle patologie a cui è associato.')) return
     setSaving(true)
     try {
-      await deleteDoc(doc(db, 'medici', id))
+      // Le patologie lo elencano in `mediciIds`: senza pulizia resterebbero
+      // riferimenti a un medico che non esiste più
+      const batch = writeBatch(db)
+      const patologie = await getDocs(
+        query(collection(db, 'patologie'), where('mediciIds', 'array-contains', id))
+      )
+      patologie.docs.forEach((d) => batch.update(d.ref, { mediciIds: arrayRemove(id) }))
+      batch.delete(doc(db, 'medici', id))
+      await batch.commit()
       await revalidatePublic(['/medici', `/medici/${form.slug}`, '/', '/sport'])
       router.push('/admin/dashboard/medici')
+      router.refresh()
     } catch {
       setError('Errore durante l\'eliminazione.')
       setSaving(false)
@@ -230,8 +270,9 @@ export default function EditMedicoPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
+              <label htmlFor="medico-slug" className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
               <input
+                id="medico-slug"
                 type="text"
                 value={form.slug}
                 onChange={(e) => update('slug', e.target.value)}
@@ -464,31 +505,10 @@ export default function EditMedicoPage() {
 
         {/* Stato */}
         <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={form.pubblicato}
-              onClick={() => update('pubblicato', !form.pubblicato)}
-              className={`relative w-12 h-6 rounded-full overflow-hidden transition-colors ${
-                form.pubblicato ? 'bg-primary' : 'bg-slate-600'
-              }`}
-            >
-              <span
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${
-                  form.pubblicato ? 'left-7' : 'left-1'
-                }`}
-              />
-            </button>
-            <div>
-              <p className="font-medium text-white">
-                {form.pubblicato ? 'Pubblicato' : 'Bozza'}
-              </p>
-              <p className="text-xs text-slate-400">
-                {form.pubblicato ? 'Visibile sul sito' : 'Non visibile sul sito'}
-              </p>
-            </div>
-          </div>
+          <InterruttorePubblicazione
+            attivo={form.pubblicato}
+            onCambia={(v) => update('pubblicato', v)}
+          />
         </div>
       </main>
     </div>

@@ -54,3 +54,24 @@ export async function verificaSlug(
   }
   return { slug }
 }
+
+/** Data di oggi in ora italiana, per i campi <input type="date"> (YYYY-MM-DD). */
+export function oggiLocale(): string {
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Rome' }).format(new Date())
+}
+
+/** "2026-03-01" → ISO, o null se la data non è valida (es. campo svuotato). */
+export function dataInIso(valore: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valore)) return null
+  const data = new Date(`${valore}T12:00:00`)
+  return Number.isNaN(data.getTime()) ? null : data.toISOString()
+}
+
+/** ISO → "YYYY-MM-DD" in ora italiana, per ricaricare la data nel form. */
+export function isoInData(iso: string | undefined): string {
+  if (!iso) return ''
+  const data = new Date(iso)
+  return Number.isNaN(data.getTime())
+    ? ''
+    : new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Rome' }).format(data)
+}

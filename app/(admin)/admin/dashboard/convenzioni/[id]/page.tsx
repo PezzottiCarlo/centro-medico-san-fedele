@@ -8,6 +8,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { linkEsterno, linkSicuro } from '@/lib/link'
 
 export default function EditConvenzionePage() {
   const router = useRouter()
@@ -57,20 +58,25 @@ export default function EditConvenzionePage() {
   }
 
   async function handleSave() {
-    if (!form.nome) {
+    if (!form.nome.trim()) {
       setError('Il nome è obbligatorio.')
+      return
+    }
+    const urlPulito = form.url?.trim() ? linkSicuro(form.url) : ''
+    if (urlPulito === null || (urlPulito && !linkEsterno(urlPulito))) {
+      setError('Il sito della convenzione deve essere un indirizzo web (es. https://www.esempio.it).')
       return
     }
     setSaving(true)
     setError('')
     try {
-      await updateDoc(doc(db, 'convenzioni', id), { ...form })
+      await updateDoc(doc(db, 'convenzioni', id), { ...form, nome: form.nome.trim(), url: urlPulito })
       await revalidatePublic(['/convenzioni', '/'])
       router.push('/admin/dashboard/convenzioni')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setSaving(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
@@ -81,6 +87,7 @@ export default function EditConvenzionePage() {
       await deleteDoc(doc(db, 'convenzioni', id))
       await revalidatePublic(['/convenzioni', '/'])
       router.push('/admin/dashboard/convenzioni')
+      router.refresh()
     } catch {
       setError('Errore durante l\'eliminazione.')
       setSaving(false)

@@ -12,6 +12,7 @@ import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 import { confrontaSpecialistiche } from '@/lib/specialistiche'
+import { verificaSlug } from '@/lib/admin'
 
 export default function NuovaPatologiaPage() {
   const router = useRouter()
@@ -48,10 +49,14 @@ export default function NuovaPatologiaPage() {
     load()
   }, [])
 
+  // Una volta modificato a mano, lo slug non segue più il titolo/nome
+  const [slugToccato, setSlugToccato] = useState(false)
+
   function update(key: string, value: string | string[]) {
+    if (key === 'slug') setSlugToccato(true)
     setForm((f) => {
       const updated = { ...f, [key]: value }
-      if (key === 'nome' && typeof value === 'string') {
+      if (key === 'nome' && typeof value === 'string' && !slugToccato) {
         updated.slug = slugify(value)
       }
       return updated
@@ -68,20 +73,34 @@ export default function NuovaPatologiaPage() {
   }
 
   async function handleSave() {
-    if (!form.nome || !form.specialisticaId) {
+    if (!form.nome.trim() || !form.specialisticaId) {
       setError('Nome e specialistica sono obbligatori.')
       return
     }
     setLoading(true)
     setError('')
     try {
-      await addDoc(collection(db, 'patologie'), { ...form })
+      const esito = await verificaSlug(db, 'patologie', form.slug || form.nome)
+      if ('errore' in esito) {
+        setLoading(false)
+        setError(esito.errore)
+        return
+      }
+      // Solo medici che esistono ancora
+      const mediciEsistenti = new Set(allMedici.map((m) => m.id))
+      const dati = {
+        ...form,
+        nome: form.nome.trim(),
+        slug: esito.slug,
+        mediciIds: form.mediciIds.filter((m) => mediciEsistenti.has(m)),
+      }
+      await addDoc(collection(db, 'patologie'), dati)
       await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
       router.push('/admin/dashboard/patologie')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 

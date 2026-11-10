@@ -8,6 +8,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
+import { linkEsterno, linkSicuro } from '@/lib/link'
 
 export default function NuovaConvenzione() {
   const router = useRouter()
@@ -27,20 +28,25 @@ export default function NuovaConvenzione() {
   }
 
   async function handleSave() {
-    if (!form.nome) {
+    if (!form.nome.trim()) {
       setError('Il nome è obbligatorio.')
+      return
+    }
+    const urlPulito = form.url?.trim() ? linkSicuro(form.url) : ''
+    if (urlPulito === null || (urlPulito && !linkEsterno(urlPulito))) {
+      setError('Il sito della convenzione deve essere un indirizzo web (es. https://www.esempio.it).')
       return
     }
     setLoading(true)
     setError('')
     try {
-      await addDoc(collection(db, 'convenzioni'), form)
+      await addDoc(collection(db, 'convenzioni'), { ...form, nome: form.nome.trim(), url: urlPulito })
       await revalidatePublic(['/convenzioni', '/'])
       router.push('/admin/dashboard/convenzioni')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 

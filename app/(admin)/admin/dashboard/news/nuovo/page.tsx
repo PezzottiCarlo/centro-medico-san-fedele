@@ -10,6 +10,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
+import { dataInIso, htmlVuoto, oggiLocale, verificaSlug } from '@/lib/admin'
 
 export default function NuovaNewsPage() {
   const router = useRouter()
@@ -23,13 +24,17 @@ export default function NuovaNewsPage() {
     autore: '',
     immagine: '',
     pubblicato: false,
-    dataPublicazione: new Date().toISOString().split('T')[0],
+    dataPublicazione: oggiLocale(),
   })
 
+  // Una volta modificato a mano, lo slug non segue più il titolo/nome
+  const [slugToccato, setSlugToccato] = useState(false)
+
   function update(key: string, value: string | boolean) {
+    if (key === 'slug') setSlugToccato(true)
     setForm((f) => {
       const updated = { ...f, [key]: value }
-      if (key === 'titolo' && typeof value === 'string') {
+      if (key === 'titolo' && typeof value === 'string' && !slugToccato) {
         updated.slug = slugify(value)
       }
       return updated
@@ -37,23 +42,36 @@ export default function NuovaNewsPage() {
   }
 
   async function handleSave() {
-    if (!form.titolo || !form.corpo) {
+    if (!form.titolo.trim() || htmlVuoto(form.corpo)) {
       setError('Titolo e contenuto sono obbligatori.')
+      return
+    }
+    const dataIso = dataInIso(form.dataPublicazione)
+    if (!dataIso) {
+      setError('La data di pubblicazione non è valida.')
       return
     }
     setLoading(true)
     setError('')
     try {
+      const esito = await verificaSlug(db, 'news_eventi', form.slug || form.titolo)
+      if ('errore' in esito) {
+        setLoading(false)
+        setError(esito.errore)
+        return
+      }
       await addDoc(collection(db, 'news_eventi'), {
         ...form,
-        dataPublicazione: new Date(form.dataPublicazione).toISOString(),
+        titolo: form.titolo.trim(),
+        slug: esito.slug,
+        dataPublicazione: dataIso,
       })
       await revalidatePublic(['/news', `/news/${form.slug}`, '/'])
       router.push('/admin/dashboard/news')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 

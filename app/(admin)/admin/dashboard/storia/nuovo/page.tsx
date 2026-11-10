@@ -2,13 +2,14 @@
 
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { addDoc, collection } from 'firebase/firestore'
+import { addDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
+import { htmlVuoto } from '@/lib/admin'
 
 export default function NuovaStoriaPage() {
   return (
@@ -44,8 +45,8 @@ function NuovaStoriaForm() {
   }
 
   async function handleSave() {
-    if (!form.titolo || !form.descrizione) {
-      setError('Anno, titolo e descrizione sono obbligatori.')
+    if (!form.titolo.trim() || htmlVuoto(form.descrizione)) {
+      setError('Titolo e descrizione sono obbligatori.')
       return
     }
     setLoading(true)
@@ -55,13 +56,20 @@ function NuovaStoriaForm() {
       const data = tipoCorrente === 'evento'
         ? { anno: form.anno, titolo: form.titolo, descrizione: form.descrizione, immagine: form.immagine, order: form.order, pubblicato: form.pubblicato, sportivo: form.sportivo }
         : { anno: form.anno, titolo: form.titolo, descrizione: form.descrizione, pubblicato: form.pubblicato }
+      // Un evento nuovo va in fondo alla linea del tempo (con `order: 0`
+      // finiva prima del 2008); il valore si può poi cambiare dalla modifica
+      if (tipoCorrente === 'evento' && !form.order) {
+        const eventi = await getDocs(collection(db, 'storia_eventi'))
+        const ultimo = Math.max(0, ...eventi.docs.map((d) => Number(d.get('order')) || 0))
+        Object.assign(data, { order: ultimo + 1 })
+      }
       await addDoc(collection(db, collectionName), data)
       await revalidatePublic(['/storia', '/sport', '/'])
       router.push('/admin/dashboard/storia')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 

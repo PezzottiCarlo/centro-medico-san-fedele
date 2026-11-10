@@ -9,6 +9,7 @@ import { ImageUpload } from '@/components/admin/ImageUpload'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { dataInIso, htmlVuoto, isoInData, verificaSlug } from '@/lib/admin'
 
 export default function EditNewsPage() {
   const router = useRouter()
@@ -46,7 +47,7 @@ export default function EditNewsPage() {
           autore: data.autore || '',
           immagine: data.immagine || '',
           pubblicato: data.pubblicato ?? false,
-          dataPublicazione: data.dataPublicazione ? new Date(data.dataPublicazione).toISOString().split('T')[0] : '',
+          dataPublicazione: isoInData(data.dataPublicazione),
         })
       } catch {
         setError('Errore nel caricamento.')
@@ -62,23 +63,36 @@ export default function EditNewsPage() {
   }
 
   async function handleSave() {
-    if (!form.titolo || !form.corpo) {
+    if (!form.titolo.trim() || htmlVuoto(form.corpo)) {
       setError('Titolo e contenuto sono obbligatori.')
+      return
+    }
+    const dataIso = dataInIso(form.dataPublicazione)
+    if (!dataIso) {
+      setError('La data di pubblicazione non è valida.')
       return
     }
     setSaving(true)
     setError('')
     try {
+      const esito = await verificaSlug(db, 'news_eventi', form.slug || form.titolo, id)
+      if ('errore' in esito) {
+        setSaving(false)
+        setError(esito.errore)
+        return
+      }
       await updateDoc(doc(db, 'news_eventi', id), {
         ...form,
-        dataPublicazione: new Date(form.dataPublicazione).toISOString(),
+        titolo: form.titolo.trim(),
+        slug: esito.slug,
+        dataPublicazione: dataIso,
       })
       await revalidatePublic(['/news', `/news/${form.slug}`, '/'])
       router.push('/admin/dashboard/news')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setSaving(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
@@ -89,6 +103,7 @@ export default function EditNewsPage() {
       await deleteDoc(doc(db, 'news_eventi', id))
       await revalidatePublic(['/news', `/news/${form.slug}`, '/'])
       router.push('/admin/dashboard/news')
+      router.refresh()
     } catch {
       setError('Errore durante l\'eliminazione.')
       setSaving(false)

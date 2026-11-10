@@ -12,8 +12,9 @@ import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
 import type { Orario, SottoSpecialistica } from '@/types'
 import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 import { confrontaSpecialistiche } from '@/lib/specialistiche'
+import { GIORNI, normalizzaGiorno, verificaSlug } from '@/lib/admin'
+import { InterruttorePubblicazione } from '@/components/admin/InterruttorePubblicazione'
 
-const GIORNI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
 
 interface SpecialisticaOpt {
   id: string
@@ -61,10 +62,14 @@ export default function NuovoMedicoPage() {
     orari: [] as Orario[],
   })
 
+  // Una volta modificato a mano, lo slug non segue più il titolo/nome
+  const [slugToccato, setSlugToccato] = useState(false)
+
   function update(key: string, value: unknown) {
+    if (key === 'slug') setSlugToccato(true)
     setForm((f) => {
       const updated = { ...f, [key]: value } as typeof f
-      if (key === 'nome' && typeof value === 'string') {
+      if (key === 'nome' && typeof value === 'string' && !slugToccato) {
         updated.slug = slugify(value)
       }
       return updated
@@ -111,20 +116,26 @@ export default function NuovoMedicoPage() {
   }
 
   async function handleSave() {
-    if (!form.nome) {
+    if (!form.nome.trim()) {
       setError('Il nome è obbligatorio.')
       return
     }
     setLoading(true)
     setError('')
     try {
-      await addDoc(collection(db, 'medici'), form)
+      const esito = await verificaSlug(db, 'medici', form.slug || form.nome)
+      if ('errore' in esito) {
+        setLoading(false)
+        setError(esito.errore)
+        return
+      }
+      await addDoc(collection(db, 'medici'), { ...form, nome: form.nome.trim(), slug: esito.slug })
       await revalidatePublic(['/medici', `/medici/${form.slug}`, '/', '/sport'])
       router.push('/admin/dashboard/medici')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
@@ -172,8 +183,9 @@ export default function NuovoMedicoPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
+              <label htmlFor="medico-slug" className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
               <input
+                id="medico-slug"
                 type="text"
                 value={form.slug}
                 onChange={(e) => update('slug', e.target.value)}
@@ -403,31 +415,10 @@ export default function NuovoMedicoPage() {
         </div>
 
         <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={form.pubblicato}
-              onClick={() => update('pubblicato', !form.pubblicato)}
-              className={`relative w-12 h-6 rounded-full overflow-hidden transition-colors ${
-                form.pubblicato ? 'bg-primary' : 'bg-slate-600'
-              }`}
-            >
-              <span
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${
-                  form.pubblicato ? 'left-7' : 'left-1'
-                }`}
-              />
-            </button>
-            <div>
-              <p className="font-medium text-white">
-                {form.pubblicato ? 'Pubblicato' : 'Bozza'}
-              </p>
-              <p className="text-xs text-slate-500">
-                {form.pubblicato ? 'Visibile sul sito' : 'Non visibile sul sito'}
-              </p>
-            </div>
-          </div>
+          <InterruttorePubblicazione
+            attivo={form.pubblicato}
+            onCambia={(v) => update('pubblicato', v)}
+          />
         </div>
       </main>
     </div>

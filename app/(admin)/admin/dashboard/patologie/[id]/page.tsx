@@ -11,6 +11,7 @@ import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { confrontaSpecialistiche } from '@/lib/specialistiche'
+import { verificaSlug } from '@/lib/admin'
 
 export default function EditPatologiaPage() {
   const router = useRouter()
@@ -83,20 +84,34 @@ export default function EditPatologiaPage() {
   }
 
   async function handleSave() {
-    if (!form.nome || !form.specialisticaId) {
+    if (!form.nome.trim() || !form.specialisticaId) {
       setError('Nome e specialistica sono obbligatori.')
       return
     }
     setSaving(true)
     setError('')
     try {
-      await updateDoc(doc(db, 'patologie', id), { ...form })
+      const esito = await verificaSlug(db, 'patologie', form.slug || form.nome, id)
+      if ('errore' in esito) {
+        setSaving(false)
+        setError(esito.errore)
+        return
+      }
+      // Solo medici che esistono ancora
+      const mediciEsistenti = new Set(allMedici.map((m) => m.id))
+      const dati = {
+        ...form,
+        nome: form.nome.trim(),
+        slug: esito.slug,
+        mediciIds: form.mediciIds.filter((m) => mediciEsistenti.has(m)),
+      }
+      await updateDoc(doc(db, 'patologie', id), dati)
       await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
       router.push('/admin/dashboard/patologie')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setSaving(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
@@ -107,6 +122,7 @@ export default function EditPatologiaPage() {
       await deleteDoc(doc(db, 'patologie', id))
       await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
       router.push('/admin/dashboard/patologie')
+      router.refresh()
     } catch {
       setError('Errore durante l\'eliminazione.')
       setSaving(false)

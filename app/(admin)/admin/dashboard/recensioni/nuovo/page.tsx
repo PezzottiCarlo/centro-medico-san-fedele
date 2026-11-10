@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase/client'
 import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Star } from 'lucide-react'
+import { oggiLocale } from '@/lib/admin'
 
 export default function NuovaRecensione() {
   const router = useRouter()
@@ -16,7 +17,7 @@ export default function NuovaRecensione() {
     autore: '',
     testo: '',
     stelle: 5,
-    data: new Date().toISOString().split('T')[0],
+    data: oggiLocale(),
     fonte: 'editoriale' as const,
   })
 
@@ -35,10 +36,10 @@ export default function NuovaRecensione() {
       await addDoc(collection(db, 'recensioni_statiche'), form)
       await revalidatePublic(['/'])
       router.push('/admin/dashboard/recensioni')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
