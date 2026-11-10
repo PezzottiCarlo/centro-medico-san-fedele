@@ -2,7 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from 'firebase/firestore'
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+  arrayRemove,
+} from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { RichEditor } from '@/components/admin/RichEditor'
 import { ImageUpload } from '@/components/admin/ImageUpload'
@@ -11,6 +21,8 @@ import { sortMedici } from '@/lib/medici'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Trash2, Plus, ArrowUpDown } from 'lucide-react'
 import type { SottoSpecialistica } from '@/types'
+import { nuovoId, SLUG_DI_SISTEMA, verificaSlug } from '@/lib/admin'
+import { InterruttorePubblicazione } from '@/components/admin/InterruttorePubblicazione'
 import { numeraSotto, ordinaSotto, spostaSotto } from '@/lib/sottoSpecialistiche'
 import { OrdineSottoControlli, RigaRiordino } from '@/components/admin/OrdineSottoControlli'
 import { ListaOrdinabile } from '@/components/admin/ListaOrdinabile'
@@ -29,6 +41,9 @@ export default function EditSpecialisticaPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [allMedici, setAllMedici] = useState<MedicoOpt[]>([])
+  // Id delle terapie al caricamento: servono a capire quali sono state eliminate
+  const [sottoIniziali, setSottoIniziali] = useState<string[]>([])
+  const [slugOriginale, setSlugOriginale] = useState('')
   // Lista compatta (solo i nomi) per riordinare comodamente anche decine di terapie
   const [riordino, setRiordino] = useState(false)
   const [form, setForm] = useState({
@@ -72,6 +87,8 @@ export default function EditSpecialisticaPage() {
           sottoSpecialistiche: ordinaSotto(data.sottoSpecialistiche || []),
           immagine: data.immagine || '',
         })
+        setSottoIniziali(((data.sottoSpecialistiche || []) as SottoSpecialistica[]).map((x) => x.id))
+        setSlugOriginale(data.slug || '')
         setAllMedici(
           sortMedici(
             mediciSnap.docs.map((d) => ({
@@ -90,6 +107,9 @@ export default function EditSpecialisticaPage() {
     load()
   }, [id])
 
+  // Valutato sullo slug caricato, non su quello che si sta digitando
+  const slugBloccato = SLUG_DI_SISTEMA.has(slugOriginale)
+
   // Calcola i medici per ogni sotto-specialistica (read-only, derivato da medici.sottoSpecialisticheIds)
   const mediciBySotto = useMemo(() => {
     const map: Record<string, MedicoOpt[]> = {}
@@ -106,7 +126,7 @@ export default function EditSpecialisticaPage() {
   function addSottoSpecialistica() {
     update('sottoSpecialistiche', [
       ...form.sottoSpecialistiche,
-      { id: crypto.randomUUID(), nome: '' },
+      { id: nuovoId(), nome: '' },
     ])
   }
 
@@ -133,38 +153,96 @@ export default function EditSpecialisticaPage() {
   }
 
   function removeSottoSpecialistica(index: number) {
+    const sotto = form.sottoSpecialistiche[index]
+    const collegati = mediciBySotto[sotto.id]?.length ?? 0
+    const nome = sotto.nome.trim() || 'questa terapia'
+    const avviso = collegati
+      ? `Eliminare "${nome}"? È associata a ${collegati} ${collegati === 1 ? 'medico' : 'medici'}: al salvataggio verrà tolta anche dalle loro schede.`
+      : `Eliminare "${nome}"?`
+    if (!confirm(avviso)) return
     update('sottoSpecialistiche', form.sottoSpecialistiche.filter((_, i) => i !== index))
   }
 
   async function handleSave() {
-    if (!form.nome || !form.descrizioneBreve) {
+    if (!form.nome.trim() || !form.descrizioneBreve.trim()) {
       setError('Nome e descrizione breve sono obbligatori.')
+      return
+    }
+    if (form.sottoSpecialistiche.some((s) => !s.nome.trim())) {
+      setError('Ogni terapia deve avere un nome: compilalo o elimina la riga vuota.')
       return
     }
     setSaving(true)
     setError('')
     try {
+      const esito = slugBloccato
+        ? { slug: form.slug }
+        : await verificaSlug(db, 'specialistiche', form.slug || form.nome, id)
+      if ('errore' in esito) {
+        setSaving(false)
+        setError(esito.errore)
+        return
+      }
+      const batch = writeBatch(db)
       // L'ordine mostrato qui diventa il campo `ordine` di ogni terapia
-      await updateDoc(doc(db, 'specialistiche', id), {
+      batch.update(doc(db, 'specialistiche', id), {
         ...form,
-        sottoSpecialistiche: numeraSotto(form.sottoSpecialistiche),
+        nome: form.nome.trim(),
+        slug: esito.slug,
+        sottoSpecialistiche: numeraSotto(
+          form.sottoSpecialistiche.map((s) => ({ ...s, nome: s.nome.trim() }))
+        ),
       })
+      // Terapie eliminate: vanno tolte anche dai medici, altrimenti restano id
+      // orfani invisibili nell'admin e riscritti a ogni salvataggio
+      const rimaste = new Set(form.sottoSpecialistiche.map((s) => s.id))
+      const eliminate = sottoIniziali.filter((sid) => !rimaste.has(sid))
+      if (eliminate.length) {
+        for (const m of allMedici) {
+          if (m.sottoSpecialisticheIds.some((sid) => eliminate.includes(sid))) {
+            batch.update(doc(db, 'medici', m.id), {
+              sottoSpecialisticheIds: arrayRemove(...eliminate),
+            })
+          }
+        }
+      }
+      await batch.commit()
       await revalidatePublic(['/ambulatori', `/ambulatori/${form.slug}`, '/sport', '/'])
       router.push('/admin/dashboard/specialistiche')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setSaving(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
   async function handleDelete() {
-    if (!confirm('Sei sicuro di voler eliminare questa specialistica?')) return
+    if (slugBloccato) {
+      setError('Questa specialistica alimenta una pagina dedicata del sito e non si può eliminare: mettila in bozza.')
+      return
+    }
+    if (!confirm('Sei sicuro di voler eliminare questa specialistica? Verrà tolta anche dalle schede dei medici e dalle patologie collegate.')) return
     setSaving(true)
     try {
-      await deleteDoc(doc(db, 'specialistiche', id))
+      // Pulizia dei riferimenti: medici (specialistica e sue terapie) e patologie
+      const batch = writeBatch(db)
+      const [mediciSnap, patologieSnap] = await Promise.all([
+        getDocs(query(collection(db, 'medici'), where('specialisticheIds', 'array-contains', id))),
+        getDocs(query(collection(db, 'patologie'), where('specialisticaId', '==', id))),
+      ])
+      const sottoIds = sottoIniziali
+      mediciSnap.docs.forEach((d) =>
+        batch.update(d.ref, {
+          specialisticheIds: arrayRemove(id),
+          ...(sottoIds.length && { sottoSpecialisticheIds: arrayRemove(...sottoIds) }),
+        })
+      )
+      patologieSnap.docs.forEach((d) => batch.update(d.ref, { specialisticaId: '' }))
+      batch.delete(doc(db, 'specialistiche', id))
+      await batch.commit()
       await revalidatePublic(['/ambulatori', `/ambulatori/${form.slug}`, '/sport', '/'])
       router.push('/admin/dashboard/specialistiche')
+      router.refresh()
     } catch {
       setError('Errore durante l\'eliminazione.')
       setSaving(false)
@@ -240,22 +318,21 @@ export default function EditSpecialisticaPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
+            <label htmlFor="spec-slug" className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
             <input
+              id="spec-slug"
               type="text"
               value={form.slug}
+              readOnly={slugBloccato}
+              aria-describedby="spec-slug-aiuto"
               onChange={(e) => update('slug', e.target.value)}
-              className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary read-only:opacity-60"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Ordine</label>
-            <input
-              type="number"
-              value={form.order}
-              onChange={(e) => update('order', parseInt(e.target.value) || 0)}
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <p id="spec-slug-aiuto" className="text-xs text-slate-400 mt-1">
+              {slugBloccato
+                ? 'Slug fisso: lo usa una pagina dedicata del sito (/sport o /dsa).'
+                : "Indirizzo della pagina: /ambulatori/slug. Cambiandolo, i vecchi link smettono di funzionare."}
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Descrizione breve * (per card)</label>
@@ -414,31 +491,11 @@ export default function EditSpecialisticaPage() {
 
         {/* Stato pubblicazione */}
         <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={form.pubblicata}
-              onClick={() => update('pubblicata', !form.pubblicata)}
-              className={`relative w-12 h-6 rounded-full overflow-hidden transition-colors ${
-                form.pubblicata ? 'bg-primary' : 'bg-slate-600'
-              }`}
-            >
-              <span
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${
-                  form.pubblicata ? 'left-7' : 'left-1'
-                }`}
-              />
-            </button>
-            <div>
-              <p className="font-medium text-white">
-                {form.pubblicata ? 'Pubblicata' : 'Bozza'}
-              </p>
-              <p className="text-xs text-slate-400">
-                {form.pubblicata ? 'Visibile sul sito' : 'Non visibile sul sito'}
-              </p>
-            </div>
-          </div>
+          <InterruttorePubblicazione
+            attivo={form.pubblicata}
+            onCambia={(v) => update('pubblicata', v)}
+            etichette={['Pubblicata', 'Bozza']}
+          />
         </div>
 
         {/* SEO */}

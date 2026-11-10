@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { addDoc, collection } from 'firebase/firestore'
+import { addDoc, collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { slugify } from '@/lib/utils'
 import { RichEditor } from '@/components/admin/RichEditor'
@@ -11,6 +11,8 @@ import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Plus, Trash2, ArrowUpDown } from 'lucide-react'
 import type { SottoSpecialistica } from '@/types'
+import { nuovoId, verificaSlug } from '@/lib/admin'
+import { InterruttorePubblicazione } from '@/components/admin/InterruttorePubblicazione'
 import { numeraSotto, spostaSotto } from '@/lib/sottoSpecialistiche'
 import { OrdineSottoControlli, RigaRiordino } from '@/components/admin/OrdineSottoControlli'
 import { ListaOrdinabile } from '@/components/admin/ListaOrdinabile'
@@ -30,14 +32,20 @@ export default function NuovaSpecialisticaPage() {
     metaTitle: '',
     metaDescription: '',
     order: 0,
+    // Nasce in bozza: si pubblica quando è completa
+    pubblicata: false,
     sottoSpecialistiche: [] as SottoSpecialistica[],
     immagine: '',
   })
 
-  function update(key: string, value: string | number | SottoSpecialistica[]) {
+  // Una volta modificato a mano, lo slug non segue più il nome
+  const [slugToccato, setSlugToccato] = useState(false)
+
+  function update(key: string, value: string | number | boolean | SottoSpecialistica[]) {
+    if (key === 'slug') setSlugToccato(true)
     setForm((f) => {
       const updated = { ...f, [key]: value }
-      if (key === 'nome' && typeof value === 'string') {
+      if (key === 'nome' && typeof value === 'string' && !slugToccato) {
         updated.slug = slugify(value)
         if (!f.metaTitle) updated.metaTitle = value
       }
@@ -48,7 +56,7 @@ export default function NuovaSpecialisticaPage() {
   function addSottoSpecialistica() {
     update('sottoSpecialistiche', [
       ...form.sottoSpecialistiche,
-      { id: crypto.randomUUID(), nome: '' },
+      { id: nuovoId(), nome: '' },
     ])
   }
 
@@ -79,23 +87,41 @@ export default function NuovaSpecialisticaPage() {
   }
 
   async function handleSave() {
-    if (!form.nome || !form.descrizioneBreve) {
+    if (!form.nome.trim() || !form.descrizioneBreve.trim()) {
       setError('Nome e descrizione breve sono obbligatori.')
+      return
+    }
+    if (form.sottoSpecialistiche.some((s) => !s.nome.trim())) {
+      setError('Ogni terapia deve avere un nome: compilalo o elimina la riga vuota.')
       return
     }
     setLoading(true)
     setError('')
     try {
+      const esito = await verificaSlug(db, 'specialistiche', form.slug || form.nome)
+      if ('errore' in esito) {
+        setLoading(false)
+        setError(esito.errore)
+        return
+      }
+      // In fondo all'elenco: con `order: 0` finiva davanti a tutte
+      const tutte = await getDocs(collection(db, 'specialistiche'))
+      const ultimo = Math.max(0, ...tutte.docs.map((d) => Number(d.get('order')) || 0))
       await addDoc(collection(db, 'specialistiche'), {
         ...form,
-        sottoSpecialistiche: numeraSotto(form.sottoSpecialistiche),
+        nome: form.nome.trim(),
+        slug: esito.slug,
+        order: ultimo + 1,
+        sottoSpecialistiche: numeraSotto(
+          form.sottoSpecialistiche.map((s) => ({ ...s, nome: s.nome.trim() }))
+        ),
       })
       await revalidatePublic(['/ambulatori', `/ambulatori/${form.slug}`, '/sport', '/'])
       router.push('/admin/dashboard/specialistiche')
+      router.refresh()
     } catch {
-      setError('Errore durante il salvataggio.')
-    } finally {
       setLoading(false)
+      setError('Errore durante il salvataggio.')
     }
   }
 
@@ -151,22 +177,18 @@ export default function NuovaSpecialisticaPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
+            <label htmlFor="spec-slug" className="block text-sm font-medium text-slate-300 mb-1">Slug</label>
             <input
+              id="spec-slug"
               type="text"
               value={form.slug}
+              aria-describedby="spec-slug-aiuto"
               onChange={(e) => update('slug', e.target.value)}
               className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Ordine</label>
-            <input
-              type="number"
-              value={form.order}
-              onChange={(e) => update('order', parseInt(e.target.value) || 0)}
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <p id="spec-slug-aiuto" className="text-xs text-slate-400 mt-1">
+              Indirizzo della pagina: /ambulatori/slug. Solo lettere minuscole, numeri e trattini.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Descrizione breve * (per card)</label>
@@ -295,6 +317,15 @@ export default function NuovaSpecialisticaPage() {
               }
             />
           )}
+        </div>
+
+        {/* Stato pubblicazione */}
+        <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+          <InterruttorePubblicazione
+            attivo={form.pubblicata}
+            onCambia={(v) => update('pubblicata', v)}
+            etichette={['Pubblicata', 'Bozza']}
+          />
         </div>
 
         {/* SEO */}
