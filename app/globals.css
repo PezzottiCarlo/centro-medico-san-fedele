@@ -290,6 +290,20 @@ html.high-contrast :focus-visible {
   .prose-content hr {
     @apply border-t border-bg-deep my-6;
   }
+
+  /* Testo dell'editor su fondo scuro (pagina Medicina sportiva) */
+  .prose-content-scuro :is(h1, h2, h3, h4, strong) {
+    @apply text-white;
+  }
+  .prose-content-scuro a {
+    @apply text-emerald-400 hover:text-emerald-300;
+  }
+  .prose-content-scuro blockquote {
+    @apply border-emerald-500/40 text-slate-300;
+  }
+  .prose-content-scuro hr {
+    @apply border-slate-700;
+  }
 }
 
 /* Badge fluttuante di reCAPTCHA: nascosto perché la dicitura equivalente è

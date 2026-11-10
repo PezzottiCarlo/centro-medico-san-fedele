@@ -9,6 +9,7 @@ import { HeroDark } from '@/components/layout/HeroDark'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { SportServiziSection } from '@/components/sport/SportServiziSection'
 import { pulisciHtml } from '@/lib/sanitizeHtml'
+import { anniDiAttivita } from '@/lib/siteConfig'
 
 export const revalidate = 60
 export async function generateMetadata() {
@@ -57,7 +58,10 @@ async function getSpecialisticaSport(): Promise<{
       .where('slug', '==', 'medicina-sportiva')
       .limit(1)
       .get()
-    if (specSnap.empty) return { spec: null, medici: [], patologie: [] }
+    // In bozza: la pagina resta, ma senza descrizione e servizi della specialistica
+    if (specSnap.empty || specSnap.docs[0].get('pubblicata') !== true) {
+      return { spec: null, medici: [], patologie: [] }
+    }
     const specDoc = specSnap.docs[0]
     const spec: Specialistica = { id: specDoc.id, ...(specDoc.data() as Omit<Specialistica, 'id'>) }
 
@@ -80,12 +84,6 @@ async function getSpecialisticaSport(): Promise<{
   }
 }
 
-const STATS = [
-  { value: '500+', label: 'Certificazioni/anno' },
-  { value: '98%', label: 'Soddisfazione' },
-  { value: '15+', label: 'Discipline sportive' },
-  { value: '48h', label: 'Referto medio' },
-]
 
 export default async function SportPage() {
   const [storiaSportiva, specSport, hero] = await Promise.all([
@@ -93,7 +91,16 @@ export default async function SportPage() {
     getSpecialisticaSport(),
     getHeroConfig('sport'),
   ])
-  const medici = specSport.medici.slice(0, 4)
+  // Numeri reali (prima c'erano "500+ certificazioni" e "48h" senza fonte).
+  // Il 98% di soddisfazione è lo stesso valore fisso della home.
+  const medici = specSport.medici
+  const numeroServizi = (specSport.spec?.sottoSpecialistiche ?? []).filter((s) => s.nome?.trim()).length
+  const STATS = [
+    { value: String(anniDiAttivita()), label: 'Anni di esperienza' },
+    { value: String(numeroServizi), label: 'Servizi sportivi' },
+    { value: String(medici.length), label: 'Specialisti dedicati' },
+    { value: '98%', label: 'Soddisfazione' },
+  ].filter((s) => s.value !== '0')
 
   return (
     <div className="bg-slate-950 text-white">
@@ -102,14 +109,14 @@ export default async function SportPage() {
       {/* Stats bar */}
       <section className="border-y border-slate-800 bg-slate-900/50">
         <div className="container-main py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {STATS.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl md:text-4xl font-black text-emerald-400">{s.value}</div>
-                <div className="text-sm text-slate-500 mt-1 font-medium">{s.label}</div>
+              <div key={s.label} className="text-center flex flex-col-reverse">
+                <dt className="text-sm text-slate-400 mt-1 font-medium">{s.label}</dt>
+                <dd className="text-3xl md:text-4xl font-black text-emerald-400">{s.value}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
       </section>
 
@@ -146,7 +153,7 @@ export default async function SportPage() {
             <div>
               <span className="text-emerald-400 text-sm font-bold tracking-wider uppercase mb-3 block">Il nostro approccio</span>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Perche scegliere noi?
+                Perché scegliere noi?
               </h2>
               <div className="space-y-4 text-slate-400 leading-relaxed">
                 <p>
@@ -164,7 +171,7 @@ export default async function SportPage() {
                   'Apparecchiature diagnostiche di ultima generazione',
                   'Team multidisciplinare dedicato',
                   'Percorsi personalizzati per ogni disciplina',
-                  'Refertazione rapida entro 48 ore',
+                  'Refertazione rapida',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -211,7 +218,8 @@ export default async function SportPage() {
                       alt={m.nome}
                       width={80}
                       height={80}
-                      className="rounded-full object-cover mx-auto mb-4 ring-2 ring-slate-800 group-hover:ring-emerald-500/30 transition-all"
+                      sizes="80px"
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4 ring-2 ring-slate-800 group-hover:ring-emerald-500/30 transition-all"
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center text-emerald-400 text-2xl font-bold mx-auto mb-4 ring-2 ring-slate-800 group-hover:ring-emerald-500/30 transition-all">
@@ -263,7 +271,7 @@ export default async function SportPage() {
                 <div className="relative bg-slate-900/60 backdrop-blur-sm border border-slate-800 rounded-2xl p-8 md:p-10">
                   <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
                   <div
-                    className="prose prose-invert prose-slate max-w-none text-slate-300 prose-headings:text-white prose-strong:text-white prose-a:text-emerald-400"
+                    className="prose-content prose-content-scuro max-w-none text-slate-300"
                     dangerouslySetInnerHTML={{ __html: pulisciHtml(specSport.spec.descrizione) }}
                   />
                 </div>
@@ -474,7 +482,7 @@ export default async function SportPage() {
                           {evento.titolo}
                         </h3>
                         <div
-                          className="relative text-slate-400 leading-relaxed text-sm md:text-base prose prose-invert prose-sm md:prose-base max-w-none line-clamp-6"
+                          className="relative text-slate-400 leading-relaxed text-sm md:text-base prose-content prose-content-scuro max-w-none line-clamp-6"
                           dangerouslySetInnerHTML={{ __html: pulisciHtml(evento.descrizione) }}
                         />
                       </div>

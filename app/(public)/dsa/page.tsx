@@ -31,11 +31,13 @@ async function getDSAData(): Promise<{ spec: Specialistica | null; medici: Medic
 
     const snap = await adminDb.collection('medici').where('pubblicato', '==', true).get()
 
-    if (dsaSpecSnap.empty) return { spec: null, medici: [] }
+    // Solo se pubblicata: in bozza la pagina resta, senza i suoi contenuti
+    const pubblicate = dsaSpecSnap.docs.filter((d) => d.get('pubblicata') === true)
+    if (pubblicate.length === 0) return { spec: null, medici: [] }
 
-    const specDoc = dsaSpecSnap.docs[0]
+    const specDoc = pubblicate[0]
     const spec: Specialistica = { id: specDoc.id, ...(specDoc.data() as Omit<Specialistica, 'id'>) }
-    const dsaSpecIds = dsaSpecSnap.docs.map((d) => d.id)
+    const dsaSpecIds = pubblicate.map((d) => d.id)
 
     const medici = snap.docs
       .filter((d) => {

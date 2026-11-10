@@ -35,18 +35,22 @@ const SERVIZI_DEDICATI = [
     titolo: 'Assistenza Sinistri',
     descrizione:
       'Supporto medico-legale completo per la gestione di sinistri stradali e infortuni. Perizie, valutazione del danno biologico e assistenza durante tutto l\'iter.',
-    link: '/contatti',
-    linkLabel: 'Contattaci per info',
-    color: 'primary',
+    link: '/ambulatori/assistenza-sinistri',
+    linkLabel: 'Scopri il servizio',
+    // Classi scritte per intero: Tailwind non genera quelle composte a runtime
+    // (`text-${colore}`), e l'icona restava senza colore
+    sfondo: 'bg-primary/10',
+    testo: 'text-primary',
   },
   {
     icon: Building2,
     titolo: 'Servizi alle Aziende',
     descrizione:
       'Medicina del lavoro, visite periodiche, sorveglianza sanitaria e programmi di prevenzione per le aziende del territorio. Convenzioni personalizzate.',
-    link: '/contatti',
-    linkLabel: 'Richiedi un preventivo',
-    color: 'secondary',
+    link: '/ambulatori/medicina-del-lavoro',
+    linkLabel: 'Medicina del lavoro',
+    sfondo: 'bg-secondary/10',
+    testo: 'text-secondary-dark',
   },
   {
     icon: Scan,
@@ -55,7 +59,8 @@ const SERVIZI_DEDICATI = [
       'Apparecchiature di ultima generazione per ecografie, elettromiografie, esami strumentali e di laboratorio. Risultati rapidi e affidabili.',
     link: '/ambulatori/esami-diagnostici',
     linkLabel: 'Vedi gli esami',
-    color: 'accent',
+    sfondo: 'bg-primary/10',
+    testo: 'text-primary-dark',
   },
 ]
 
@@ -64,6 +69,13 @@ export default async function AmbulatorioPage() {
     getSpecialistiche(),
     getHeroConfig('ambulatori'),
   ])
+
+  // Il link a una specialistica vale solo se è pubblicata, altrimenti Contatti
+  const slugPubblicati = new Set(specialistiche.map((x) => x.slug))
+  const linkServizio = (link: string) =>
+    link.startsWith('/ambulatori/') && !slugPubblicati.has(link.slice('/ambulatori/'.length))
+      ? '/contatti'
+      : link
 
   return (
     <>
@@ -124,12 +136,12 @@ export default async function AmbulatorioPage() {
               const Icon = s.icon
               return (
                 <div key={s.titolo} className="bg-white rounded-lg p-6 shadow-card border border-gray-100 flex flex-col">
-                  <div className={`w-12 h-12 rounded-full bg-${s.color}/10 flex items-center justify-center mb-4`}>
-                    <Icon size={24} className={`text-${s.color}`} />
+                  <div className={`w-12 h-12 rounded-full ${s.sfondo} flex items-center justify-center mb-4`}>
+                    <Icon size={24} className={s.testo} aria-hidden />
                   </div>
                   <h3 className="font-semibold text-text-main text-xl mb-3">{s.titolo}</h3>
                   <p className="text-gray-500 text-sm leading-relaxed mb-5 flex-1">{s.descrizione}</p>
-                  <Link href={s.link} className="text-primary text-sm font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all">
+                  <Link href={linkServizio(s.link)} className="text-primary text-sm font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all">
                     {s.linkLabel} <ArrowRight size={14} />
                   </Link>
                 </div>

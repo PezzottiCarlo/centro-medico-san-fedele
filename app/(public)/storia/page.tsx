@@ -38,7 +38,11 @@ async function getData() {
 }
 
 export default async function StoriaPage() {
-  const [{ eventi, riconoscimenti }, hero] = await Promise.all([getData(), getHeroConfig('storia')])
+  const [{ eventi, riconoscimenti }, hero, site] = await Promise.all([
+    getData(),
+    getHeroConfig('storia'),
+    getSiteConfig(),
+  ])
 
   const imageGalleryJsonLd = generateStoriaImageGalleryJsonLd(eventi)
   const hasGalleryImages =
@@ -218,7 +222,11 @@ export default async function StoriaPage() {
                   </div>
                   <p className="text-primary text-base font-black mb-2">{r.anno}</p>
                   <h3 className="font-extrabold text-text-main text-xl md:text-2xl mb-3 leading-tight">{r.titolo}</h3>
-                  <p className="text-text-main/70 text-base leading-relaxed font-medium">{r.descrizione}</p>
+                  {/* La descrizione arriva dall'editor (HTML): come testo si vedevano i tag */}
+                  <div
+                    className="prose-content text-text-main/80 text-base leading-relaxed font-medium"
+                    dangerouslySetInnerHTML={{ __html: pulisciHtml(r.descrizione) }}
+                  />
                 </div>
               ))}
             </div>
@@ -231,8 +239,7 @@ export default async function StoriaPage() {
         <div className="container-main text-center relative">
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-text-main mb-5">Vieni a trovarci</h2>
           <p className="text-text-main/70 text-lg md:text-xl mb-10 max-w-xl mx-auto font-medium">
-            Siamo a Longone al Segrino, in Provincia di Como. Prenota la tua visita o contattaci
-            per informazioni.
+            Siamo a {localitaCentro(site)}. Prenota la tua visita o contattaci per informazioni.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/prenota" className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4">

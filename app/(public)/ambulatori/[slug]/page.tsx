@@ -127,7 +127,11 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
               specSlug={spec.slug}
               specNome={spec.nome}
               icona={spec.icona}
-              enableGenderFilter={spec.slug === 'medicina-estetica'}
+              // Il selettore Donna/Uomo compare dove le prestazioni hanno davvero un
+              // genere (prima era legato a Medicina estetica, che non ne ha nessuna)
+              enableGenderFilter={(spec.sottoSpecialistiche ?? []).some(
+                (x) => x.genere && x.genere !== 'entrambi'
+              )}
             />
           )}
 
