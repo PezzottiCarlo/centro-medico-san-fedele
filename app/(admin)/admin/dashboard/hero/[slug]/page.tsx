@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import { ImageUpload } from '@/components/admin/ImageUpload'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
@@ -26,8 +27,8 @@ const CTA_LINK_RAPIDI: { label: string; href: string; icona: HeroCtaIcon }[] = [
   { label: 'Email del centro', href: CTA_LINK_EMAIL, icona: 'none' },
 ]
 
-function normalizzaCta(cta?: HeroCTA): HeroCTA | undefined {
-  return cta && { ...cta, href: normalizzaLinkCta(cta.href) }
+function normalizzaCta(cta?: HeroCTA | null): HeroCTA | null {
+  return cta ? { ...cta, href: normalizzaLinkCta(cta.href) } : null
 }
 
 const CTA_ICONS: { value: HeroCtaIcon; label: string }[] = [
@@ -53,6 +54,9 @@ export default function EditHeroPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  // Se la lettura fallisce il form mostra i valori di default: salvarli
+  // sovrascriverebbe la hero vera, quindi il salvataggio resta bloccato
+  const [caricato, setCaricato] = useState(false)
   const [form, setForm] = useState<HeroConfig>(() =>
     defaults ? { ...defaults } : ({} as HeroConfig)
   )
@@ -71,12 +75,16 @@ export default function EditHeroPage() {
           setForm({
             ...defaults!,
             ...data,
-            ctaPrimaria: normalizzaCta(data.ctaPrimaria ?? defaults!.ctaPrimaria),
-            ctaSecondaria: normalizzaCta(data.ctaSecondaria ?? defaults!.ctaSecondaria),
+            // `null` = bottone spento dall'admin; campo assente = default
+            ctaPrimaria: normalizzaCta('ctaPrimaria' in data ? data.ctaPrimaria : defaults!.ctaPrimaria),
+            ctaSecondaria: normalizzaCta(
+              'ctaSecondaria' in data ? data.ctaSecondaria : defaults!.ctaSecondaria
+            ),
             variant: defaults!.variant,
             pageSlug: slug,
           })
         }
+        setCaricato(true)
       } catch (err) {
         const msg = err instanceof Error ? err.message : ''
         if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
@@ -105,7 +113,9 @@ export default function EditHeroPage() {
   }
 
   function toggleCta(which: 'ctaPrimaria' | 'ctaSecondaria', enabled: boolean) {
-    setForm((f) => ({ ...f, [which]: enabled ? f[which] ?? emptyCta() : undefined }))
+    // `null` e non `undefined`: undefined sparisce nel salvataggio e il merge
+    // lasciava su Firestore il bottone vecchio, che quindi non si spegneva mai
+    setForm((f) => ({ ...f, [which]: enabled ? f[which] ?? emptyCta() : null }))
   }
 
   async function handleSave() {
@@ -125,15 +135,11 @@ export default function EditHeroPage() {
       }
       const cleaned = JSON.parse(JSON.stringify(payload))
       await setDoc(doc(db, 'hero_config', slug), cleaned, { merge: true })
-      try {
-        await fetch('/api/admin/revalidate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug }),
-        })
-      } catch {}
+      await revalidatePublic()
+      setSaving(false)
       setSuccess('Hero salvato. Le modifiche compaiono entro pochi secondi.')
     } catch (err) {
+      setSaving(false)
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
         setError(
@@ -142,8 +148,6 @@ export default function EditHeroPage() {
       } else {
         setError('Errore durante il salvataggio.')
       }
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -191,7 +195,8 @@ export default function EditHeroPage() {
           </div>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !caricato}
+            title={!caricato ? 'Dati non caricati: ricarica la pagina prima di salvare' : undefined}
             className="btn-primary flex items-center gap-2 text-sm flex-shrink-0"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -348,7 +353,7 @@ function CtaEditor({
   onChange,
 }: {
   label: string
-  cta?: HeroCTA
+  cta?: HeroCTA | null
   onToggle: (enabled: boolean) => void
   onChange: (key: keyof HeroCTA, val: string) => void
 }) {

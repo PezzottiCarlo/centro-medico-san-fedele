@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Plus, Save, Trash2 } from 'lucide-react'
 import { SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
@@ -14,6 +15,9 @@ export default function SiteConfigPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [form, setForm] = useState<SiteConfig>(SITE_CONFIG_DEFAULT)
+  // Con la lettura fallita il form contiene i default (titolare e DPO vuoti):
+  // salvarli cancellerebbe i dati veri, quindi il salvataggio resta bloccato
+  const [caricato, setCaricato] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -25,6 +29,7 @@ export default function SiteConfigPage() {
             ...(snap.data() as Partial<SiteConfig>),
           })
         }
+        setCaricato(true)
       } catch (err) {
         const msg = err instanceof Error ? err.message : ''
         if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
@@ -88,28 +93,12 @@ export default function SiteConfigPage() {
       const payload: SiteConfig = { ...form, aggiornatoIl: new Date().toISOString() }
       const cleaned = JSON.parse(JSON.stringify(payload))
       await setDoc(doc(db, 'site_config', 'main'), cleaned, { merge: true })
-      try {
-        await Promise.all([
-          fetch('/api/admin/revalidate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path: '/' }),
-          }),
-          fetch('/api/admin/revalidate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slug: 'contatti' }),
-          }),
-          // I dati del titolare compaiono nelle pagine legali
-          fetch('/api/admin/revalidate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paths: ['/privacy', '/cookie-policy'] }),
-          }),
-        ])
-      } catch {}
+      // Contatti e orari stanno nel layout (footer, chatbot) di tutte le pagine
+      await revalidatePublic()
+      setSaving(false)
       setSuccess('Configurazione salvata. Le modifiche compaiono entro pochi secondi.')
     } catch (err) {
+      setSaving(false)
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
         setError(
@@ -118,8 +107,6 @@ export default function SiteConfigPage() {
       } else {
         setError('Errore durante il salvataggio.')
       }
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -143,7 +130,8 @@ export default function SiteConfigPage() {
           </div>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !caricato}
+            title={!caricato ? 'Dati non caricati: ricarica la pagina prima di salvare' : undefined}
             className="btn-primary flex items-center gap-2 text-sm flex-shrink-0"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}

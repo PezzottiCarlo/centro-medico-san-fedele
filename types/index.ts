@@ -152,8 +152,8 @@ export interface HeroConfig {
   immagine?: string
   imageScale?: number
   variant: HeroVariant
-  ctaPrimaria?: HeroCTA
-  ctaSecondaria?: HeroCTA
+  ctaPrimaria?: HeroCTA | null // null = bottone spento dall'admin
+  ctaSecondaria?: HeroCTA | null
   pubblicato: boolean
   aggiornatoIl?: string
 }

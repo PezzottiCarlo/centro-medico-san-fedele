@@ -1,5 +1,6 @@
 import { adminDb } from '@/lib/firebase/admin'
 import { richiediSessione } from '@/lib/firebase/sessione'
+import { HERO_PAGE_SLUGS } from '@/lib/heroDefaults'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Users, FileText, Stethoscope, MessageSquare, Star, Building2, History, HeartPulse, LayoutTemplate, Settings } from 'lucide-react'
@@ -12,7 +13,8 @@ async function getStats() {
       adminDb.collection('news_eventi').get(),
       adminDb.collection('leads').get(),
       adminDb.collection('specialistiche').get(),
-      adminDb.collection('convenzioni').where('attiva', '==', true).get(),
+      // Tutte, come le altre card (prima contava solo le attive)
+      adminDb.collection('convenzioni').get(),
       adminDb.collection('recensioni_statiche').get(),
       adminDb.collection('storia_eventi').get(),
       adminDb.collection('riconoscimenti').get(),
@@ -49,7 +51,7 @@ export default async function DashboardPage() {
     { label: 'Convenzioni', value: stats.convenzioni, icon: Building2, href: '/admin/dashboard/convenzioni', color: 'bg-cyan-500/10 text-cyan-400' },
     { label: 'Recensioni', value: stats.recensioni, icon: Star, href: '/admin/dashboard/recensioni', color: 'bg-rose-500/10 text-rose-400' },
     { label: 'Storia', value: stats.storia, icon: History, href: '/admin/dashboard/storia', color: 'bg-orange-500/10 text-orange-400' },
-    { label: 'Hero pagine', value: 11, icon: LayoutTemplate, href: '/admin/dashboard/hero', color: 'bg-indigo-500/10 text-indigo-400' },
+    { label: 'Hero pagine', value: HERO_PAGE_SLUGS.length, icon: LayoutTemplate, href: '/admin/dashboard/hero', color: 'bg-indigo-500/10 text-indigo-400' },
     { label: 'Contatti & info', value: 1, icon: Settings, href: '/admin/dashboard/site-config', color: 'bg-slate-500/10 text-slate-300' },
   ]
 
