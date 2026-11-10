@@ -137,6 +137,16 @@ env:
     availability:
       - RUNTIME
 
+  # Indirizzo da cui le app di messaggistica scaricano l'immagine di anteprima
+  # dei link (og-image.jpg). Finché www.centrosanfedele.it non punta a questo
+  # backend, lì l'immagine risponde 404 e i link condivisi restano senza foto.
+  # Dopo il cambio di dominio si può togliere: resta valido comunque.
+  - variable: OG_BASE_URL
+    value: https://san-fedele-app--san-fedele-dev.europe-west4.hosted.app
+    availability:
+      - BUILD
+      - RUNTIME
+
   # L'ID della scheda Google del centro non è un segreto
   - variable: GOOGLE_PLACE_ID
     value: ChIJgQik4WGghkcRiUorySo28zA

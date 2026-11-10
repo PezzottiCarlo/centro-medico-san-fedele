@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
-import { SITE_URL } from '@/lib/siteUrl'
+import { OG_BASE_URL, SITE_URL } from '@/lib/siteUrl'
 import { riassunto, testoReale } from '@/lib/testo'
 import type { SiteConfig } from '@/types'
 
@@ -8,8 +8,8 @@ const BASE_URL = SITE_URL
 const NOME_SITO = 'Centro Medico San Fedele'
 const DEFAULT_TITLE = NOME_SITO
 /** Immagine per le anteprime social (1200×630) e logo dei dati strutturati */
-const OG_IMAGE = `${BASE_URL}/og-image.jpg`
-const LOGO = `${BASE_URL}/logo-san-fedele.png`
+const OG_IMAGE = `${OG_BASE_URL}/og-image.jpg`
+const LOGO = `${OG_BASE_URL}/logo-san-fedele.png`
 
 /**
  * Titolo di una pagina senza il nome del sito: lo aggiunge il template del
