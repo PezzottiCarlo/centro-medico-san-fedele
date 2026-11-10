@@ -7,6 +7,7 @@ import TipTapImage from '@tiptap/extension-image'
 import TipTapLink from '@tiptap/extension-link'
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading2, Heading3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { linkSicuro } from '@/lib/link'
 
 interface RichEditorProps {
   content: string
@@ -61,9 +62,14 @@ export function RichEditor({ content, onChange }: RichEditorProps) {
 
   const addLink = () => {
     const url = window.prompt('URL del link:')
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run()
+    if (!url) return
+    // Solo indirizzi web, telefono, email o pagine del sito
+    const sicuro = linkSicuro(url)
+    if (!sicuro) {
+      alert('Indirizzo non valido: usa un link che inizi con https://, tel:, mailto: o /')
+      return
     }
+    editor.chain().focus().setLink({ href: sicuro }).run()
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,12 +86,12 @@ export function RichEditor({ content, onChange }: RichEditorProps) {
         body: formData,
       })
 
-      if (!res.ok) throw new Error('Upload failed')
+      const dati = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+      if (!res.ok || !dati.url) throw new Error(dati.error || 'Caricamento non riuscito')
 
-      const { url } = await res.json()
-      editor.chain().focus().setImage({ src: url }).run()
-    } catch {
-      alert('Errore durante il caricamento dell\'immagine.')
+      editor.chain().focus().setImage({ src: dati.url }).run()
+    } catch (err) {
+      alert(`Errore durante il caricamento dell'immagine: ${err instanceof Error ? err.message : 'riprova'}.`)
     }
 
     if (imageInputRef.current) imageInputRef.current.value = ''

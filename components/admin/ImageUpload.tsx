@@ -12,6 +12,7 @@ interface ImageUploadProps {
 
 export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Immagine' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
+  const [errore, setErrore] = useState('')
   const [progress, setProgress] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -21,33 +22,36 @@ export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Imma
 
     setUploading(true)
     setProgress(0)
+    setErrore('')
+
+    // Avanzamento simulato: fetch non espone il progresso dell'upload
+    const progressInterval = setInterval(() => {
+      setProgress((p) => Math.min(p + 10, 90))
+    }, 200)
 
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', folder)
 
-      // Simulate progress while uploading
-      const progressInterval = setInterval(() => {
-        setProgress((p) => Math.min(p + 10, 90))
-      }, 200)
-
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       })
+      const dati = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+      // Il server spiega il motivo (troppo grande, formato non ammesso…)
+      if (!res.ok || !dati.url) throw new Error(dati.error || 'Caricamento non riuscito')
 
-      clearInterval(progressInterval)
-
-      if (!res.ok) throw new Error('Upload failed')
-
-      const { url } = await res.json()
       setProgress(100)
-      onChange(url)
+      onChange(dati.url)
     } catch (err) {
-      console.error('Upload error:', err)
-      alert('Errore durante il caricamento. Riprova.')
+      setErrore(
+        err instanceof Error && err.message !== 'Failed to fetch'
+          ? `${err.message}. Riprova.`
+          : 'Errore di connessione durante il caricamento. Riprova.'
+      )
     } finally {
+      clearInterval(progressInterval)
       setUploading(false)
       setProgress(0)
       if (fileRef.current) fileRef.current.value = ''
@@ -105,6 +109,11 @@ export function ImageUpload({ value, onChange, folder = 'uploads', label = 'Imma
             <X size={12} />
           </button>
         </div>
+      )}
+      {errore && (
+        <p role="alert" className="mt-2 text-sm text-red-400">
+          {errore}
+        </p>
       )}
     </div>
   )

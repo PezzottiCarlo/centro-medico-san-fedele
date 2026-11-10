@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { collection, deleteDoc, deleteField, doc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase/client'
 import type { Lead } from '@/types'
 import { formatDate } from '@/lib/utils'
-import { Phone, Mail, MessageSquare, CheckCircle2, RotateCcw, Loader2, BellRing, X } from 'lucide-react'
+import { Phone, Mail, MessageSquare, CheckCircle2, RotateCcw, Loader2, BellRing, X, Trash2 } from 'lucide-react'
 
 type Filter = 'tutti' | 'da-evadere' | 'evasi'
 
@@ -78,17 +78,16 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
     setBusy(lead.id)
     setError('')
     const next = !lead.evaso
-    const evasoIl = next ? new Date().toISOString() : ''
+    const evasoIl = next ? new Date().toISOString() : undefined
     try {
       await updateDoc(doc(db, 'leads', lead.id), {
         evaso: next,
-        evasoIl,
+        // Riaprendo si toglie il campo invece di salvarci una stringa vuota
+        evasoIl: evasoIl ?? deleteField(),
         letto: true,
       })
       setLeads((prev) =>
-        prev.map((l) =>
-          l.id === lead.id ? { ...l, evaso: next, evasoIl: evasoIl || undefined, letto: true } : l
-        )
+        prev.map((l) => (l.id === lead.id ? { ...l, evaso: next, evasoIl, letto: true } : l))
       )
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
@@ -99,6 +98,23 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
       } else {
         setError("Errore durante l'aggiornamento. Riprova.")
       }
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // Cancellazione definitiva, per le richieste di cancellazione dei dati
+  // (GDPR art. 17) o per le richieste di prova
+  async function eliminaLead(lead: Lead) {
+    const nome = `${lead.nome}${lead.cognome ? ' ' + lead.cognome : ''}`
+    if (!confirm(`Eliminare definitivamente la richiesta di ${nome}? Non si potrà recuperare.`)) return
+    setBusy(lead.id)
+    setError('')
+    try {
+      await deleteDoc(doc(db, 'leads', lead.id))
+      setLeads((prev) => prev.filter((l) => l.id !== lead.id))
+    } catch {
+      setError("Eliminazione non riuscita. Riprova.")
     } finally {
       setBusy(null)
     }
@@ -223,6 +239,11 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
                       </a>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
+                      {lead.consensoMarketing && (
+                        <span className="text-xs bg-violet-500/10 text-violet-300 px-2 py-0.5 rounded-full">
+                          Consenso comunicazioni
+                        </span>
+                      )}
                       {lead.consultoTelefonico && (
                         <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full">
                           Consulto telefonico
@@ -279,6 +300,16 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
                       <CheckCircle2 size={16} />
                     )}
                     {evaso ? 'Riapri' : 'Segna come evasa'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => eliminaLead(lead)}
+                    disabled={isBusy}
+                    aria-label={`Elimina la richiesta di ${lead.nome}`}
+                    title="Elimina definitivamente"
+                    className="inline-flex items-center justify-center rounded p-2 text-red-400/70 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>

@@ -59,6 +59,8 @@ export function RecensioniAdmin({ editoriali: initialEditoriali }: { editoriali:
       await deleteDoc(doc(db, 'recensioni_statiche', id))
       setEditoriali((prev) => prev.filter((r) => r.id !== id))
       await revalidatePublic(['/'])
+    } catch {
+      alert('Eliminazione non riuscita: controlla la connessione e riprova.')
     } finally {
       setDeleting(null)
     }

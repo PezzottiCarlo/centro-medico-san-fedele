@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { revalidatePublic } from '@/lib/revalidateClient'
 import type { Convenzione } from '@/types'
 import { Trash2, ExternalLink, Pencil } from 'lucide-react'
 import Link from 'next/link'
@@ -11,12 +12,17 @@ import Image from 'next/image'
 export function ConvenzioniList({ initial }: { initial: Convenzione[] }) {
   const [items, setItems] = useState(initial)
   const [loading, setLoading] = useState<string | null>(null)
+  const [errore, setErrore] = useState('')
 
   async function toggleAttiva(id: string, current: boolean) {
     setLoading(id)
+    setErrore('')
     try {
       await updateDoc(doc(db, 'convenzioni', id), { attiva: !current })
       setItems((prev) => prev.map((c) => (c.id === id ? { ...c, attiva: !current } : c)))
+      await revalidatePublic()
+    } catch {
+      setErrore('Modifica non salvata: controlla la connessione e riprova.')
     } finally {
       setLoading(null)
     }
@@ -25,9 +31,13 @@ export function ConvenzioniList({ initial }: { initial: Convenzione[] }) {
   async function handleDelete(id: string, nome: string) {
     if (!confirm(`Eliminare "${nome}"?`)) return
     setLoading(id)
+    setErrore('')
     try {
       await deleteDoc(doc(db, 'convenzioni', id))
       setItems((prev) => prev.filter((c) => c.id !== id))
+      await revalidatePublic()
+    } catch {
+      setErrore('Eliminazione non riuscita: controlla la connessione e riprova.')
     } finally {
       setLoading(null)
     }
@@ -42,6 +52,12 @@ export function ConvenzioniList({ initial }: { initial: Convenzione[] }) {
   }
 
   return (
+    <>
+    {errore && (
+      <p role="alert" className="m-4 rounded border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+        {errore}
+      </p>
+    )}
     <table className="w-full">
       <thead className="bg-slate-800/50 border-b border-slate-700">
         <tr>
@@ -112,5 +128,6 @@ export function ConvenzioniList({ initial }: { initial: Convenzione[] }) {
         ))}
       </tbody>
     </table>
+    </>
   )
 }
