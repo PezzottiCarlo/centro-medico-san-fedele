@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useId } from 'react'
 import { ChevronDown } from 'lucide-react'
 
 interface Props {
@@ -13,6 +13,7 @@ export function CollapsibleBio({ text, collapsedHeight = 160 }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [overflows, setOverflows] = useState(false)
   const contentRef = useRef<HTMLParagraphElement>(null)
+  const id = useId()
 
   useEffect(() => {
     if (contentRef.current) {
@@ -23,6 +24,7 @@ export function CollapsibleBio({ text, collapsedHeight = 160 }: Props) {
   return (
     <div>
       <div
+        id={`${id}-bio`}
         className="relative overflow-hidden transition-[max-height] duration-500 ease-in-out"
         style={{ maxHeight: expanded || !overflows ? '9999px' : `${collapsedHeight}px` }}
       >
@@ -33,7 +35,7 @@ export function CollapsibleBio({ text, collapsedHeight = 160 }: Props) {
           {text}
         </p>
         {!expanded && overflows && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-bg-soft to-transparent" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-bg-soft to-transparent" />
         )}
       </div>
 
@@ -41,12 +43,15 @@ export function CollapsibleBio({ text, collapsedHeight = 160 }: Props) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-4 inline-flex items-center gap-1.5 text-primary font-semibold hover:gap-2.5 transition-all"
+          className="mt-4 inline-flex items-center gap-1.5 text-primary-dark font-semibold hover:gap-2.5 transition-all rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           aria-expanded={expanded}
+          aria-controls={`${id}-bio`}
         >
           {expanded ? 'Riduci' : 'Leggi tutto'}
+          <span className="sr-only"> la biografia</span>
           <ChevronDown
             size={18}
+            aria-hidden
             className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
           />
         </button>
