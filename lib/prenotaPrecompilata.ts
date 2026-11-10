@@ -9,6 +9,14 @@
 
 const CHIAVE = 'sanfedele:prenota-precompilata'
 
+/**
+ * Avvisa il modulo già aperto che sono arrivati dati nuovi. Va mandato solo se
+ * il link del bot porta esattamente alla pagina in cui si è: con parametri
+ * diversi il modulo si rimonta e li legge da sé (se lo ricevesse il modulo
+ * vecchio, li consumerebbe un attimo prima di sparire).
+ */
+export const EVENTO_PRECOMPILA = 'sanfedele:precompila'
+
 export interface DatiPrecompilati {
   nome?: string
   cognome?: string

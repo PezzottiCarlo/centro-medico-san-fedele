@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import { useRouter } from 'next/navigation'
-import { datiDaFrammento, salvaPrecompilazione } from '@/lib/prenotaPrecompilata'
+import { datiDaFrammento, EVENTO_PRECOMPILA, salvaPrecompilazione } from '@/lib/prenotaPrecompilata'
 
 interface Message {
   id: string
@@ -51,12 +51,23 @@ function LinkBot({ href, children }: { href?: string; children?: React.ReactNode
     if (!isInterno || !href || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
     e.preventDefault()
     const url = new URL(href, window.location.origin)
+    const destinazione = url.pathname + url.search
     if (url.pathname === '/prenota') {
       salvaPrecompilazione(datiDaFrammento(url.hash))
       // Il modulo deve essere visibile: la chat si chiude
       window.dispatchEvent(new CustomEvent(EVENTO_CHIUDI_CHAT))
+      // Stesso modulo (il parametro `passo` lo aggiunge il modulo a ogni step):
+      // niente rimontaggio, il modulo aperto si aggiorna da sé
+      const senzaPasso = (u: URL) => {
+        u.searchParams.delete('passo')
+        return u.pathname + u.search
+      }
+      if (senzaPasso(new URL(url)) === senzaPasso(new URL(window.location.href))) {
+        window.dispatchEvent(new CustomEvent(EVENTO_PRECOMPILA))
+        return
+      }
     }
-    router.push(url.pathname + url.search)
+    router.push(destinazione)
   }
 
   return (

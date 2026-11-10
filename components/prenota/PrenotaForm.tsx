@@ -7,7 +7,8 @@ import { CheckCircle, ChevronRight, ChevronLeft, Loader2, Phone, MessageCircle }
 import { cn } from '@/lib/utils'
 import { ConsensiPrivacy } from '@/components/ui/ConsensiPrivacy'
 import { useRecaptcha } from '@/hooks/useRecaptcha'
-import { prendiPrecompilazione } from '@/lib/prenotaPrecompilata'
+import { EVENTO_PRECOMPILA, prendiPrecompilazione } from '@/lib/prenotaPrecompilata'
+import { CampoArea, CampoTesto, ErroreModulo } from '@/components/ui/Campo'
 
 /* ── Types ─────────────────────────────────────────────────── */
 
@@ -52,17 +53,28 @@ interface StatoCronologia {
   prenotaPasso?: Step
   /** Quanti passi del modulo ci sono prima di questa voce (0 = ingresso nella pagina) */
   prenotaProfondita?: number
+  /**
+   * Quale apertura del modulo ha creato la voce. Dopo un ricaricamento le voci
+   * vecchie restano nella cronologia ma le scelte fatte allora sono perse:
+   * tornarci mostrerebbe passi vuoti (es. sotto-specialistiche senza specialistica).
+   */
+  prenotaModulo?: string
 }
 
 function statoCorrente(): StatoCronologia {
   return (window.history.state ?? {}) as StatoCronologia
 }
 
-/** URL attuale con `passo` aggiornato (o tolto, per il passo iniziale). */
-function urlConPasso(passo: Step | null): string {
+/**
+ * URL attuale con `passo` aggiornato (o tolto, per il passo iniziale).
+ * `senzaIngresso` toglie anche `step=dati`: tornando indietro da un ingresso
+ * diretto ai dati, un ricaricamento non deve riportare lì.
+ */
+function urlConPasso(passo: Step | null, senzaIngresso = false): string {
   const url = new URL(window.location.href)
   if (passo) url.searchParams.set('passo', passo)
   else url.searchParams.delete('passo')
+  if (senzaIngresso) url.searchParams.delete('step')
   return url.pathname + url.search + url.hash
 }
 
@@ -147,6 +159,10 @@ function PrenotaFormInterno({
   const [step, setStep] = useState<Step>(() => computeInitial().step)
   const stepIniziale = useRef(step)
   const primoRender = useRef(true)
+  const idModulo = useRef(Math.random().toString(36).slice(2))
+  // Dopo l'invio i passi della cronologia non servono più (vedi handleSubmit)
+  const inviato = useRef(false)
+  const titoloPasso = useRef<HTMLHeadingElement>(null)
 
   // Ogni passo è una voce della cronologia: il tasto indietro del browser (e lo
   // swipe su telefono) torna al passo precedente invece di lasciare la pagina.
@@ -154,13 +170,23 @@ function PrenotaFormInterno({
     // Ricaricando a metà modulo i dati scelti sono persi: si riparte dall'inizio
     // e l'URL perde il `passo` rimasto da prima
     window.history.replaceState(
-      { ...statoCorrente(), prenotaPasso: stepIniziale.current, prenotaProfondita: 0 },
+      {
+        ...statoCorrente(),
+        prenotaPasso: stepIniziale.current,
+        prenotaProfondita: 0,
+        prenotaModulo: idModulo.current,
+      },
       '',
       urlConPasso(null)
     )
     function suPopState(e: PopStateEvent) {
+      if (inviato.current) return
       const stato = (e.state ?? {}) as StatoCronologia
-      const passo = stato.prenotaPasso && STEPS.includes(stato.prenotaPasso) ? stato.prenotaPasso : stepIniziale.current
+      const valido =
+        stato.prenotaModulo === idModulo.current &&
+        !!stato.prenotaPasso &&
+        STEPS.includes(stato.prenotaPasso)
+      const passo = valido ? stato.prenotaPasso! : stepIniziale.current
       setStep(passo)
       if (passo !== 'dati') setConsulto(false)
     }
@@ -172,15 +198,16 @@ function PrenotaFormInterno({
   function vai(prossimo: Step) {
     const profondita = (statoCorrente().prenotaProfondita ?? 0) + 1
     window.history.pushState(
-      { prenotaPasso: prossimo, prenotaProfondita: profondita },
+      { prenotaPasso: prossimo, prenotaProfondita: profondita, prenotaModulo: idModulo.current },
       '',
       urlConPasso(prossimo)
     )
     setStep(prossimo)
   }
 
-  // A ogni cambio di step la pagina torna in cima: il passo nuovo inizia
-  // dall'alto e non resta a metà dello schermo dove si trovava il precedente.
+  // A ogni cambio di step la pagina torna in cima e il focus va sul titolo del
+  // passo: il bottone appena premuto sparisce, e senza questo chi usa tastiera
+  // o lettore di schermo si ritroverebbe all'inizio della pagina senza avviso.
   useEffect(() => {
     if (primoRender.current) {
       primoRender.current = false
@@ -188,6 +215,7 @@ function PrenotaFormInterno({
     }
     const ridotto = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     window.scrollTo({ top: 0, behavior: ridotto ? 'auto' : 'smooth' })
+    titoloPasso.current?.focus({ preventScroll: true })
   }, [step])
 
   const [loading, setLoading] = useState(false)
@@ -209,15 +237,22 @@ function PrenotaFormInterno({
   const [messaggio, setMessaggio] = useState('')
   const [consensi, setConsensi] = useState({ consensoDati: false, consensoMarketing: false })
 
-  // Dati passati da MelaBot (nome, telefono, motivo...): letti una volta sola
+  // Dati passati da MelaBot (nome, telefono, motivo...): letti all'apertura e
+  // ogni volta che il bot ne manda di nuovi con il modulo già aperto (stesso
+  // link: la pagina non si ricarica, quindi serve l'evento)
   useEffect(() => {
-    const dati = prendiPrecompilazione()
-    if (!dati) return
-    if (dati.nome) setNome(dati.nome)
-    if (dati.cognome) setCognome(dati.cognome)
-    if (dati.telefono) setTelefono(dati.telefono)
-    if (dati.email) setEmail(dati.email)
-    if (dati.messaggio) setMessaggio(dati.messaggio)
+    function applica() {
+      const dati = prendiPrecompilazione()
+      if (!dati) return
+      if (dati.nome) setNome(dati.nome)
+      if (dati.cognome) setCognome(dati.cognome)
+      if (dati.telefono) setTelefono(dati.telefono)
+      if (dati.email) setEmail(dati.email)
+      if (dati.messaggio) setMessaggio(dati.messaggio)
+    }
+    applica()
+    window.addEventListener(EVENTO_PRECOMPILA, applica)
+    return () => window.removeEventListener(EVENTO_PRECOMPILA, applica)
   }, [])
   const recaptcha = useRecaptcha()
 
@@ -316,13 +351,16 @@ function PrenotaFormInterno({
     }
   }
 
-  // Al posto di "nessuna preferenza": niente servizio né medico, la segreteria
-  // richiama il paziente e lo indirizza. Si passa subito ai dati personali.
+  // Il paziente non sa cosa scegliere: la segreteria lo richiama e lo
+  // indirizza. Le scelte già fatte (specialistica, prestazione) restano, così
+  // chi richiama sa di cosa si tratta; si toglie solo il medico.
   function richiediConsulto() {
     // Dal primo step non c'è ancora una specialistica: resta una richiesta generica
-    if (step === 'spec') setSpecSlug('')
-    setSottoId('')
-    setSottoNome('')
+    if (step === 'spec') {
+      setSpecSlug('')
+      setSottoId('')
+      setSottoNome('')
+    }
     setMedicoSlug('')
     setConsulto(true)
     setConsultoDa(step)
@@ -335,9 +373,10 @@ function PrenotaFormInterno({
     vai('dati')
   }
 
-  // Nessun medico disponibile per la selezione: si prosegue senza sceglierlo
+  // Nessuna preferenza (o nessun medico disponibile): si prosegue senza sceglierlo
   function skipMedico() {
     setMedicoSlug('')
+    setConsulto(false)
     vai('dati')
   }
 
@@ -360,9 +399,9 @@ function PrenotaFormInterno({
     const passo = passoPrecedente()
     if (step === 'dati') setConsulto(false)
     window.history.replaceState(
-      { ...statoCorrente(), prenotaPasso: passo, prenotaProfondita: 0 },
+      { ...statoCorrente(), prenotaPasso: passo, prenotaProfondita: 0, prenotaModulo: idModulo.current },
       '',
-      urlConPasso(passo)
+      urlConPasso(passo, true)
     )
     stepIniziale.current = passo
     setStep(passo)
@@ -395,6 +434,12 @@ function PrenotaFormInterno({
       })
       const data = await res.json()
       if (data.success) {
+        // Le voci dei passi restano nella cronologia: si torna a quella di
+        // ingresso, così il tasto indietro lascia la pagina invece di scorrere
+        // passi invisibili dietro la conferma
+        inviato.current = true
+        const profondita = statoCorrente().prenotaProfondita ?? 0
+        if (profondita > 0) window.history.go(-profondita)
         setSuccess(true)
       } else {
         setError(data.message || 'Errore durante l\'invio. Riprova.')
@@ -410,10 +455,16 @@ function PrenotaFormInterno({
 
   if (success) {
     return (
-      <div className="text-center py-12">
-        <CheckCircle size={64} className="text-green-500 mx-auto mb-4" />
-        <h2 className="heading-3 mb-2">Richiesta inviata!</h2>
-        <p className="text-gray-500 max-w-md mx-auto">
+      <div role="status" className="text-center py-12">
+        <CheckCircle size={64} className="text-secondary-dark mx-auto mb-4" aria-hidden />
+        <h2
+          ref={(el) => el?.focus()}
+          tabIndex={-1}
+          className="heading-3 mb-2 focus:outline-none"
+        >
+          Richiesta inviata!
+        </h2>
+        <p className="text-gray-600 max-w-md mx-auto">
           Grazie {nome} {cognome}! Ti contatteremo al numero {telefono} entro 24 ore lavorative
           {consulto ? ' per il consulto telefonico.' : ' per confermare la tua prenotazione.'}
         </p>
@@ -441,53 +492,66 @@ function PrenotaFormInterno({
       </div>
 
       {/* Stepper */}
-      <div className="flex items-center justify-center mb-10">
-        {visibleSteps.map((s, i) => (
-          <div key={s.key} className="flex items-center">
-            <div
-              className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
-                i < stepperIndex
-                  ? 'bg-green-500 text-white'
-                  : i === stepperIndex
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 text-gray-400'
+      <ol aria-label="Passaggi della prenotazione" className="flex items-center justify-center mb-10">
+        {visibleSteps.map((s, i) => {
+          const fatto = i < stepperIndex
+          const attuale = i === stepperIndex
+          return (
+            <li key={s.key} className="flex items-center" aria-current={attuale ? 'step' : undefined}>
+              <span
+                className={cn(
+                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors flex-shrink-0',
+                  fatto
+                    ? 'bg-secondary-dark text-white'
+                    : attuale
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-600 ring-1 ring-gray-300'
+                )}
+              >
+                {fatto ? <CheckCircle size={16} aria-hidden /> : <span aria-hidden>{i + 1}</span>}
+              </span>
+              <span
+                className={cn(
+                  'ml-2 text-sm font-medium',
+                  // Su telefono il nome resta solo per i lettori di schermo
+                  'sr-only sm:not-sr-only',
+                  attuale ? 'text-primary' : 'text-gray-600'
+                )}
+              >
+                {s.label}
+                {fatto && <span className="sr-only"> (completato)</span>}
+              </span>
+              {i < visibleSteps.length - 1 && (
+                <span
+                  aria-hidden
+                  className={cn('w-6 sm:w-12 h-0.5 mx-1.5 sm:mx-3', fatto ? 'bg-secondary-dark' : 'bg-gray-200')}
+                />
               )}
-            >
-              {i < stepperIndex ? <CheckCircle size={16} /> : i + 1}
-            </div>
-            <span
-              className={cn(
-                'ml-2 text-sm font-medium hidden sm:inline',
-                i === stepperIndex ? 'text-primary' : 'text-gray-400'
-              )}
-            >
-              {s.label}
-            </span>
-            {i < visibleSteps.length - 1 && (
-              <div className={cn('w-12 h-0.5 mx-3', i < stepperIndex ? 'bg-green-500' : 'bg-gray-200')} />
-            )}
-          </div>
-        ))}
-      </div>
+            </li>
+          )
+        })}
+      </ol>
 
       {/* ── Step: Specialistica ──────────────────────────── */}
       {step === 'spec' && (
         <div>
-          <h2 className="heading-3 mb-6">Scegli la specialistica</h2>
+          <h2 ref={titoloPasso} tabIndex={-1} className="heading-3 mb-6 focus:outline-none">
+            Scegli la specialistica
+          </h2>
           <div className="mb-3">
             <ConsultoButton onClick={richiediConsulto} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {specialistiche.map((s) => (
               <button
+                type="button"
                 key={s.id}
                 onClick={() => selectSpecialistica(s.slug)}
                 className="flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-gray-200 hover:border-primary hover:bg-primary/5"
               >
-                <span className="text-2xl">{s.icona}</span>
+                <span className="text-2xl" aria-hidden>{s.icona}</span>
                 <span className="font-medium text-sm">{s.nome}</span>
-                <ChevronRight size={16} className="ml-auto text-gray-300" />
+                <ChevronRight size={16} className="ml-auto text-gray-400" aria-hidden />
               </button>
             ))}
           </div>
@@ -497,8 +561,10 @@ function PrenotaFormInterno({
       {/* ── Step: Sotto-specialistica ────────────────────── */}
       {step === 'sotto' && (
         <div>
-          <h2 className="heading-3 mb-2">Scegli la sotto-specialistica</h2>
-          <p className="text-gray-400 text-sm mb-6">
+          <h2 ref={titoloPasso} tabIndex={-1} className="heading-3 mb-2 focus:outline-none">
+            Scegli la sotto-specialistica
+          </h2>
+          <p className="text-gray-600 text-sm mb-6">
             Non sai quale scegliere? Richiedi un consulto telefonico: ti richiamiamo noi.
           </p>
           <div className="space-y-3">
@@ -507,24 +573,25 @@ function PrenotaFormInterno({
               const count = medici.filter((m) => m.sottoSpecialisticheIds.includes(s.id)).length
               return (
                 <button
+                  type="button"
                   key={s.id}
                   onClick={() => selectSottoSpecialistica(s.id, s.nome)}
                   className="w-full flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-gray-200 hover:border-primary hover:bg-primary/5"
                 >
                   <span className="font-medium text-sm">{s.nome}</span>
                   {count > 0 && (
-                    <span className="text-xs text-gray-400 ml-auto mr-2">
+                    <span className="text-xs text-gray-600 ml-auto mr-2">
                       {count} {count === 1 ? 'medico' : 'medici'}
                     </span>
                   )}
-                  <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+                  <ChevronRight size={16} className="text-gray-400 flex-shrink-0" aria-hidden />
                 </button>
               )
             })}
           </div>
           <div className="mt-6">
-            <button onClick={goBack} className="btn-ghost flex items-center gap-2">
-              <ChevronLeft size={18} /> Indietro
+            <button type="button" onClick={goBack} className="btn-ghost flex items-center gap-2">
+              <ChevronLeft size={18} aria-hidden /> Indietro
             </button>
           </div>
         </div>
@@ -533,6 +600,7 @@ function PrenotaFormInterno({
       {/* ── Step: Medico ─────────────────────────────────── */}
       {step === 'medico' && (
         <MedicoStep
+          titoloRef={titoloPasso}
           medici={availableMedici}
           onSelect={selectMedico}
           onSkip={skipMedico}
@@ -544,7 +612,9 @@ function PrenotaFormInterno({
       {/* ── Step: Dati personali ─────────────────────────── */}
       {step === 'dati' && (
         <div>
-          <h2 className="heading-3 mb-4">I tuoi dati</h2>
+          <h2 ref={titoloPasso} tabIndex={-1} className="heading-3 mb-4 focus:outline-none">
+            I tuoi dati
+          </h2>
           <RiepilogoScelta
             consulto={consulto}
             specialistica={selectedSpec?.nome}
@@ -553,90 +623,85 @@ function PrenotaFormInterno({
           />
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1">Nome *</label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="w-full border border-gray-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Mario"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1">Cognome *</label>
-                <input
-                  type="text"
-                  value={cognome}
-                  onChange={(e) => setCognome(e.target.value)}
-                  className="w-full border border-gray-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Rossi"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-main mb-1">Telefono *</label>
-              <input
-                type="tel"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                className="w-full border border-gray-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="+39 333 000 0000"
+              <CampoTesto
+                etichetta="Nome"
+                obbligatorio
+                autoComplete="given-name"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                maxLength={60}
+              />
+              <CampoTesto
+                etichetta="Cognome"
+                obbligatorio
+                autoComplete="family-name"
+                value={cognome}
+                onChange={(e) => setCognome(e.target.value)}
+                maxLength={60}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-text-main mb-1">Email *</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="mario@email.it"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-main mb-1">
-                Messaggio / Motivo della visita
-              </label>
-              <textarea
-                value={messaggio}
-                onChange={(e) => setMessaggio(e.target.value)}
-                rows={4}
-                className="w-full border border-gray-300 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                placeholder="Descrivi brevemente il motivo della visita..."
-              />
-            </div>
+            <CampoTesto
+              etichetta="Telefono"
+              obbligatorio
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              placeholder="+39 333 000 0000"
+              aiuto="Ti richiamiamo a questo numero per confermare."
+            />
+            <CampoTesto
+              etichetta="Email"
+              obbligatorio
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              maxLength={254}
+              placeholder="nome@esempio.it"
+            />
+            <CampoArea
+              etichetta="Messaggio / motivo della visita"
+              rows={4}
+              maxLength={2000}
+              value={messaggio}
+              onChange={(e) => setMessaggio(e.target.value)}
+              placeholder="Descrivi brevemente il motivo della visita…"
+            />
           </div>
 
           <div className="mt-5">
             <ConsensiPrivacy value={consensi} onChange={setConsensi} />
           </div>
 
-          {error && (
-            <p className="text-red-600 text-sm mt-3 bg-red-50 border border-red-200 rounded p-3">
-              {error}
-            </p>
-          )}
+          <div className="mt-3">
+            <ErroreModulo>{error}</ErroreModulo>
+          </div>
 
           <div className="flex gap-3 mt-6">
-            <button onClick={goBack} className="btn-ghost flex items-center gap-2">
-              <ChevronLeft size={18} /> Indietro
+            <button type="button" onClick={goBack} className="btn-ghost flex items-center gap-2">
+              <ChevronLeft size={18} aria-hidden /> Indietro
             </button>
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={
                 loading || !nome || !cognome || !telefono || !email || !consensi.consensoDati
               }
-              className="btn-primary flex items-center gap-2 disabled:opacity-50"
+              aria-describedby="prenota-requisiti"
+              className="btn-primary flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
-                <><Loader2 size={18} className="animate-spin" /> Invio...</>
+                <><Loader2 size={18} className="animate-spin" aria-hidden /> Invio…</>
               ) : (
-                <>Invia richiesta <ChevronRight size={18} /></>
+                <>Invia richiesta <ChevronRight size={18} aria-hidden /></>
               )}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-3">* Campi obbligatori.</p>
+          <p id="prenota-requisiti" className="text-xs text-gray-600 mt-3">
+            I campi con * sono obbligatori; per inviare serve il consenso al trattamento dei dati.
+          </p>
         </div>
       )}
     </div>
@@ -646,12 +711,14 @@ function PrenotaFormInterno({
 /* ── Medico sub-component ──────────────────────────────────── */
 
 function MedicoStep({
+  titoloRef,
   medici,
   onSelect,
   onSkip,
   onConsulto,
   onBack,
 }: {
+  titoloRef: React.Ref<HTMLHeadingElement>
   medici: { id: string; nome: string; slug: string }[]
   onSelect: (slug: string) => void
   onSkip: () => void
@@ -661,21 +728,23 @@ function MedicoStep({
   if (medici.length === 0) {
     return (
       <div>
-        <h2 className="heading-3 mb-4">Scelta medico</h2>
+        <h2 ref={titoloRef} tabIndex={-1} className="heading-3 mb-4 focus:outline-none">
+          Scelta medico
+        </h2>
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center mb-6">
-          <p className="text-gray-500 mb-2">
-            Al momento non ci sono medici con disponibilita fissa per questa selezione.
+          <p className="text-gray-700 mb-2">
+            Al momento non ci sono medici con disponibilità fissa per questa selezione.
           </p>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-600 text-sm">
             La segreteria ti contatterà per assegnarti lo specialista più adatto.
           </p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onBack} className="btn-ghost flex items-center gap-2">
-            <ChevronLeft size={18} /> Indietro
+          <button type="button" onClick={onBack} className="btn-ghost flex items-center gap-2">
+            <ChevronLeft size={18} aria-hidden /> Indietro
           </button>
-          <button onClick={onSkip} className="btn-primary flex items-center gap-2">
-            Prosegui <ChevronRight size={18} />
+          <button type="button" onClick={onSkip} className="btn-primary flex items-center gap-2">
+            Prosegui <ChevronRight size={18} aria-hidden />
           </button>
         </div>
       </div>
@@ -684,26 +753,44 @@ function MedicoStep({
 
   return (
     <div>
-      <h2 className="heading-3 mb-6">Scegli il medico (opzionale)</h2>
+      <h2 ref={titoloRef} tabIndex={-1} className="heading-3 mb-6 focus:outline-none">
+        Scegli il medico (opzionale)
+      </h2>
       <div className="space-y-3">
         <ConsultoButton onClick={onConsulto} />
+        {/* Il medico è facoltativo: si può proseguire tenendo le scelte fatte */}
+        <button
+          type="button"
+          onClick={onSkip}
+          className="w-full flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-gray-200 hover:border-primary hover:bg-primary/5"
+        >
+          <span className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0 font-bold" aria-hidden>
+            ?
+          </span>
+          <span>
+            <span className="block font-medium">Nessuna preferenza</span>
+            <span className="block text-xs text-gray-600">Ti assegniamo noi lo specialista disponibile</span>
+          </span>
+          <ChevronRight size={16} className="ml-auto text-gray-400" aria-hidden />
+        </button>
         {medici.map((m) => (
           <button
+            type="button"
             key={m.id}
             onClick={() => onSelect(m.slug)}
             className="w-full flex items-center gap-3 p-4 rounded border-2 text-left transition-all border-gray-200 hover:border-primary hover:bg-primary/5"
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold flex-shrink-0">
+            <div aria-hidden className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold flex-shrink-0">
               {m.nome.charAt(0)}
             </div>
             <span className="font-medium">{m.nome}</span>
-            <ChevronRight size={16} className="ml-auto text-gray-300" />
+            <ChevronRight size={16} className="ml-auto text-gray-400" aria-hidden />
           </button>
         ))}
       </div>
       <div className="mt-6">
-        <button onClick={onBack} className="btn-ghost flex items-center gap-2">
-          <ChevronLeft size={18} /> Indietro
+        <button type="button" onClick={onBack} className="btn-ghost flex items-center gap-2">
+          <ChevronLeft size={18} aria-hidden /> Indietro
         </button>
       </div>
     </div>
@@ -724,11 +811,11 @@ function ConsultoButton({ onClick }: { onClick: () => void }) {
       </span>
       <span>
         <span className="block font-semibold text-text-main">Richiedi consulto telefonico</span>
-        <span className="block text-xs text-gray-500">
+        <span className="block text-xs text-gray-600">
           Non sai cosa scegliere? Lasciaci i tuoi dati, ti richiamiamo noi.
         </span>
       </span>
-      <ChevronRight size={16} className="ml-auto text-primary flex-shrink-0" />
+      <ChevronRight size={16} className="ml-auto text-primary flex-shrink-0" aria-hidden />
     </button>
   )
 }
@@ -746,12 +833,12 @@ function RiepilogoScelta({
   medico?: string
 }) {
   const voci = consulto
-    ? ['Consulto telefonico', specialistica].filter(Boolean)
+    ? ['Consulto telefonico', specialistica, sotto].filter(Boolean)
     : [specialistica, sotto, medico].filter(Boolean)
   if (voci.length === 0) return null
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-gray-500">{consulto ? 'Richiesta:' : 'Stai prenotando:'}</span>
+      <span className="text-gray-600">{consulto ? 'Richiesta:' : 'Stai prenotando:'}</span>
       {voci.map((v) => (
         <span key={v} className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
           {v}
