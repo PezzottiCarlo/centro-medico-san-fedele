@@ -28,7 +28,7 @@ san-fedele/
 │   │   ├── page.tsx           # Home
 │   │   ├── ambulatori/[slug]/ # Dettaglio specialistica
 │   │   ├── medici/[slug]/     # Profilo medico
-│   │   ├── patologie/[slug]/  # Dettaglio patologia
+│   │   ├── patologie/         # Elenco: ogni patologia si apre in una finestra (?patologia=slug)
 │   │   ├── news/[slug]/       # Articolo/news
 │   │   ├── prenota/           # Form prenotazione 3 step
 │   │   ├── sport/             # Medicina sportiva (tema scuro)

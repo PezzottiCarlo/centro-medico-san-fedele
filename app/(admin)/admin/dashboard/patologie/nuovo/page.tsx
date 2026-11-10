@@ -95,7 +95,7 @@ export default function NuovaPatologiaPage() {
         mediciIds: form.mediciIds.filter((m) => mediciEsistenti.has(m)),
       }
       await addDoc(collection(db, 'patologie'), dati)
-      await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
+      await revalidatePublic(['/patologie', '/sport'])
       router.push('/admin/dashboard/patologie')
       router.refresh()
     } catch {

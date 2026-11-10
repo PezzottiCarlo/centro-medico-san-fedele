@@ -23,7 +23,8 @@ const STATIC_PATHS = new Set<string>([
 ])
 
 // Prefissi di route dinamiche consentiti: es. /ambulatori/<slug>, /medici/<slug>
-const DYNAMIC_PREFIXES = ['/ambulatori/', '/medici/', '/patologie/', '/news/']
+// (le patologie non hanno più pagine singole: si aprono in una finestra su /patologie)
+const DYNAMIC_PREFIXES = ['/ambulatori/', '/medici/', '/news/']
 
 function isAllowed(path: string): boolean {
   if (STATIC_PATHS.has(path)) return true

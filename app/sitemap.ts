@@ -59,14 +59,6 @@ async function medici(): Promise<Voce[]> {
     .map((slug) => ({ url: `${BASE_URL}/medici/${slug}`, changeFrequency: 'monthly', priority: 0.7 }))
 }
 
-async function patologie(): Promise<Voce[]> {
-  const snap = await adminDb.collection('patologie').get()
-  return snap.docs
-    .map((d) => d.data().slug)
-    .filter(slugValido)
-    .map((slug) => ({ url: `${BASE_URL}/patologie/${slug}`, changeFrequency: 'monthly', priority: 0.7 }))
-}
-
 async function news(): Promise<Voce[]> {
   const snap = await adminDb.collection('news_eventi').where('pubblicato', '==', true).get()
   return snap.docs.flatMap((d) => {
@@ -85,7 +77,7 @@ async function news(): Promise<Voce[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Ogni collezione per conto suo: se una query fallisce, le altre pagine restano
-  const risultati = await Promise.allSettled([specialistiche(), medici(), patologie(), news()])
+  const risultati = await Promise.allSettled([specialistiche(), medici(), news()])
 
   const dinamiche = risultati.flatMap((r) => {
     if (r.status === 'fulfilled') return r.value

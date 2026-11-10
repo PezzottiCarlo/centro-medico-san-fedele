@@ -128,6 +128,10 @@ const nextConfig = {
       { source: '/dove-siamo', destination: '/contatti', permanent: true },
       { source: '/ambulatori/medicina-sportiva', destination: '/sport', permanent: true },
       { source: '/ambulatori/equipe-dsa', destination: '/dsa', permanent: true },
+      // Le patologie non hanno più una pagina: si aprono in una finestra
+      // sull'elenco. Il redirect permanente toglie i vecchi indirizzi da Google
+      // e porta chi ha un vecchio link direttamente alla scheda aperta.
+      { source: '/patologie/:slug', destination: '/patologie?patologia=:slug', permanent: true },
     ]
   },
 }

@@ -106,7 +106,7 @@ export default function EditPatologiaPage() {
         mediciIds: form.mediciIds.filter((m) => mediciEsistenti.has(m)),
       }
       await updateDoc(doc(db, 'patologie', id), dati)
-      await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
+      await revalidatePublic(['/patologie', '/sport'])
       router.push('/admin/dashboard/patologie')
       router.refresh()
     } catch {
@@ -120,7 +120,7 @@ export default function EditPatologiaPage() {
     setSaving(true)
     try {
       await deleteDoc(doc(db, 'patologie', id))
-      await revalidatePublic(['/patologie', `/patologie/${form.slug}`, '/sport'])
+      await revalidatePublic(['/patologie', '/sport'])
       router.push('/admin/dashboard/patologie')
       router.refresh()
     } catch {

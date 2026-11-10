@@ -73,7 +73,7 @@ export default async function AdminPatologiePage() {
                         )}
                         <div>
                           <p className="font-medium text-white">{p.nome}</p>
-                          <p className="text-xs text-slate-500">/patologie/{p.slug}</p>
+                          <p className="text-xs text-slate-500">/patologie?patologia={p.slug}</p>
                         </div>
                       </div>
                     </td>
