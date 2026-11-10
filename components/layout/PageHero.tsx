@@ -37,12 +37,12 @@ export function PageHero({ config, title, subtitle, imageSrc, imageScale }: Page
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-[#145a85]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-[#1F3D5C]" />
         )}
       </div>
 
       <div className="container-main w-full pb-8 sm:pb-10 md:pb-14">
-        <span className="block h-1 w-10 rounded-full bg-white/80 mb-3 sm:mb-4 drop-shadow" />
+        <span aria-hidden className="block h-1 w-10 rounded-full bg-white/80 mb-3 sm:mb-4 drop-shadow" />
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-white drop-shadow-md">
           {finalTitle}
         </h1>

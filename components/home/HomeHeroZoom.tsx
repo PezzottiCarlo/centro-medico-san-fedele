@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Pointer } from 'lucide-react'
 import { CtaIcon } from '@/components/ui/CtaIcon'
@@ -110,15 +111,26 @@ function SfondoHero({ src }: { src: string }) {
 
 function CtaLink({ cta }: { cta: HeroCTA }) {
   const esterno = cta.href.startsWith('http')
+  const classi = `group inline-flex items-center justify-center gap-2 md:gap-2.5 px-6 md:px-7 py-3 min-h-[44px] w-full sm:w-auto rounded-full font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 ${ctaClasses(cta)}`
+  // Le pagine del sito si aprono senza ricaricare tutto (prima era un <a>)
+  if (cta.href.startsWith('/') && !cta.href.startsWith('//')) {
+    return (
+      <Link href={cta.href} className={classi}>
+        <CtaIcon kind={cta.icona} />
+        {cta.testo}
+      </Link>
+    )
+  }
   return (
     <a
       href={cta.href}
       target={esterno ? '_blank' : undefined}
       rel={esterno ? 'noopener noreferrer' : undefined}
-      className={`group inline-flex items-center justify-center gap-2 md:gap-2.5 px-6 md:px-7 py-3 min-h-[44px] w-full sm:w-auto rounded-full font-semibold transition-all ${ctaClasses(cta)}`}
+      className={classi}
     >
       <CtaIcon kind={cta.icona} />
       {cta.testo}
+      {esterno && <span className="sr-only"> (si apre in una nuova scheda)</span>}
     </a>
   )
 }
@@ -205,18 +217,18 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
       ref={heroRef}
       // Schermo meno navbar (vedi .hero-schermo in globals.css)
       className="hero-schermo relative min-h-[480px] w-full overflow-hidden"
-      aria-label="Hero"
+      aria-labelledby="titolo-hero"
     >
       <SfondoHero src={bgImage} />
       {/* Scurisce solo dove sta il testo: in basso su telefono, a destra su
           desktop. La mela resta luminosa. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/65 lg:bg-gradient-to-r lg:from-black/5 lg:via-black/20 lg:to-black/65" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/65 lg:bg-gradient-to-r lg:from-black/5 lg:via-black/20 lg:to-black/65" />
 
       {/* Telefono e tablet: testo in basso e centrato, sotto la mela.
           Desktop: testo nella metà destra, la mela libera nel terzo di sinistra. */}
       <div className="absolute inset-x-0 bottom-0 flex justify-center px-6 pb-28 md:pb-32 lg:inset-y-0 lg:left-auto lg:w-[56%] lg:items-center lg:justify-start lg:pb-0 lg:pl-4 lg:pr-12 xl:pr-24">
         <div className="text-center lg:text-left max-w-4xl lg:max-w-2xl w-full">
-          <h1 className="text-3xl sm:text-4xl md:text-6xl xl:text-7xl font-light tracking-tight text-white drop-shadow-md motion-safe:animate-[hero-compari_0.9s_ease-out_0.2s_both]">
+          <h1 id="titolo-hero" className="text-3xl sm:text-4xl md:text-6xl xl:text-7xl font-light tracking-tight text-white drop-shadow-md motion-safe:animate-[hero-compari_0.9s_ease-out_0.2s_both]">
             {config.titolo}{' '}
             {config.titoloEvidenziato && (
               <span className="font-semibold block sm:inline lg:block">{config.titoloEvidenziato}</span>
@@ -247,8 +259,9 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
         {/* Schermi touch: un dito che trascina verso l'alto */}
         <span data-suggerimento="dito" className="hidden [@media(pointer:coarse)]:flex flex-col items-center gap-1">
           <span className="relative h-14 w-10">
-            <span className="absolute left-1/2 top-0 h-full w-1 -translate-x-1/2 rounded-full bg-gradient-to-t from-white/0 via-white/50 to-white/0" />
+            <span aria-hidden className="absolute left-1/2 top-0 h-full w-1 -translate-x-1/2 rounded-full bg-gradient-to-t from-white/0 via-white/50 to-white/0" />
             <Pointer
+              aria-hidden
               size={30}
               strokeWidth={1.75}
               className="absolute bottom-0 left-1/2 -ml-[15px] text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] motion-safe:animate-[dito-scorri_1.8s_ease-in-out_infinite]"
@@ -265,7 +278,7 @@ export function HomeHeroZoom({ config }: HomeHeroZoomProps) {
             Scorri
           </span>
           <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/70 bg-white/10 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-white/25 motion-safe:animate-[freccia-giu_1.6s_ease-in-out_infinite]">
-            <ChevronDown size={26} strokeWidth={2.25} />
+            <ChevronDown size={26} strokeWidth={2.25} aria-hidden />
           </span>
         </span>
       </button>

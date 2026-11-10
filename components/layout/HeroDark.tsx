@@ -13,7 +13,7 @@ function isExternal(href: string) {
 
 function CTAButton({ cta, variant }: { cta: HeroCTA; variant: 'primary' | 'secondary' }) {
   const base =
-    'inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-all text-base sm:text-lg min-h-[48px]'
+    'inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-lg transition-all text-base sm:text-lg min-h-[48px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
   const styles =
     variant === 'primary'
       ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold hover:shadow-lg hover:shadow-emerald-500/25'
@@ -37,6 +37,7 @@ function CTAButton({ cta, variant }: { cta: HeroCTA; variant: 'primary' | 'secon
         className={`${base} ${styles}`}
       >
         {content}
+        {cta.href.startsWith('http') && <span className="sr-only"> (si apre in una nuova scheda)</span>}
       </a>
     )
   }
