@@ -43,6 +43,8 @@ html {
 /* ── Base ────────────────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
+  /* Le ancore (#modulo-contatti, #servizi…) non finiscono sotto l'header fisso */
+  scroll-padding-top: 5rem;
 }
 
 body {

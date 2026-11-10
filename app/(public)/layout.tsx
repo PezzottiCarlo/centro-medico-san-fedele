@@ -18,8 +18,17 @@ export default async function PublicLayout({
   return (
     <AccessibilityProvider>
       <div className="flex flex-col min-h-screen">
+        {/* Primo elemento della pagina: chi usa la tastiera salta il menu */}
+        <a
+          href="#contenuto"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-full focus:bg-primary focus:px-5 focus:py-3 focus:font-semibold focus:text-white focus:shadow-lg"
+        >
+          Salta al contenuto
+        </a>
         <Header />
-        <main className="flex-1">{children}</main>
+        <main id="contenuto" tabIndex={-1} className="flex-1 focus:outline-none">
+          {children}
+        </main>
         <MelaChatCTA />
         <Footer />
         <ChatbotButton domande={domande} telefono={site.telefono} orari={orariInBreve(site)} />

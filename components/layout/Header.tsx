@@ -43,6 +43,16 @@ function isActive(href: string, pathname: string): boolean {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
+/**
+ * Blocchi nascosti con la sola opacità restavano raggiungibili col Tab (link
+ * invisibili, senza focus visibile) e `aria-hidden` su elementi focusabili è
+ * vietato. `inert` li toglie sia dal Tab sia dai lettori di schermo.
+ * React 18 non conosce ancora la prop: si passa come attributo.
+ */
+function nascosto(attivo: boolean): Record<string, string | boolean> {
+  return attivo ? { inert: '', 'aria-hidden': true } : {}
+}
+
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -54,6 +64,26 @@ export function Header() {
   useEffect(() => {
     setMobileOpen(false)
   }, [pathname])
+
+  // Menu mobile aperto: Esc lo chiude (riportando il focus sul bottone) e la
+  // pagina sotto non scorre più insieme al dito
+  const bottoneMenu = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!mobileOpen) return
+    const suTasto = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileOpen(false)
+        bottoneMenu.current?.focus()
+      }
+    }
+    const overflowPrima = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', suTasto)
+    return () => {
+      document.body.style.overflow = overflowPrima
+      document.removeEventListener('keydown', suTasto)
+    }
+  }, [mobileOpen])
 
   // Altezza reale della barra: serve a limitare il menu mobile allo spazio che
   // resta sotto di essa. Cambia con lo scroll (logo e padding si riducono),
@@ -105,9 +135,14 @@ export function Header() {
   }, [])
 
   return (
+    <>
+    {/* L'header è fisso e questo spazio ha l'altezza dell'header grande: quando
+        si restringe scorrendo, il contenuto sotto non si sposta (prima ogni
+        restringimento faceva saltare la pagina e copriva le ancore). */}
+    <div aria-hidden className="h-[var(--altezza-header,var(--altezza-header-stima))]" />
     <header
       ref={headerRef}
-      className={`sticky top-0 z-[60] backdrop-blur-xl transition-all duration-300 ${dark
+      className={`fixed inset-x-0 top-0 z-[60] backdrop-blur-xl transition-all duration-300 ${dark
         ? 'bg-slate-950/90 shadow-[0_1px_0_0_rgba(255,255,255,0.06)]'
         : 'bg-white/90 shadow-sm'
         }`}
@@ -146,7 +181,7 @@ export function Header() {
         {/* Titolo centrale — si nasconde con lo scroll */}
         <Link
           href="/"
-          aria-hidden={scrolled}
+          {...nascosto(scrolled)}
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center max-w-[60%] md:max-w-[55%] transition-all duration-300 ${scrolled ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 pointer-events-auto scale-100'
             }`}
         >
@@ -165,8 +200,7 @@ export function Header() {
             suo posto compare "Prenota ora", così la prenotazione è sempre a un tocco */}
         <Link
           href="/prenota"
-          aria-hidden={!scrolled}
-          tabIndex={scrolled ? undefined : -1}
+          {...nascosto(!scrolled || mobileOpen)}
           className={`lg:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold shadow-sm transition-all duration-300 ${dark
             ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
             : 'bg-primary text-white hover:bg-primary-dark'
@@ -178,7 +212,7 @@ export function Header() {
 
         {/* Voci menu inline — appaiono solo quando si scrolla (desktop) */}
         <div
-          aria-hidden={!scrolled}
+          {...nascosto(!scrolled)}
           className={`hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-5 xl:gap-7 transition-all duration-300 ${scrolled ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             }`}
         >
@@ -222,6 +256,7 @@ export function Header() {
               ? 'text-white hover:bg-white/10'
               : 'text-text-main hover:bg-primary/10'
               } ${mobileOpen ? (dark ? 'bg-white/10' : 'bg-primary/10') : ''}`}
+            ref={bottoneMenu}
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? 'Chiudi menu' : 'Apri menu'}
             aria-expanded={mobileOpen}
@@ -243,7 +278,7 @@ export function Header() {
 
       {/* Secondary nav row (desktop) — visibile solo in stato grande */}
       <div
-        aria-hidden={scrolled}
+        {...nascosto(scrolled)}
         className={`hidden lg:block border-t transition-all duration-300 ${dark ? 'border-slate-800' : 'border-gray-100'
           } ${scrolled ? 'max-h-0 opacity-0 overflow-hidden border-transparent' : 'max-h-20 opacity-100'}`}
       >
@@ -271,7 +306,7 @@ export function Header() {
           contenuto senza max-height indovinate a mano. */}
       <div
         id="mobile-menu"
-        aria-hidden={!mobileOpen}
+        {...nascosto(!mobileOpen)}
         className={`lg:hidden grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out ${mobileOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
           }`}
       >
@@ -365,5 +400,6 @@ export function Header() {
           }`}
       />
     </header>
+    </>
   )
 }
