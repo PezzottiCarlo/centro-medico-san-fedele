@@ -8,6 +8,8 @@ import { Calendar, Clock, Phone, Mail, ArrowRight, Stethoscope, Sparkles } from 
 import { specialisticaHref } from '@/lib/utils'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { CollapsibleBio } from '@/components/medici/CollapsibleBio'
+import { telHref } from '@/lib/telefono'
+import { riassunto } from '@/lib/testo'
 import { TerapieMedico, type TerapiaCard } from '@/components/medici/TerapieMedico'
 import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
 import { ordinaSotto } from '@/lib/sottoSpecialistiche'
@@ -33,6 +35,8 @@ async function getData(slug: string) {
 
   const medicoDoc = medicoSnap.docs[0]
   const medico: Medico = { id: medicoDoc.id, ...(medicoDoc.data() as Omit<Medico, 'id'>) }
+  // Medico in bozza: la pagina non esiste (prima era raggiungibile dall'URL)
+  if (medico.pubblicato !== true) return null
 
   const allSpec: Specialistica[] = specSnap.docs.map((d) => ({
     id: d.id,
@@ -66,10 +70,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   try {
     const data = await getData(params.slug)
     if (!data) return {}
+    const { medico, specialistiche } = data
+    // Molti medici non hanno la bio: una description costruita dai loro dati è
+    // meglio di nessuna (Google ne inventerebbe una dal testo della pagina)
+    const aree = specialistiche.map((s) => s.nome).join(', ')
+    const descrizione =
+      riassunto(medico.bio) ||
+      `${medico.nome}${medico.mansione ? `, ${medico.mansione}` : ''}${aree ? ` (${aree})` : ''}: orari e prenotazioni al Centro Medico San Fedele.`
     return generatePageMetadata({
-      title: `${data.medico.nome}`,
-      description: data.medico.bio?.substring(0, 160),
+      title: medico.nome,
+      description: descrizione,
       slug: `medici/${params.slug}`,
+      image: medico.foto,
     })
   } catch {
     return {}
@@ -89,7 +101,11 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
     specialistiche: specialistiche.map((s) => s.nome),
   })
 
-  const firstName = medico.nome.split(' ')[0]
+  // Il nome completo, titolo compreso: prendendo la prima parola usciva
+  // "Prenota con Dott."
+  const nomeMedico = medico.nome
+  const telMedico = telHref(medico.telefono)
+  const telCentro = telHref(site.telefonoE164 || site.telefono)
 
   return (
     <>
@@ -153,11 +169,11 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                   </div>
                 )}
 
-                {(medico.telefono || medico.email) && (
+                {(telMedico || medico.email) && (
                   <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5">
-                    {medico.telefono && (
+                    {telMedico && (
                       <a
-                        href={`tel:${medico.telefono}`}
+                        href={telMedico}
                         className="inline-flex items-center gap-2 text-text-main hover:text-primary text-sm font-semibold"
                       >
                         <Phone size={15} /> {medico.telefono}
@@ -209,12 +225,14 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                     Questo specialista riceve <strong>su appuntamento</strong>. Contatta il centro
                     per verificare la disponibilità.
                   </p>
-                  <a
-                    href={`tel:${site.telefonoE164}`}
-                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
-                  >
-                    <Phone size={16} /> Chiama lo studio per informazioni
-                  </a>
+                  {telCentro && (
+                    <a
+                      href={telCentro}
+                      className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-colors"
+                    >
+                      <Phone size={16} aria-hidden /> Chiama lo studio per informazioni
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -232,7 +250,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
               </p>
               <h2 className="heading-2 mb-3">Terapie e prestazioni</h2>
               <p className="text-text-main/60 text-lg max-w-2xl mx-auto">
-                Tutte le terapie e sotto-specialistiche praticate da {firstName}.
+                Tutte le terapie e sotto-specialistiche praticate da {nomeMedico}.
               </p>
             </div>
             <TerapieMedico terapie={terapie} medicoSlug={medico.slug} />
@@ -269,7 +287,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
         <section className="py-16 md:py-20 bg-bg-deep">
           <div className="container-main text-center max-w-3xl">
             <h2 className="text-3xl md:text-5xl font-extrabold text-text-main mb-4">
-              Prenota con {firstName}
+              Prenota con {nomeMedico}
             </h2>
             <p className="text-text-main/70 text-lg md:text-xl mb-8 font-medium">
               Scegli il giorno e l&apos;orario più comodo. Ti ricontatteremo per confermare la

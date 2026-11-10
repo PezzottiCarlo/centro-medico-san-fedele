@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 import { HeroGradient } from '@/components/layout/HeroGradient'
 import { getHeroConfig } from '@/lib/firebase/hero'
+import { riassunto } from '@/lib/testo'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -20,7 +21,10 @@ async function getData() {
       adminDb.collection('patologie').get(),
       adminDb.collection('specialistiche').where('pubblicata', '==', true).get(),
     ])
-    const patologie: Patologia[] = patSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Patologia, 'id'>) }))
+    // In ordine alfabetico (prima uscivano nell'ordine casuale degli id)
+    const patologie: Patologia[] = patSnap.docs
+      .map((d) => ({ id: d.id, ...(d.data() as Omit<Patologia, 'id'>) }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
     const specialistiche: Specialistica[] = specSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Specialistica, 'id'>) }))
     return { patologie, specialistiche }
   } catch {
@@ -70,7 +74,7 @@ export default async function PatologiePage() {
                     )}
                     <h2 className="font-semibold text-text-main text-lg mt-3 mb-2">{p.nome}</h2>
                     <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
-                      {p.descrizione?.replace(/<[^>]*>/g, '').substring(0, 120)}...
+                      {riassunto(p.descrizione, 120)}
                     </p>
                     <span className="inline-flex items-center gap-1 text-primary text-sm font-medium mt-4 group-hover:gap-2 transition-all">
                       Scopri di più <ArrowRight size={14} />

@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { adminDb } from '@/lib/firebase/admin'
-import { generatePageMetadata } from '@/lib/seo'
+import { generatePageMetadata, metaDescrizione, metaTitolo } from '@/lib/seo'
+import { riassunto } from '@/lib/testo'
 import type { Patologia, Medico, Specialistica } from '@/types'
 import { specialisticaHref } from '@/lib/utils'
 import { pulisciHtml } from '@/lib/sanitizeHtml'
@@ -32,13 +33,20 @@ async function getData(slug: string) {
       : Promise.resolve(null),
   ])
 
+  // I medici di una patologia si scelgono nella sua scheda admin e stanno in
+  // `patologia.mediciIds`. Prima si leggeva `medico.patologieIds`, un campo
+  // che nessuno compila: il riquadro non compariva mai. Solo i pubblicati,
+  // nell'ordine alfabetico già dato da adminDb.
+  const idMedici = new Set(patologia.mediciIds ?? [])
   const medici: Medico[] = mediciSnap.docs
-    .filter((d) => (d.data().patologieIds as string[])?.includes(patDoc.id))
+    .filter((d) => idMedici.has(d.id))
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Medico, 'id'>) }))
 
-  const specialistica: Specialistica | null = specSnap && !('empty' in specSnap) && specSnap.exists
-    ? { id: specSnap.id, ...(specSnap.data() as Omit<Specialistica, 'id'>) }
-    : null
+  // Il collegamento alla specialistica solo se è pubblicata (altrimenti 404)
+  const specialistica: Specialistica | null =
+    specSnap && specSnap.exists && specSnap.get('pubblicata') === true
+      ? { id: specSnap.id, ...(specSnap.data() as Omit<Specialistica, 'id'>) }
+      : null
 
   return { patologia, medici, specialistica }
 }
@@ -47,10 +55,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   try {
     const data = await getData(params.slug)
     if (!data) return {}
+    const { patologia, specialistica } = data
     return generatePageMetadata({
-      title: data.patologia.metaTitle || data.patologia.nome,
-      description: data.patologia.metaDescription,
+      title: metaTitolo(patologia.metaTitle, patologia.nome),
+      description: metaDescrizione(
+        patologia.metaDescription,
+        riassunto(patologia.descrizione) ||
+          `${patologia.nome}: diagnosi e trattamento al Centro Medico San Fedele${specialistica ? `, ${specialistica.nome}` : ''}.`
+      ),
       slug: `patologie/${params.slug}`,
+      image: patologia.immagine,
     })
   } catch {
     return {}
@@ -120,7 +134,10 @@ export default async function PatologiaPage({ params }: { params: { slug: string
                   </div>
                 </div>
               )}
-              <Link href="/prenota" className="btn-primary block w-full text-center">
+              <Link
+                href={specialistica ? `/prenota?specialistica=${specialistica.slug}` : '/prenota'}
+                className="btn-primary block w-full text-center"
+              >
                 Prenota una visita
               </Link>
             </div>

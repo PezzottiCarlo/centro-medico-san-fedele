@@ -7,6 +7,8 @@ import type { NewsEvento } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 import { pulisciHtml } from '@/lib/sanitizeHtml'
+import { etichettaCategoria } from '@/lib/news'
+import { riassunto } from '@/lib/testo'
 
 export const revalidate = 60
 
@@ -23,7 +25,9 @@ async function getData(slug: string): Promise<NewsEvento | null> {
   const snap = await adminDb.collection('news_eventi').where('slug', '==', slug).limit(1).get()
   if (snap.empty) return null
   const d = snap.docs[0]
-  return { id: d.id, ...(d.data() as Omit<NewsEvento, 'id'>) }
+  const news = { id: d.id, ...(d.data() as Omit<NewsEvento, 'id'>) }
+  // News in bozza: la pagina non esiste (prima era raggiungibile dall'URL)
+  return news.pubblicato === true ? news : null
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
@@ -32,7 +36,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     if (!news) return {}
     return generatePageMetadata({
       title: news.titolo,
-      description: news.corpo?.replace(/<[^>]*>/g, '').substring(0, 160),
+      description: riassunto(news.corpo),
       slug: `news/${params.slug}`,
       image: news.immagine,
     })
@@ -60,9 +64,11 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
 
         <div className="flex items-center gap-3 mb-4">
           <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-            {news.categoria}
+            {etichettaCategoria(news.categoria)}
           </span>
-          <time className="text-sm text-gray-400">{formatDate(news.dataPublicazione)}</time>
+          <time dateTime={news.dataPublicazione} className="text-sm text-gray-500">
+            {formatDate(news.dataPublicazione)}
+          </time>
           {news.autore && <span className="text-sm text-gray-400">di {news.autore}</span>}
         </div>
 

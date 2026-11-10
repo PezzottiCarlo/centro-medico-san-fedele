@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils'
 import { ArrowRight, Newspaper, BookOpen, CalendarDays } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
+import { etichettaCategoria } from '@/lib/news'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -35,11 +36,6 @@ const SECTIONS = [
   { key: 'evento' as const, label: 'Eventi', icon: CalendarDays, description: 'Eventi, giornate e iniziative in programma' },
 ]
 
-const CATEGORY_LABELS: Record<string, string> = {
-  news: 'News',
-  articolo: 'Articolo',
-  evento: 'Evento',
-}
 
 function FeaturedCard({ item }: { item: NewsEvento }) {
   return (
@@ -62,7 +58,7 @@ function FeaturedCard({ item }: { item: NewsEvento }) {
         <div className="p-6 md:p-8 flex flex-col justify-center flex-1">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
-              {CATEGORY_LABELS[item.categoria] || item.categoria}
+              {etichettaCategoria(item.categoria)}
             </span>
             <span className="text-xs text-gray-400">{formatDate(item.dataPublicazione)}</span>
           </div>
@@ -98,7 +94,7 @@ function NewsCard({ item }: { item: NewsEvento }) {
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
-            {CATEGORY_LABELS[item.categoria] || item.categoria}
+            {etichettaCategoria(item.categoria)}
           </span>
           <span className="text-xs text-gray-400">{formatDate(item.dataPublicazione)}</span>
         </div>
@@ -116,17 +112,17 @@ function NewsCard({ item }: { item: NewsEvento }) {
 export default async function NewsPage() {
   const [allItems, hero] = await Promise.all([getNews(), getHeroConfig('news')])
 
-  const grouped = {
-    news: allItems.filter((n) => n.categoria === 'news'),
-    articolo: allItems.filter((n) => n.categoria === 'articolo'),
-    evento: allItems.filter((n) => n.categoria === 'evento'),
-  }
-
   const hasContent = allItems.length > 0
 
-  // Most recent items (first 2) get the featured treatment
+  // Le due più recenti vanno "in primo piano" e non si ripetono nelle sezioni
   const featured = allItems.slice(0, 2)
-  const rest = allItems.slice(2)
+  const giaMostrate = new Set(featured.map((n) => n.id))
+  const altre = allItems.filter((n) => !giaMostrate.has(n.id))
+  const grouped = {
+    news: altre.filter((n) => n.categoria === 'news'),
+    articolo: altre.filter((n) => n.categoria === 'articolo'),
+    evento: altre.filter((n) => n.categoria === 'evento'),
+  }
 
   return (
     <>
