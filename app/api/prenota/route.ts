@@ -5,21 +5,37 @@ import { sendLeadEmail } from '@/lib/email'
 import { inviaNotificaWhatsApp } from '@/lib/whatsapp'
 import { ipChiamante, limiteSuperato } from '@/lib/rateLimit'
 import { verificaRecaptcha } from '@/lib/recaptcha'
+import { verificaScelte } from '@/lib/catalogo'
+import { codiceErrore, leggiJson } from '@/lib/richieste'
 
 // Ogni invio scrive un lead e spedisce una mail: senza freno l'endpoint è una
 // leva per riempire la casella della segreteria. Largo per una persona vera.
 const MAX_INVII = 5
 const FINESTRA_MS = 10 * 60 * 1000
 
+const MAX_BYTE = 16 * 1024
+
+// Nomi propri: lettere (anche accentate), spazi, apostrofi (anche ’, che la
+// tastiera dell'iPhone mette da sola), trattini e punti.
+// Niente < > " @ : i nomi finiscono nelle mail e nell'oggetto.
+// (RegExp costruita a runtime: il target TypeScript non conosce il flag `u`)
+const NOME = new RegExp("^[\\p{L}\\p{M}][\\p{L}\\p{M}'’ .-]*$", 'u')
+
 const PrenotaSchema = z.object({
-  nome: z.string().min(2, 'Nome troppo corto').max(100),
-  cognome: z.string().min(2, 'Cognome troppo corto').max(100),
-  telefono: z.string().min(6, 'Telefono non valido').max(20),
-  email: z.string().email('Email non valida'),
-  messaggio: z.string().trim().max(1000).default(''),
-  specialistica: z.string().optional(),
-  sottoSpecialistica: z.string().optional(),
-  medico: z.string().optional(),
+  nome: z.string().trim().min(2, 'Nome troppo corto').max(60, 'Nome troppo lungo').regex(NOME, 'Il nome contiene caratteri non validi'),
+  cognome: z.string().trim().min(2, 'Cognome troppo corto').max(60, 'Cognome troppo lungo').regex(NOME, 'Il cognome contiene caratteri non validi'),
+  telefono: z
+    .string()
+    .trim()
+    .max(25, 'Telefono non valido')
+    .regex(/^\+?[0-9 ()./-]+$/, 'Telefono non valido')
+    .refine((t) => t.replace(/\D/g, '').length >= 6, 'Telefono non valido'),
+  email: z.string().trim().max(254, 'Email non valida').email('Email non valida'),
+  messaggio: z.string().trim().max(2000, 'Messaggio troppo lungo').default(''),
+  // Slug o nomi del catalogo: verificati più sotto, quelli sconosciuti si scartano
+  specialistica: z.string().trim().max(120).optional(),
+  sottoSpecialistica: z.string().trim().max(150).optional(),
+  medico: z.string().trim().max(120).optional(),
   // Il paziente non ha scelto servizio o medico e chiede di essere richiamato
   consultoTelefonico: z.boolean().optional().default(false),
   recaptchaToken: z.string().optional(),
@@ -53,9 +69,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const letto = await leggiJson(request, MAX_BYTE)
+  if ('errore' in letto) return letto.errore
+
   try {
-    const body = await request.json()
-    const { recaptchaToken, ...data } = PrenotaSchema.parse(body)
+    const { recaptchaToken, ...data } = PrenotaSchema.parse(letto.dati)
 
     const captcha = await verificaRecaptcha(recaptchaToken, 'prenota')
     if (!captcha.ok) {
@@ -70,9 +88,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Save to Firestore
+    // Servizio e medico solo se esistono davvero nel catalogo pubblicato
+    const scelte = await verificaScelte(data)
+
     await adminDb.collection('leads').add({
-      ...data,
+      nome: data.nome,
+      cognome: data.cognome,
+      telefono: data.telefono,
+      email: data.email,
+      messaggio: data.messaggio,
+      consultoTelefonico: data.consultoTelefonico,
+      consensoDati: data.consensoDati,
+      consensoMarketing: data.consensoMarketing,
+      // Slug per i collegamenti, nome per chi legge (admin e mail)
+      ...(scelte.specialistica && {
+        specialistica: scelte.specialistica.slug,
+        specialisticaNome: scelte.specialistica.nome,
+      }),
+      ...(scelte.sottoSpecialistica && { sottoSpecialistica: scelte.sottoSpecialistica.nome }),
+      ...(scelte.medico && { medico: scelte.medico.slug, medicoNome: scelte.medico.nome }),
       timestamp: new Date().toISOString(),
       letto: false,
       fonte: 'form',
@@ -80,22 +114,32 @@ export async function POST(request: NextRequest) {
 
     // Notifiche alla segreteria: mail e, se configurato, WhatsApp. In parallelo
     // e senza far fallire la richiesta, che è già salvata su Firestore.
-    // I consensi restano su Firestore, non servono nei messaggi.
-    const { consensoDati: _cd, consensoMarketing: _cm, ...emailData } = data
+    const servizio = [scelte.specialistica?.nome, scelte.sottoSpecialistica?.nome, scelte.medico?.nome]
     const [esitoEmail, esitoWhatsApp] = await Promise.allSettled([
-      sendLeadEmail(emailData),
+      sendLeadEmail({
+        nome: data.nome,
+        cognome: data.cognome,
+        telefono: data.telefono,
+        email: data.email,
+        messaggio: data.messaggio,
+        consultoTelefonico: data.consultoTelefonico,
+        specialistica: servizio[0],
+        sottoSpecialistica: servizio[1],
+        medico: servizio[2],
+      }),
       inviaNotificaWhatsApp({
         tipo: data.consultoTelefonico ? 'richiesta di consulto telefonico' : 'richiesta',
         nome: `${data.nome} ${data.cognome}`,
         telefono: data.telefono,
-        servizio:
-          [data.specialistica, data.sottoSpecialistica, data.medico].filter(Boolean).join(' · ') ||
-          'non indicato',
+        servizio: servizio.filter(Boolean).join(' · ') || 'non indicato',
       }),
     ])
-    if (esitoEmail.status === 'rejected') console.error('Email sending failed:', esitoEmail.reason)
+    // Solo il codice: i messaggi SMTP possono contenere l'indirizzo del paziente
+    if (esitoEmail.status === 'rejected') {
+      console.error('[prenota] invio email fallito:', codiceErrore(esitoEmail.reason))
+    }
     if (esitoWhatsApp.status === 'rejected') {
-      console.error('WhatsApp notification failed:', esitoWhatsApp.reason)
+      console.error('[prenota] notifica WhatsApp fallita:', codiceErrore(esitoWhatsApp.reason))
     }
 
     return NextResponse.json({ success: true, message: 'Richiesta inviata con successo' })
@@ -107,12 +151,13 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message: error.errors[0]?.message || 'Controlla i dati inseriti e riprova.',
-          errors: error.errors,
+          // Solo il campo, non i valori inviati
+          campo: error.errors[0]?.path.join('.'),
         },
         { status: 400 }
       )
     }
-    console.error('Prenota API error:', error)
+    console.error('[prenota] errore:', codiceErrore(error))
     return NextResponse.json(
       { success: false, message: 'Errore interno del server' },
       { status: 500 }

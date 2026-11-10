@@ -12,7 +12,6 @@ export interface PrenotaPayload {
   specialistica?: string
   sottoSpecialistica?: string
   medico?: string
-  fonte?: 'form'
   consensoDati: boolean
   consensoMarketing?: boolean
 }
@@ -39,11 +38,7 @@ export function usePrenotaForm(): UsePrenotaFormReturn {
       const res = await fetch('/api/prenota', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...payload,
-          fonte: payload.fonte ?? 'form',
-          recaptchaToken,
-        }),
+        body: JSON.stringify({ ...payload, recaptchaToken }),
       })
       const data = (await res.json()) as {
         success?: boolean

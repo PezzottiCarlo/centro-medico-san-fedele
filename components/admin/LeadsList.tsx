@@ -230,7 +230,7 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
                       )}
                       {lead.specialistica && (
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                          {lead.specialistica}
+                          {lead.specialisticaNome ?? lead.specialistica}
                         </span>
                       )}
                       {lead.sottoSpecialistica && (
@@ -240,7 +240,7 @@ export function LeadsList({ initial }: { initial: Lead[] }) {
                       )}
                       {lead.medico && (
                         <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
-                          Medico: {lead.medico}
+                          Medico: {lead.medicoNome ?? lead.medico}
                         </span>
                       )}
                     </div>

@@ -220,7 +220,7 @@ export default async function HomePage() {
       {/* Modulo di contatto, dopo le recensioni */}
       <ScriviciSection
         site={site}
-        specialistiche={specialistiche.map((s) => ({ id: s.id, nome: s.nome }))}
+        specialistiche={specialistiche.map((s) => ({ id: s.id, nome: s.nome, slug: s.slug }))}
       />
 
     </>

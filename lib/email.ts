@@ -4,6 +4,7 @@ import fs from 'fs'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { orariInBreve, SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
 import { SITE_URL } from '@/lib/siteUrl'
+import { numeroPulito, telefonoCentro } from '@/lib/telefono'
 import type { SiteConfig } from '@/types'
 
 // Trim difensivo: secret iniettati via `echo ... | firebase apphosting:secrets:set`
@@ -96,7 +97,7 @@ function centroFromSite(site: SiteConfig): CentroBrand {
     nome: 'Centro Medico San Fedele',
     indirizzo: site.indirizzoCompleto,
     telefono: site.telefono,
-    telefonoLink: site.telefonoE164,
+    telefonoLink: telefonoCentro(site),
     email: site.email,
     orari: orari || orariInBreve(SITE_CONFIG_DEFAULT),
     sito: SITE_URL.replace(/^https?:\/\//, ''),
@@ -169,7 +170,7 @@ function emailShell(opts: { preheader: string; bodyHtml: string; centro: CentroB
                   <td style="text-align:center;font-size:12px;color:${C.textSoft};line-height:1.6;">
                     <strong style="color:${C.text};">${centro.nome}</strong><br/>
                     ${escape(centro.indirizzo)}<br/>
-                    Tel <a href="tel:${centro.telefonoLink}" style="color:${C.primary};text-decoration:none;">${centro.telefono}</a>
+                    Tel <a href="tel:${centro.telefonoLink}" style="color:${C.primary};text-decoration:none;">${escape(centro.telefono)}</a>
                     &nbsp;·&nbsp;
                     <a href="mailto:${centro.email}" style="color:${C.primary};text-decoration:none;">${centro.email}</a>
                     <br/>
@@ -229,7 +230,7 @@ function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="padding-top:8px;font-size:15px;color:${C.text};">
-                    <a href="tel:${escape(data.telefono)}" style="color:${C.primary};text-decoration:none;font-weight:600;">${escape(data.telefono)}</a>
+                    <a href="tel:${numeroPulito(data.telefono)}" style="color:${C.primary};text-decoration:none;font-weight:600;">${escape(data.telefono)}</a>
                     <span style="color:${C.textSoft};">&nbsp;·&nbsp;</span>
                     <a href="mailto:${escape(data.email)}" style="color:${C.primary};text-decoration:none;font-weight:600;">${escape(data.email)}</a>
                   </td>
@@ -264,7 +265,7 @@ function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string 
         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td style="border-radius:999px;background:${C.primary};">
-              <a href="tel:${escape(data.telefono)}" style="display:inline-block;padding:12px 24px;font-size:14px;color:${C.white};text-decoration:none;font-weight:600;border-radius:999px;">📞 Richiama il paziente</a>
+              <a href="tel:${numeroPulito(data.telefono)}" style="display:inline-block;padding:12px 24px;font-size:14px;color:${C.white};text-decoration:none;font-weight:600;border-radius:999px;">📞 Richiama il paziente</a>
             </td>
             <td style="width:10px;"></td>
             <td style="border-radius:999px;background:${C.white};border:1.5px solid ${C.primary};">
@@ -272,7 +273,7 @@ function buildSecretariatHtml(data: LeadEmailData, centro: CentroBrand): string 
             </td>
           </tr>
         </table>
-        <p style="margin:18px 0 0 0;font-size:12px;color:${C.textSoft};">Richiesta ricevuta il ${new Date().toLocaleString('it-IT', { dateStyle: 'long', timeStyle: 'short' })} dal portale web.</p>
+        <p style="margin:18px 0 0 0;font-size:12px;color:${C.textSoft};">Richiesta ricevuta il ${new Date().toLocaleString('it-IT', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Rome' })} dal portale web.</p>
       </td>
     </tr>
   `
@@ -338,7 +339,7 @@ function buildPatientHtml(data: LeadEmailData, centro: CentroBrand): string {
                 <tr>
                   <td style="font-size:13px;color:${C.textSoft};line-height:1.5;">
                     <strong style="color:${C.text};font-size:15px;display:block;margin-bottom:2px;">📞 Telefono</strong>
-                    <a href="tel:${centro.telefonoLink}" style="color:${C.primary};text-decoration:none;font-weight:600;font-size:15px;">${centro.telefono}</a><br/>
+                    <a href="tel:${centro.telefonoLink}" style="color:${C.primary};text-decoration:none;font-weight:600;font-size:15px;">${escape(centro.telefono)}</a><br/>
                     <span style="font-size:12px;">${centro.orari}</span>
                   </td>
                 </tr>
@@ -389,7 +390,9 @@ export async function sendLeadEmail(data: LeadEmailData): Promise<void> {
   await transporter.sendMail({
     from: `"Portale ${centro.nome}" <${EMAIL_FROM}>`,
     to: EMAIL_TO,
-    replyTo: `"${fullName}" <${data.email}>`,
+    // Oggetto e non stringa: nodemailer fa l'escape del nome, che non può più
+    // aggiungere destinatari (es. un nome con dentro `" <altro@indirizzo>`)
+    replyTo: { name: fullName, address: data.email },
     subject: `${data.consultoTelefonico ? 'Consulto telefonico' : 'Nuova richiesta'} — ${fullName}${data.specialistica ? ' · ' + data.specialistica : ''}`,
     html: buildSecretariatHtml(data, centro),
     attachments,

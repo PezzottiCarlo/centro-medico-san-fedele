@@ -16,7 +16,7 @@ interface FormData {
   consensoMarketing: boolean
 }
 
-export function HomeContactForm({ specialistiche, embedded = false }: { specialistiche: { id: string; nome: string }[]; embedded?: boolean }) {
+export function HomeContactForm({ specialistiche, embedded = false }: { specialistiche: { id: string; nome: string; slug: string }[]; embedded?: boolean }) {
   const { loading, success, error, submit, reset } = usePrenotaForm()
   const [form, setForm] = useState<FormData>({
     nome: '',
@@ -141,7 +141,7 @@ export function HomeContactForm({ specialistiche, embedded = false }: { speciali
         >
           <option value="">Seleziona un servizio...</option>
           {specialistiche.map((s) => (
-            <option key={s.id} value={s.nome}>{s.nome}</option>
+            <option key={s.id} value={s.slug}>{s.nome}</option>
           ))}
         </select>
       </div>

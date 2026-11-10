@@ -100,9 +100,11 @@ export interface Lead {
   telefono: string
   email: string
   messaggio: string
-  specialistica?: string
+  specialistica?: string // slug (nei lead più vecchi può essere il nome)
+  specialisticaNome?: string // nome leggibile, verificato sul catalogo
   sottoSpecialistica?: string
-  medico?: string
+  medico?: string // slug
+  medicoNome?: string
   consultoTelefonico?: boolean // chiede di essere richiamato senza scegliere servizio o medico
   timestamp: string // ISO string
   letto: boolean

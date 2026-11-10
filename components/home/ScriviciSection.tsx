@@ -4,7 +4,7 @@ import type { SiteConfig } from '@/types'
 
 interface Props {
   site: SiteConfig
-  specialistiche: { id: string; nome: string }[]
+  specialistiche: { id: string; nome: string; slug: string }[]
 }
 
 const VANTAGGI = [
