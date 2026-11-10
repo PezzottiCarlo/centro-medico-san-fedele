@@ -445,7 +445,7 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
               <div className="relative">
                 <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden ring-2 ring-white/40">
                   <Image
-                    src="/mela-chatbot.png"
+                    src="/mela-idea.png"
                     alt="MelaBot"
                     width={44}
                     height={44}

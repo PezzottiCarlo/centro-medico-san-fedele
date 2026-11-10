@@ -27,8 +27,8 @@ function ctaClasses(cta: HeroCTA): string {
 // sull'immagine: corpo al 23–36% della larghezza, fumetto fino al 40%.
 const SFONDO_DEFAULT = {
   src: '/hero-bg.jpg',
-  larghezza: 6912,
-  altezza: 3456,
+  larghezza: 2560,
+  altezza: 1280,
   fuocoX: 0.31,
   fuocoY: 0.53,
 }
