@@ -1,5 +1,5 @@
 import { Clock, ShieldCheck, Stethoscope, Phone } from 'lucide-react'
-import { HomeContactForm } from '@/components/home/HomeContactForm'
+import { ModuloContatto } from '@/components/home/ModuloContatto'
 import type { SiteConfig } from '@/types'
 
 interface Props {
@@ -70,7 +70,7 @@ export function ScriviciSection({ site, specialistiche }: Props) {
         </div>
 
         <div className="rounded-3xl bg-white p-6 sm:p-8 md:p-10 text-text-main shadow-2xl shadow-black/20 ring-1 ring-white/40">
-          <HomeContactForm specialistiche={specialistiche} embedded />
+          <ModuloContatto specialistiche={specialistiche} />
         </div>
       </div>
     </section>

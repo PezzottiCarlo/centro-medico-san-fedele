@@ -1,6 +1,6 @@
 import { generatePageMetadata, localitaCentro } from '@/lib/seo'
 import { MapPin, Phone, Mail, Clock, Car, Train, Navigation } from 'lucide-react'
-import { ContactForm } from '@/components/home/ContactForm'
+import { ModuloContatto } from '@/components/home/ModuloContatto'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
@@ -148,7 +148,7 @@ export default async function ContattiPage() {
               ti risponderemo nel più breve tempo possibile.
             </p>
             <div className="bg-white rounded-lg p-5 sm:p-6 shadow-card border border-gray-100">
-              <ContactForm />
+              <ModuloContatto pulsante="mela" />
             </div>
           </div>
         </div>
