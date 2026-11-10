@@ -87,7 +87,7 @@ export function InfoRapide({ site }: Props) {
                 href={whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative flex items-center justify-center gap-2 rounded-full bg-whatsapp px-5 py-3 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-whatsapp-dark"
+                className="relative flex items-center justify-center gap-2 rounded-full bg-[#15803D] px-5 py-3 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#166534]"
               >
                 <CtaIcon kind="whatsapp" size={20} /> Scrivici su WhatsApp
                 <span className="sr-only">(si apre in una nuova scheda)</span>

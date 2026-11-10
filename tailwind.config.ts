@@ -14,11 +14,6 @@ const config: Config = {
         'primary-dark': '#2D537B',
         secondary: '#5AAE4B',
         'secondary-dark': '#479A38',
-        // Varianti scure per il testo bianco: il verde del logo e quello di
-        // WhatsApp (#25D366) con il bianco sopra non arrivano a 3:1
-        'secondary-deep': '#3A7D2F',
-        whatsapp: '#15803D',
-        'whatsapp-dark': '#166534',
         bg: '#FFFFFF',
         'bg-soft': '#EDF2F8',
         'bg-deep': '#D1DDEA',

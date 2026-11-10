@@ -7,16 +7,18 @@ import { ChevronDown, Pointer } from 'lucide-react'
 import { CtaIcon } from '@/components/ui/CtaIcon'
 import type { HeroConfig, HeroCTA } from '@/types'
 
+// Verdi scuri scritti per esteso: il verde di WhatsApp (#25D366) e quello del
+// logo con il testo bianco sopra non arrivavano a 3:1 di contrasto
 function ctaClasses(cta: HeroCTA): string {
   switch (cta.icona) {
     case 'whatsapp':
-      return 'text-white bg-whatsapp hover:bg-whatsapp-dark shadow-lg shadow-black/20'
+      return 'text-white bg-[#15803D] hover:bg-[#166534] shadow-lg shadow-black/20'
     case 'phone':
       return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
     case 'calendar':
       return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
     case 'arrow':
-      return 'text-white bg-secondary-deep hover:bg-[#2F6826] shadow-lg shadow-secondary/30'
+      return 'text-white bg-[#3A7D2F] hover:bg-[#2F6826] shadow-lg shadow-secondary/30'
     default:
       return 'text-white bg-white/10 hover:bg-white/20 border border-white/30 backdrop-blur'
   }
