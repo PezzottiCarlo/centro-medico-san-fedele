@@ -8,23 +8,8 @@ html {
   overflow-anchor: none;
 }
 
-/* ── Google Fonts ──────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap');
-
-/* ── Custom Fonts (local) ────────────────────────────────────── */
-@font-face {
-  font-family: 'OpenDyslexic';
-  src: url('/fonts/OpenDyslexic-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'OpenDyslexic';
-  src: url('/fonts/OpenDyslexic-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-display: swap;
-}
+/* Font: Inter e Lexend arrivano da next/font (app/layout.tsx) come variabili
+   --font-inter e --font-lexend. */
 
 /* ── CSS Variables ───────────────────────────────────────────── */
 :root {
@@ -40,7 +25,7 @@ html {
   --color-text: #2A3642;
   --color-accent: #406EA0;
   --color-muted: #EDF2F8;
-  --font-base: 'Inter', system-ui, sans-serif;
+  --font-base: var(--font-inter), system-ui, sans-serif;
   --radius: 24px;
 }
 
@@ -68,12 +53,12 @@ body {
 
 /* ── DSA Mode ────────────────────────────────────────────────── */
 html.dsa-mode {
-  --font-base: 'Lexend', sans-serif;
+  --font-base: var(--font-lexend), system-ui, sans-serif;
   --color-bg: #FFFFFF;
 }
 
 html.dsa-mode body {
-  font-family: 'Lexend', sans-serif;
+  font-family: var(--font-base);
   letter-spacing: 0.04em;
   line-height: 1.8;
   word-spacing: 0.1em;

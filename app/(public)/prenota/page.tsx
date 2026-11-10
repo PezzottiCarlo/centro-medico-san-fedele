@@ -4,6 +4,10 @@ import { generatePageMetadata } from '@/lib/seo'
 import { PrenotaForm } from '@/components/prenota/PrenotaForm'
 import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
+// Senza questo la pagina restava statica fino al deploy successivo (cache di
+// un anno): medici e specialistiche nuovi non comparivano nel modulo
+export const revalidate = 60
+
 export const metadata = generatePageMetadata({
   title: 'Prenota una Visita',
   description: 'Prenota facilmente la tua visita medica al Centro Medico San Fedele.',
@@ -63,7 +67,15 @@ export default async function PrenotaPage() {
             Pochi semplici passi per prenotare. Ti contatteremo entro 24 ore lavorative per confermare.
           </p>
         </div>
-        <Suspense fallback={<div className="text-center py-12 text-gray-400">Caricamento...</div>}>
+        {/* Il modulo legge i parametri dell'URL, quindi nasce nel browser: lo
+            spazio riservato evita che il footer salti su e giù al caricamento */}
+        <Suspense
+          fallback={
+            <div className="min-h-[70vh] text-center py-12 text-gray-600" role="status">
+              Caricamento del modulo…
+            </div>
+          }
+        >
           <PrenotaForm specialistiche={specialistiche} medici={medici} />
         </Suspense>
       </div>

@@ -2,7 +2,6 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
@@ -30,9 +29,8 @@ const config: Config = {
         xl: '40px',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        lexend: ['Lexend', 'sans-serif'],
-        dyslexic: ['OpenDyslexic', 'sans-serif'],
+        sans: ['var(--font-base)', 'system-ui', 'sans-serif'],
+        lexend: ['var(--font-lexend)', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         card: '0 4px 24px rgba(0,0,0,0.06)',
