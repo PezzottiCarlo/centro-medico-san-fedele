@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { SpecialtyCard, type SpecialisticaCard } from './SpecialtyCard'
 import { MelaButton } from '@/components/ui/MelaButton'
@@ -26,6 +26,7 @@ function normalize(s: string): string {
 
 export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
   const [query, setQuery] = useState('')
+  const campo = useRef<HTMLInputElement>(null)
 
   const filtered = useMemo(() => {
     if (!query.trim()) return specialistiche
@@ -59,6 +60,7 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
             Cerca una specialistica, una prestazione o una patologia
           </label>
           <input
+            ref={campo}
             id="cerca-specialistiche"
             type="search"
             value={query}
@@ -69,22 +71,27 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
           {query && (
             <button
               type="button"
-              onClick={() => setQuery('')}
+              onClick={() => {
+                setQuery('')
+                // Il bottone sparisce: il focus torna nel campo invece di perdersi
+                campo.current?.focus()
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full hover:bg-bg-soft flex items-center justify-center text-text-main/75 hover:text-text-main transition-colors"
               aria-label="Cancella ricerca"
             >
-              <X size={18} />
+              <X size={18} aria-hidden />
             </button>
           )}
         </div>
-        {/* Annunciato dai lettori di schermo mentre si scrive */}
-        {query && (
-          <p role="status" className="text-sm text-text-main/70 mt-3 text-center">
-            {filtered.length === 0
+        {/* Annunciato dai lettori di schermo mentre si scrive. La regione
+            esiste sempre: inserita insieme al testo, il primo annuncio si perdeva */}
+        <p role="status" className="text-sm text-text-main/75 mt-3 text-center empty:hidden">
+          {query
+            ? filtered.length === 0
               ? 'Nessuna specialistica trovata'
-              : `${filtered.length} ${filtered.length === 1 ? 'risultato' : 'risultati'}`}
-          </p>
-        )}
+              : `${filtered.length} ${filtered.length === 1 ? 'risultato' : 'risultati'}`
+            : ''}
+        </p>
       </div>
 
       {/* Grid */}
