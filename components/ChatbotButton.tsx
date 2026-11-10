@@ -23,6 +23,10 @@ const TEASER_KEY = 'sanfedele:chat-teaser-visto'
 // per non coprire i link del footer (social, privacy, contatti).
 const SOGLIA_FONDO_PX = 100
 
+// Rosso della mela scurito quanto basta per il testo bianco e per i link su
+// bianco (contrasto 5,4:1; il #D05241 di prima arrivava a 4,2:1)
+const ROSSO = '#B6452F'
+
 function messaggioErrore(telefono: string, orari: string): string {
   const contatto = orari ? `${telefono} (${orari})` : telefono
   return `Mi dispiace, in questo momento non riesco a rispondere. Puoi chiamarci al ${contatto}. 📞`
@@ -78,7 +82,7 @@ function LinkBot({ href, children }: { href?: string; children?: React.ReactNode
       target={isExternal ? '_blank' : undefined}
       rel={isExternal ? 'noopener noreferrer' : undefined}
       className="font-medium underline underline-offset-2 hover:opacity-80 break-words"
-      style={{ color: '#D05241' }}
+      style={{ color: ROSSO }}
     >
       {children}
     </a>
@@ -115,6 +119,7 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
   const [suggerimentoScroll, setSuggerimentoScroll] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fabRef = useRef<HTMLButtonElement>(null)
 
   // Nasconde il fumetto di invito e lo ricorda per la sessione corrente
   const dismissTeaser = useCallback(() => {
@@ -179,11 +184,19 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
       /* sessionStorage non disponibile: mostriamo comunque il fumetto */
     }
     const show = setTimeout(() => setTeaser(true), 3500)
-    const hide = setTimeout(() => setTeaser(false), 16000)
+    // Anche quando si ritira da solo conta come visto: non torna a ogni pagina
+    const hide = setTimeout(dismissTeaser, 16000)
     return () => {
       clearTimeout(show)
       clearTimeout(hide)
     }
+  }, [dismissTeaser])
+
+  // Chiusura da tastiera o dal bottone nella finestra: il focus torna al
+  // bottone della chat invece di perdersi quando la finestra sparisce
+  const chiudiChat = useCallback(() => {
+    setOpen(false)
+    fabRef.current?.focus()
   }, [])
 
   // Allow other components (e.g. DoctorScroller mela card) to open the chat
@@ -217,7 +230,7 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
       setChatVisible(true)
       return
     }
-    const t = setTimeout(() => setChatVisible(false), 250) // matches chatSlideDown duration
+    const t = setTimeout(() => setChatVisible(false), 250) // durata di chatSlideDown
     return () => clearTimeout(t)
   }, [open])
 
@@ -365,8 +378,8 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
           100% { transform: scale(1); }
         }
         @keyframes fabPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(208, 82, 65, 0.45); }
-          50% { box-shadow: 0 0 0 12px rgba(208, 82, 65, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(182, 69, 47, 0.45); }
+          50% { box-shadow: 0 0 0 12px rgba(182, 69, 47, 0); }
         }
         @keyframes typingDot {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
@@ -389,8 +402,10 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
         .fab-enter {
           animation: fabPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
-        .fab-pulse {
-          animation: fabPulse 2.5s ease-in-out infinite;
+        @media (prefers-reduced-motion: no-preference) {
+          .fab-pulse {
+            animation: fabPulse 2.5s ease-in-out infinite;
+          }
         }
         .typing-dot {
           animation: typingDot 1.4s ease-in-out infinite;
@@ -415,6 +430,13 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
         className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:bottom-16 right-4 sm:right-5 flex flex-col items-end ${
           chatVisible ? 'z-[70]' : 'z-50'
         }`}
+        // Esc chiude la chat da qualunque punto dentro (campo, link, bottoni)
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && open) {
+            e.stopPropagation()
+            chiudiChat()
+          }
+        }}
       >
         {/* Mela cucù — appesa SOPRA la chat window quando è aperta. In flusso e larga
             quanto la finestra, così resta centrata a qualsiasi viewport; il margine
@@ -442,6 +464,11 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
         {/* Chat window */}
         {chatVisible && (
           <div
+            id="finestra-chat"
+            role="dialog"
+            aria-label="Chat con MelaBot, assistente virtuale"
+            // Durante l'animazione di chiusura resta a schermo ma fuori dal Tab
+            {...((!open ? { inert: '' } : {}) as Record<string, string>)}
             className={`mb-3 w-[360px] max-w-[calc(100vw-2.5rem)] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
               open ? 'chat-window-open' : 'chat-window-close'
             }`}
@@ -451,38 +478,48 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
             {/* Header */}
             <div
               className="px-5 py-4 flex items-center gap-3 flex-shrink-0"
-              style={{ background: 'linear-gradient(to right, #D05241, #B6452F)' }}
+              style={{ background: `linear-gradient(to right, ${ROSSO}, #9C3B28)` }}
             >
               <div className="relative">
                 <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center overflow-hidden ring-2 ring-white/40">
                   <Image
                     src="/mela-idea.png"
-                    alt="MelaBot"
+                    alt=""
                     width={44}
                     height={44}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div
+                  aria-hidden
                   className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2"
-                  style={{ borderColor: '#B6452F' }}
+                  style={{ borderColor: ROSSO }}
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold text-sm">MelaBot</p>
-                <p className="text-white/70 text-xs">Assistente San Fedele · Di solito risponde subito</p>
+                <p className="text-white/90 text-xs">Assistente San Fedele · Di solito risponde subito</p>
               </div>
               <button
-                onClick={() => setOpen(false)}
-                className="text-white/70 hover:text-white hover:bg-white/10 rounded-full p-1.5 transition-all duration-200"
+                type="button"
+                onClick={chiudiChat}
+                className="text-white hover:bg-white/15 rounded-full p-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label="Chiudi chat"
               >
-                <X size={18} />
+                <X size={18} aria-hidden />
               </button>
             </div>
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gradient-to-b from-gray-50/80 to-gray-50/40">
+            {/* role="log": i lettori di schermo leggono da soli i messaggi nuovi.
+                Scorrevole e raggiungibile col Tab, per leggere le risposte lunghe
+                con le frecce. */}
+            <div
+              role="log"
+              aria-label="Conversazione"
+              tabIndex={0}
+              className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3 bg-gradient-to-b from-gray-50/80 to-gray-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B6452F]"
+            >
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -496,8 +533,9 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
                         ? 'text-white rounded-2xl rounded-br-md'
                         : 'bg-white text-text-main rounded-2xl rounded-bl-md shadow-sm border border-gray-100'
                     }`}
-                    style={msg.sender === 'user' ? { backgroundColor: '#D05241' } : undefined}
+                    style={msg.sender === 'user' ? { backgroundColor: ROSSO } : undefined}
                   >
+                    <span className="sr-only">{msg.sender === 'user' ? 'Tu: ' : 'MelaBot: '}</span>
                     {msg.sender === 'bot' ? (
                       <ReactMarkdown
                           components={botMarkdownComponents}
@@ -513,10 +551,11 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
                       <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                     )}
                     <p
-                      className={`text-[10px] mt-1.5 text-right ${
-                        msg.sender === 'user' ? 'text-white/50' : 'text-gray-400'
+                      className={`text-[11px] mt-1.5 text-right ${
+                        msg.sender === 'user' ? 'text-white/90' : 'text-gray-500'
                       }`}
                     >
+                      <span className="sr-only">ore </span>
                       {formatTime(msg.timestamp)}
                     </p>
                   </div>
@@ -534,8 +573,8 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
                         key={q}
                         type="button"
                         onClick={() => handleSend(q)}
-                        className="text-left text-sm px-3.5 py-2 rounded-2xl rounded-bl-md bg-white border border-gray-200 text-text-main hover:bg-gray-50 transition-colors shadow-sm"
-                        style={{ color: '#D05241' }}
+                        className="text-left text-sm px-3.5 py-2 rounded-2xl rounded-bl-md bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B6452F]"
+                        style={{ color: ROSSO }}
                       >
                         {q}
                       </button>
@@ -547,9 +586,10 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
               {isTyping && (
                 <div className="flex justify-start msg-appear">
                   <div className="bg-white rounded-2xl rounded-bl-md shadow-sm border border-gray-100 px-4 py-3 flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '200ms' }} />
-                    <span className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '400ms' }} />
+                    <span className="sr-only">MelaBot sta scrivendo…</span>
+                    <span aria-hidden className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '0ms' }} />
+                    <span aria-hidden className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '200ms' }} />
+                    <span aria-hidden className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '400ms' }} />
                   </div>
                 </div>
               )}
@@ -560,25 +600,30 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
             {/* Input area */}
             <div className="px-4 py-3 bg-white border-t border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-2">
+                {/* Resta attivo mentre MelaBot risponde (prima si disattivava e il
+                    focus finiva fuori dalla chat): l'invio aspetta la risposta. */}
                 <input
                   ref={inputRef}
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  aria-label="Scrivi un messaggio a MelaBot"
                   placeholder="Scrivi un messaggio..."
-                  disabled={isTyping}
-                  className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm text-text-main placeholder-gray-400 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-200 disabled:opacity-50"
-                  style={{ '--tw-ring-color': 'rgba(208,82,65,0.3)' } as React.CSSProperties}
+                  autoComplete="off"
+                  enterKeyHint="send"
+                  maxLength={1000}
+                  className="flex-1 min-w-0 bg-gray-50 border border-gray-300 rounded-full px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#B6452F] focus:border-transparent focus:bg-white transition-all duration-200"
                 />
                 <button
+                  type="button"
                   onClick={() => handleSend()}
                   disabled={!input.trim() || isTyping}
                   // Verde (come la foglia della mela): si stacca dal rosso della chat
-                  className="w-10 h-10 rounded-full text-white bg-secondary hover:bg-secondary-dark flex items-center justify-center active:scale-90 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex-shrink-0"
+                  className="w-10 h-10 rounded-full text-white bg-secondary-dark hover:bg-[#3B7F2E] flex items-center justify-center active:scale-90 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary-dark"
                   aria-label="Invia messaggio"
                 >
-                  <Send size={16} className="ml-0.5" />
+                  <Send size={16} className="ml-0.5" aria-hidden />
                 </button>
               </div>
             </div>
@@ -604,17 +649,17 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
               className="block w-full text-left bg-white rounded-2xl rounded-br-md shadow-2xl border border-gray-100 pl-4 pr-9 py-3 hover:bg-gray-50 transition-colors"
             >
               <span className="block text-sm font-bold text-text-main">Hai una domanda?</span>
-              <span className="block text-xs text-text-main/60 mt-0.5 leading-snug">
+              <span className="block text-xs text-text-main/75 mt-0.5 leading-snug">
                 Chiedi a MelaBot: orari, visite, prenotazioni e convenzioni.
               </span>
             </button>
             <button
               type="button"
               onClick={dismissTeaser}
-              className="absolute top-1.5 right-1.5 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="absolute top-1 right-1 p-1.5 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
               aria-label="Chiudi il suggerimento"
             >
-              <X size={13} />
+              <X size={14} aria-hidden />
             </button>
           </div>
         )}
@@ -641,31 +686,36 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
           )}
 
           <button
+            ref={fabRef}
+            type="button"
             onClick={() => {
               setOpen((v) => !v)
               dismissTeaser()
             }}
-            style={{ backgroundColor: '#D05241' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B6452F')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#D05241')}
-            className={`group flex items-center text-white shadow-xl rounded-full active:scale-95 transition-[padding,background-color,transform] duration-300 ease-out ${classiPadding} ${!open && mounted ? 'fab-pulse' : ''
+            className={`group flex items-center text-white bg-[#B6452F] hover:bg-[#9C3B28] shadow-xl rounded-full active:scale-95 transition-[padding,background-color,transform] duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#B6452F] ${classiPadding} ${!open && mounted ? 'fab-pulse' : ''
               }`}
             aria-expanded={open}
+            aria-haspopup="dialog"
+            aria-controls={chatVisible ? 'finestra-chat' : undefined}
+            // Il nome comincia con il testo visibile ("Chiedi a MelaBot"), così
+            // chi usa i comandi vocali può dire quello che legge
             aria-label={
               open
                 ? 'Chiudi la chat'
-                : 'Apri la chat con MelaBot, l’assistente virtuale del Centro Medico San Fedele'
+                : 'Chiedi a MelaBot: apri la chat con l’assistente virtuale del Centro Medico San Fedele'
             }
           >
             <span className="relative w-6 h-6 flex items-center justify-center shrink-0">
               <MessageCircle
                 size={24}
+                aria-hidden
                 className={`absolute transition-all duration-300 ${
                   open ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
                 }`}
               />
               <X
                 size={24}
+                aria-hidden
                 className={`absolute transition-all duration-300 ${
                   open ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'
                 }`}
