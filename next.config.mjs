@@ -14,13 +14,21 @@ const bucket =
  * bootstrap inline senza nonce; il resto è chiuso. Anche così la policy blocca
  * l'incorporamento in iframe di terzi, i plugin e la riscrittura di <base>.
  */
+// Dominio ufficiale: le altre origini (hosted.app di test, run.app) non vanno
+// indicizzate. Stesso valore di lib/siteUrl.ts.
+const hostCanonico = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.centrosanfedele.it'
+).host
+
 const csp = [
   "default-src 'self'",
   // google.com/gstatic.com servono a reCAPTCHA
   `script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  `img-src 'self' data: blob: https://storage.googleapis.com https://firebasestorage.googleapis.com`,
+  // Solo il bucket del progetto, non tutto storage.googleapis.com: altrimenti
+  // un'immagine iniettata potrebbe far partire richieste verso bucket altrui
+  `img-src 'self' data: blob: https://storage.googleapis.com/${bucket}/ https://firebasestorage.googleapis.com/v0/b/${bucket}/`,
   // Firestore, Auth, Storage e Places; in sviluppo anche il websocket di HMR
   `connect-src 'self' https://*.googleapis.com https://*.google.com${isDev ? ' ws: wss:' : ''}`,
   // La mappa nella pagina Contatti e il frame di reCAPTCHA
@@ -58,6 +66,9 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Non annunciare il framework a chi cerca versioni vulnerabili
+  poweredByHeader: false,
+
   // `sanitize-html` è CJS ma tira dentro `htmlparser2`, che è ESM-only: il
   // bundler di Next non li concilia. Gira solo lato server, quindi lo lasciamo
   // risolvere a Node a runtime invece di impacchettarlo.
@@ -98,7 +109,26 @@ const nextConfig = {
   },
 
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      {
+        source: '/:path*',
+        missing: [{ type: 'host', value: hostCanonico }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+    ]
+  },
+
+  // Redirect permanenti (308) delle pagine spostate. Prima erano `redirect()`
+  // dentro pagine statiche, che dietro App Hosting rispondevano 307 senza
+  // `Location`: i crawler e i browser senza JavaScript restavano fermi.
+  async redirects() {
+    return [
+      { source: '/servizi', destination: '/ambulatori', permanent: true },
+      { source: '/dove-siamo', destination: '/contatti', permanent: true },
+      { source: '/ambulatori/medicina-sportiva', destination: '/sport', permanent: true },
+      { source: '/ambulatori/equipe-dsa', destination: '/dsa', permanent: true },
+    ]
   },
 }
 
