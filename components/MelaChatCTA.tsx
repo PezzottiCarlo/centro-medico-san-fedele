@@ -39,7 +39,7 @@ export function MelaChatCTA() {
             >
               Hai una domanda?
             </h2>
-            <p className={`font-medium mb-5 ${scura ? 'text-slate-400' : 'text-text-main/60'}`}>
+            <p className={`font-medium mb-5 ${scura ? 'text-slate-400' : 'text-text-main/75'}`}>
               Il nostro assistente virtuale MelaBot ti risponde subito: prenotazioni, orari,
               specialistiche e convenzioni.
             </p>

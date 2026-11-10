@@ -33,7 +33,7 @@ export function GoogleRiepilogoBadge({ riepilogo }: { riepilogo: GoogleRiepilogo
               ))}
             </span>
           </div>
-          <p className="mt-1 text-sm text-text-main/60">
+          <p className="mt-1 text-sm text-text-main/75">
             su {riepilogo.totale} recensioni Google
           </p>
         </div>

@@ -727,7 +727,7 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
               className={`flex flex-col items-start text-left leading-tight overflow-hidden transition-all duration-300 ease-out ${classiEtichetta}`}
             >
               <span className="font-bold text-[15px] whitespace-nowrap">Chiedi a MelaBot</span>
-              <span className="text-[11px] font-medium text-white/80 whitespace-nowrap">
+              <span className="text-[11px] font-medium text-white whitespace-nowrap">
                 Orari, visite, prenotazioni
               </span>
             </span>

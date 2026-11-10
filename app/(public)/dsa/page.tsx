@@ -265,7 +265,7 @@ export default async function DSAPage() {
                   )}
                   <h3 className="font-semibold text-text-main text-xs sm:text-sm leading-tight">{m.nome}</h3>
                   {m.mansione && (
-                    <p className="text-[10px] sm:text-xs text-text-main/60 mt-1 line-clamp-2">{m.mansione}</p>
+                    <p className="text-[10px] sm:text-xs text-text-main/75 mt-1 line-clamp-2">{m.mansione}</p>
                   )}
                   <span className="hidden sm:block text-primary text-xs font-medium group-hover:underline mt-2">
                     Vedi profilo →
@@ -282,7 +282,7 @@ export default async function DSAPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark" />
         <div className="container-main text-center relative">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white mb-3 sm:mb-4">Prenota una valutazione</h2>
-          <p className="text-white/80 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
+          <p className="text-white/90 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
             Il percorso inizia con una valutazione specialistica. I nostri esperti ti guideranno in ogni fase.
           </p>
           <Link href={`/prenota?specialistica=${spec?.slug ?? 'equipe-dsa'}&step=dati`} className="bg-white text-primary font-medium px-6 sm:px-8 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 text-base sm:text-lg min-h-[44px]">

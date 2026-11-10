@@ -64,13 +64,13 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cerca una specialistica, sotto-specialistica o patologia..."
-            className="w-full bg-white border-2 border-primary/15 focus:border-primary rounded-full pl-14 pr-12 py-4 text-base md:text-lg font-medium text-text-main placeholder:text-text-main/40 outline-none transition-colors shadow-card"
+            className="w-full bg-white border-2 border-primary/15 focus:border-primary rounded-full pl-14 pr-12 py-4 text-base md:text-lg font-medium text-text-main placeholder:text-text-main/70 outline-none transition-colors shadow-card"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full hover:bg-bg-soft flex items-center justify-center text-text-main/50 hover:text-text-main transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full hover:bg-bg-soft flex items-center justify-center text-text-main/75 hover:text-text-main transition-colors"
               aria-label="Cancella ricerca"
             >
               <X size={18} />
@@ -95,7 +95,7 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-text-main/60">
+        <div className="text-center py-12 text-text-main/75">
           <p>Prova a cercare con termini diversi.</p>
         </div>
       )}

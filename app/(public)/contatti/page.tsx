@@ -51,7 +51,7 @@ export default async function ContattiPage() {
                   <span className="block text-xl sm:text-2xl font-bold leading-tight">
                     Avvia navigazione
                   </span>
-                  <span className="block text-sm text-white/80">
+                  <span className="block text-sm text-white/90">
                     Percorso con Google Maps fino al centro
                   </span>
                 </span>

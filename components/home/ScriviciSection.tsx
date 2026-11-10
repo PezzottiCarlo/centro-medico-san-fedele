@@ -41,12 +41,12 @@ export function ScriviciSection({ site, specialistiche }: Props) {
 
       <div className="container-main relative grid grid-cols-1 lg:grid-cols-[1fr_1.25fr] gap-10 lg:gap-16 items-center">
         <div className="text-center lg:text-left">
-          <p className="text-white/70 uppercase text-xs tracking-widest font-bold mb-3">Scrivici</p>
+          <p className="text-white/90 uppercase text-xs tracking-widest font-bold mb-3">Scrivici</p>
           <h2 className="text-3xl md:text-5xl font-light tracking-tight leading-tight mb-5">
             Hai una domanda o una richiesta?{' '}
             <span className="font-semibold">Ci pensiamo noi.</span>
           </h2>
-          <p className="text-white/80 text-base md:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 mb-8">
+          <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 mb-8">
             Raccontaci di cosa hai bisogno: la segreteria ti ricontatta per darti tutte le
             informazioni o fissare una visita.
           </p>
@@ -62,7 +62,7 @@ export function ScriviciSection({ site, specialistiche }: Props) {
             ))}
           </ul>
 
-          <p className="mt-8 text-sm text-white/70">
+          <p className="mt-8 text-sm text-white/90">
             Preferisci parlare con qualcuno?{' '}
             <a href={`tel:${tel}`} className="inline-flex items-center gap-1.5 font-semibold text-white underline underline-offset-4 hover:no-underline">
               <Phone size={14} aria-hidden /> {site.telefono}

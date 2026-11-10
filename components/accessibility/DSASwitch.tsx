@@ -33,7 +33,7 @@ function Interruttore({
         <p id={`${id}-etichetta`} className={cn('font-medium', dark ? 'text-white' : 'text-text-main')}>
           {etichetta}
         </p>
-        <p id={`${id}-descrizione`} className={cn('text-sm', dark ? 'text-white/70' : 'text-gray-600')}>
+        <p id={`${id}-descrizione`} className={cn('text-sm', dark ? 'text-white/80' : 'text-gray-600')}>
           {descrizione}
         </p>
       </div>

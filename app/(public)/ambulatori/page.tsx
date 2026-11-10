@@ -159,7 +159,7 @@ export default async function AmbulatorioPage() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white mb-3 sm:mb-4">
             Non sai quale specialistica scegliere?
           </h2>
-          <p className="text-white/80 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
+          <p className="text-white/90 text-base sm:text-lg mb-6 sm:mb-8 max-w-xl mx-auto">
             Contattaci e ti aiuteremo a individuare il percorso di cura più adatto alle tue esigenze.
           </p>
           <Link href="/prenota" className="bg-white text-primary font-medium px-6 py-3 rounded-sm hover:bg-gray-50 transition-colors inline-flex items-center gap-2 min-h-[44px]">

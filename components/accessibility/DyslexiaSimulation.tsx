@@ -89,7 +89,7 @@ export function DyslexiaSimulation() {
         </p>
       </div>
 
-      <p className="text-xs md:text-sm text-text-main/60 px-6 pb-5 text-center font-medium">
+      <p className="text-xs md:text-sm text-text-main/75 px-6 pb-5 text-center font-medium">
         Questa simulazione è indicativa: la dislessia si manifesta in modo diverso per ogni persona.
       </p>
     </div>

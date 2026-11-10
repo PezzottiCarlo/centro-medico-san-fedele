@@ -92,7 +92,7 @@ export default async function HomePage() {
                 I nostri servizi
               </p>
               <h2 className="heading-2 mb-4">Le nostre specialistiche</h2>
-              <p className="text-text-main/60 text-base sm:text-lg max-w-2xl mx-auto">
+              <p className="text-text-main/75 text-base sm:text-lg max-w-2xl mx-auto">
                 Un centro multidisciplinare con specialisti dedicati per ogni area della salute.
               </p>
             </div>
@@ -172,23 +172,23 @@ export default async function HomePage() {
             <div className="flex-shrink-0 grid grid-cols-2 gap-4 md:gap-6">
               <div className="bg-white rounded-lg p-6 text-center shadow-card">
                 <div className="text-4xl font-black text-primary">{anni}</div>
-                <div className="text-sm text-text-main/60 mt-1 font-medium">
+                <div className="text-sm text-text-main/75 mt-1 font-medium">
                   Anni di esperienza
-                  <span className="block text-xs text-text-main/50">dal {ANNO_FONDAZIONE}</span>
+                  <span className="block text-xs text-text-main/75">dal {ANNO_FONDAZIONE}</span>
                 </div>
               </div>
               <div className="bg-white rounded-lg p-6 text-center shadow-card mt-6">
                 <div className="text-4xl font-black text-primary">{medici.length}</div>
-                <div className="text-sm text-text-main/60 mt-1 font-medium">Medici specialisti</div>
+                <div className="text-sm text-text-main/75 mt-1 font-medium">Medici specialisti</div>
               </div>
               <div className="bg-white rounded-lg p-6 text-center shadow-card">
                 <div className="text-4xl font-black text-primary">{specialistiche.length}</div>
-                <div className="text-sm text-text-main/60 mt-1 font-medium">Specialistiche</div>
+                <div className="text-sm text-text-main/75 mt-1 font-medium">Specialistiche</div>
               </div>
               <div className="bg-white rounded-lg p-6 text-center shadow-card mt-6">
                 {/* Unico dato fisso: non c'è una fonte da cui calcolarlo */}
                 <div className="text-4xl font-black text-primary">98%</div>
-                <div className="text-sm text-text-main/60 mt-1 font-medium">Soddisfazione</div>
+                <div className="text-sm text-text-main/75 mt-1 font-medium">Soddisfazione</div>
               </div>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default async function HomePage() {
                 Testimonianze
               </p>
               <h2 className="heading-2 mb-4">Cosa dicono di noi</h2>
-              <p className="text-text-main/60 text-base sm:text-lg">
+              <p className="text-text-main/75 text-base sm:text-lg">
                 La soddisfazione dei pazienti è la nostra ricompensa più grande.
               </p>
             </div>

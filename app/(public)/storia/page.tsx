@@ -82,7 +82,7 @@ export default async function StoriaPage() {
               <h2 className="text-3xl md:text-5xl font-extrabold text-text-main">
                 Le tappe fondamentali
               </h2>
-              <p className="text-text-main/60 text-base md:text-lg max-w-2xl mx-auto mt-4 font-medium">
+              <p className="text-text-main/75 text-base md:text-lg max-w-2xl mx-auto mt-4 font-medium">
                 Ogni anno ha lasciato un segno. Scopri i momenti che hanno costruito il
                 Centro Medico San Fedele.
               </p>
@@ -210,7 +210,7 @@ export default async function StoriaPage() {
               <h2 className="text-3xl md:text-5xl font-extrabold text-text-main mb-4">
                 Riconoscimenti e premi
               </h2>
-              <p className="text-text-main/60 text-lg md:text-xl max-w-2xl mx-auto font-medium">
+              <p className="text-text-main/75 text-lg md:text-xl max-w-2xl mx-auto font-medium">
                 I traguardi che testimoniano il nostro impegno costante per l&apos;eccellenza.
               </p>
             </div>

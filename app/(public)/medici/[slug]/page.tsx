@@ -209,7 +209,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                         <span className="text-text-main font-semibold">{o.giorno}</span>
                         <div className="text-right">
                           <span className="text-text-main font-bold">{o.ore}</span>
-                          <span className="ml-2 text-xs text-text-main/50">
+                          <span className="ml-2 text-xs text-text-main/75">
                             ({o.tipo === 'appuntamento' ? 'su prenotazione' : 'orario fisso'})
                           </span>
                         </div>
@@ -249,7 +249,7 @@ export default async function MedicoPage({ params }: { params: { slug: string } 
                 <Sparkles size={14} /> Cosa pratica
               </p>
               <h2 className="heading-2 mb-3">Terapie e prestazioni</h2>
-              <p className="text-text-main/60 text-lg max-w-2xl mx-auto">
+              <p className="text-text-main/75 text-lg max-w-2xl mx-auto">
                 Tutte le terapie e sotto-specialistiche praticate da {nomeMedico}.
               </p>
             </div>
