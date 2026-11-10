@@ -7,6 +7,7 @@ import { ArrowRight, Shield, Building2, Scan } from 'lucide-react'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { specialisticaHref } from '@/lib/utils'
+import { testoReale } from '@/lib/testo'
 
 export const revalidate = 60
 export async function generateMetadata() {
@@ -181,7 +182,11 @@ function SpecCard({ spec }: { spec: Specialistica }) {
         {spec.icona}
       </div>
       <h3 className="font-semibold text-text-main text-xl mb-2">{spec.nome}</h3>
-      <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-3">{spec.descrizioneBreve}</p>
+      {testoReale(spec.descrizioneBreve) && (
+        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+          {testoReale(spec.descrizioneBreve)}
+        </p>
+      )}
       <span className="inline-flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
         Scopri di più <ArrowRight size={16} />
       </span>

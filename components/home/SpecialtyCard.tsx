@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { specialisticaHref } from '@/lib/utils'
+import { testoReale } from '@/lib/testo'
 
 /** Solo i campi che la card mostra: la home li passa al browser */
 export interface SpecialisticaCard {
@@ -24,7 +25,9 @@ export function SpecialtyCard({ spec }: { spec: SpecialisticaCard }) {
         {spec.icona}
       </div>
       <h3 className="font-semibold text-text-main text-lg mb-2">{spec.nome}</h3>
-      <p className="text-gray-600 text-sm leading-relaxed mb-4">{spec.descrizioneBreve}</p>
+      {testoReale(spec.descrizioneBreve) && (
+        <p className="text-gray-600 text-sm leading-relaxed mb-4">{testoReale(spec.descrizioneBreve)}</p>
+      )}
       <span aria-hidden className="inline-flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
         Scopri di più <ArrowRight size={16} />
       </span>

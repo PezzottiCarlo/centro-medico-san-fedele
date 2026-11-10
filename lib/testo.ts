@@ -26,3 +26,15 @@ export function riassunto(testo: string | undefined | null, max = 160): string {
   const spazio = taglio.lastIndexOf(' ')
   return `${(spazio > max * 0.6 ? taglio.slice(0, spazio) : taglio).replace(/[\s,;:.]+$/, '')}…`
 }
+
+/**
+ * Testo dell'admin, oppure stringa vuota se è un segnaposto rimasto lì ("da
+ * fare", "todo", "xxx", una sola lettera…): meglio nessuna descrizione che
+ * "da fare" in vista ai pazienti.
+ */
+export function testoReale(testo: string | undefined | null): string {
+  const t = (testo ?? '').trim()
+  if (t.length < 3) return ''
+  if (/^(da fare|todo|tbd|xxx+|lorem ipsum|test|prova)\b/i.test(t)) return ''
+  return t
+}

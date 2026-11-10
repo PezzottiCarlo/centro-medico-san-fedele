@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { adminDb } from '@/lib/firebase/admin'
 import { generatePageMetadata, generateSpecialtyJsonLd, metaDescrizione, metaTitolo } from '@/lib/seo'
-import { riassunto } from '@/lib/testo'
+import { riassunto, testoReale } from '@/lib/testo'
 import type { Specialistica, Medico, Patologia } from '@/types'
 import { ArrowRight } from 'lucide-react'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
@@ -58,7 +58,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       title: metaTitolo(data.spec.metaTitle, data.spec.nome),
       description: metaDescrizione(
         data.spec.metaDescription,
-        data.spec.descrizioneBreve || riassunto(data.spec.descrizione)
+        testoReale(data.spec.descrizioneBreve) ||
+          riassunto(data.spec.descrizione) ||
+          `${data.spec.nome}: visite e trattamenti al Centro Medico San Fedele. Prenota online o chiamaci.`
       ),
       slug: `ambulatori/${params.slug}`,
     })
@@ -104,7 +106,9 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
           <div className="container-main">
             <div className="text-5xl mb-4">{spec.icona}</div>
             <h1 className="heading-1 mb-4">{spec.nome}</h1>
-            <p className="text-xl text-gray-500 max-w-2xl">{spec.descrizioneBreve}</p>
+            {testoReale(spec.descrizioneBreve) && (
+              <p className="text-xl text-gray-600 max-w-2xl">{testoReale(spec.descrizioneBreve)}</p>
+            )}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
 import { SITE_URL } from '@/lib/siteUrl'
-import { riassunto } from '@/lib/testo'
+import { riassunto, testoReale } from '@/lib/testo'
 import type { SiteConfig } from '@/types'
 
 const BASE_URL = SITE_URL
@@ -34,8 +34,8 @@ export function metaTitolo(metaTitle: string | undefined, nome: string): string 
  * o testi troppo brevi per Google cedono il posto a quella calcolata.
  */
 export function metaDescrizione(metaDescription: string | undefined, ripiego: string): string {
-  const pulita = (metaDescription ?? '').trim()
-  return pulita.length >= 30 && !/^(da fare|todo|tbd|xxx)/i.test(pulita) ? pulita : ripiego
+  const pulita = testoReale(metaDescription)
+  return pulita.length >= 30 ? pulita : ripiego
 }
 
 /** "Longone al Segrino (CO)", dai dati di /admin/dashboard/site-config. */
