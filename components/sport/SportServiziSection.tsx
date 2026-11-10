@@ -25,29 +25,32 @@ export function SportServiziSection({ sottoSpecialistiche: grezze, specSlug }: P
         {sottoSpecialistiche.map((s, i) => {
           const preview = s.descrizione?.trim()
           return (
+            // Dentro un bottone solo elementi "in linea" (span a blocco)
             <button
               key={s.id}
+              type="button"
               onClick={() => setActive(s)}
-              className="group relative text-left bg-slate-900 border border-slate-800 rounded-2xl p-8 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 overflow-hidden"
+              aria-haspopup="dialog"
+              className="group relative text-left bg-slate-900 border border-slate-800 rounded-2xl p-8 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
-              <div className="absolute top-4 right-4 text-[11px] font-bold text-emerald-500/40 tracking-widest">
+              <span aria-hidden className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+              <span aria-hidden className="absolute top-4 right-4 text-[11px] font-bold text-emerald-500/40 tracking-widest">
                 {String(i + 1).padStart(2, '0')}
-              </div>
-              <div className="relative">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-colors">
+              </span>
+              <span className="relative block">
+                <span aria-hidden className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-colors">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-emerald-400">
                     <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                </div>
-                <h3 className="font-bold text-white text-lg mb-3 leading-snug">{s.nome}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed line-clamp-2">
-                  {preview || 'Scopri questo servizio e prenota una visita.'}
-                </p>
-                <span className="inline-flex items-center gap-1 text-emerald-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
-                  Scopri di più <ArrowUpRight size={12} />
                 </span>
-              </div>
+                <span className="block font-bold text-white text-lg mb-3 leading-snug">{s.nome}</span>
+                <span className="block text-slate-400 text-sm leading-relaxed line-clamp-2">
+                  {preview || 'Scopri questo servizio e prenota una visita.'}
+                </span>
+                <span className="inline-flex items-center gap-1 text-emerald-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
+                  Scopri di più <ArrowUpRight size={12} aria-hidden />
+                </span>
+              </span>
             </button>
           )
         })}
@@ -65,7 +68,7 @@ export function SportServiziSection({ sottoSpecialistiche: grezze, specSlug }: P
               <span className="text-xs font-semibold tracking-wide uppercase">Medicina Sportiva</span>
             </div>
 
-            <h3 className="text-2xl font-bold text-white mb-3">{active.nome}</h3>
+            <h2 className="text-2xl font-bold text-white mb-3">{active.nome}</h2>
 
             <p className="text-slate-300 leading-relaxed whitespace-pre-line">
               {active.descrizione?.trim() ||

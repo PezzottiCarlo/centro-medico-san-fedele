@@ -37,7 +37,7 @@ export function SottoSpecialisticaModal({
           <span className="text-xs font-semibold tracking-wide uppercase">{specNome}</span>
         </div>
 
-        <h3 className="text-2xl font-semibold text-text-main mb-3">{nome}</h3>
+        <h2 className="text-2xl font-semibold text-text-main mb-3">{nome}</h2>
 
         <p className="text-gray-700 leading-relaxed whitespace-pre-line">
           {descrizione?.trim() ||

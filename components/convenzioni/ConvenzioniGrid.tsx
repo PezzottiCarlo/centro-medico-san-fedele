@@ -30,14 +30,15 @@ export function ConvenzioniGrid({ convenzioni }: Props) {
                 {c.logo ? (
                   <Image
                     src={c.logo}
-                    alt={c.nome}
+                    // Il nome è già scritto sotto: niente doppia lettura
+                    alt=""
                     width={120}
                     height={60}
                     sizes="120px"
                     className="object-contain max-h-16"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
+                  <div aria-hidden className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
                     {c.nome.charAt(0)}
                   </div>
                 )}
@@ -109,7 +110,7 @@ export function ConvenzioniGrid({ convenzioni }: Props) {
                   {open.nome.charAt(0)}
                 </div>
               )}
-              <h3 className="text-2xl md:text-3xl font-extrabold text-text-main">{open.nome}</h3>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-text-main">{open.nome}</h2>
               {open.sottotitolo && (
                 <span className="inline-block bg-primary/10 text-primary-dark text-sm font-bold px-3 py-1 rounded-full mt-3">
                   {open.sottotitolo}
