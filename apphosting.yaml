@@ -73,10 +73,10 @@ env:
     availability:
       - RUNTIME
 
-  # 'global' = endpoint multiregionale, ha sempre i modelli più nuovi.
-  # Per data-residency UE: europe-west4.
+  # Regione UE: nella chat i pazienti descrivono sintomi (dati sanitari) e
+  # l'endpoint 'global' non garantisce che il trattamento resti in Europa.
   - variable: VERTEX_LOCATION
-    value: global
+    value: europe-west4
     availability:
       - RUNTIME
 

@@ -11,6 +11,10 @@
 interface Finestra {
   colpi: number[]
   ultimoUso: number
+  // Ogni chiave pota con la propria finestra: prima la pulizia usava quella di
+  // chi la eseguiva, e una chiamata alla chat (1 minuto) cancellava le voci
+  // delle prenotazioni (10 minuti), azzerandone il limite.
+  finestraMs: number
 }
 
 const registro = new Map<string, Finestra>()
@@ -50,14 +54,19 @@ export function limiteSuperato(
   if (ora - ultimaPulizia > PULIZIA_OGNI_MS) {
     ultimaPulizia = ora
     registro.forEach((v, k) => {
-      if (ora - v.ultimoUso > finestraMs * 2) registro.delete(k)
+      if (ora - v.ultimoUso > v.finestraMs) registro.delete(k)
     })
   }
 
-  const finestra = registro.get(chiave) ?? { colpi: [], ultimoUso: ora }
-  const recenti = finestra.colpi.filter((t) => ora - t < finestraMs)
+  const finestra = registro.get(chiave)
+  const recenti = (finestra?.colpi ?? []).filter((t) => ora - t < finestraMs)
+  // Le richieste rifiutate non si contano: sotto flood l'array resta lungo al
+  // massimo `max` e il filtro costa sempre poco
+  if (recenti.length >= max) {
+    registro.set(chiave, { colpi: recenti, ultimoUso: ora, finestraMs })
+    return true
+  }
   recenti.push(ora)
-  registro.set(chiave, { colpi: recenti, ultimoUso: ora })
-
-  return recenti.length > max
+  registro.set(chiave, { colpi: recenti, ultimoUso: ora, finestraMs })
+  return false
 }

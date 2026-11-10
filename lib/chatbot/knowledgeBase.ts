@@ -20,6 +20,7 @@ import { ordinaSotto } from '@/lib/sottoSpecialistiche'
 
 const TTL_MS = 5 * 60 * 1000 // 5 minuti
 let cache: { value: string; expires: number } | null = null
+let inCostruzione: Promise<string> | null = null
 
 /** Rimuove tag/entita HTML e normalizza gli spazi. */
 function stripHtml(html: string | undefined | null): string {
@@ -58,7 +59,7 @@ async function buildKnowledgeBase(): Promise<string> {
 
   const specialistiche = specSnap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Specialistica, 'id'>) }))
-    .filter((s) => s.pubblicata !== false)
+    .filter((s) => s.pubblicata === true)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
   const medici = mediciSnap.docs
@@ -242,10 +243,20 @@ export async function getKnowledgeBase(): Promise<string> {
   if (cache && Date.now() < cache.expires) {
     return cache.value
   }
+  // Più richieste arrivate insieme a cache scaduta aspettano la stessa
+  // ricostruzione invece di rileggere ognuna 7 collection intere
+  if (!inCostruzione) {
+    inCostruzione = buildKnowledgeBase()
+      .then((value) => {
+        cache = { value, expires: Date.now() + TTL_MS }
+        return value
+      })
+      .finally(() => {
+        inCostruzione = null
+      })
+  }
   try {
-    const value = await buildKnowledgeBase()
-    cache = { value, expires: Date.now() + TTL_MS }
-    return value
+    return await inCostruzione
   } catch (error) {
     if (cache) {
       console.error('[chatbot] buildKnowledgeBase fallita, uso cache stale:', error)
