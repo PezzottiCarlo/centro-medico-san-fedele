@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 const SAMPLE_TEXT =
@@ -21,23 +21,31 @@ function randomTransform(intensity: number): string {
 }
 
 export function DyslexiaSimulation() {
-  const [active, setActive] = useState(true)
-  const [tick, setTick] = useState(0)
   const letters = useMemo(() => SAMPLE_TEXT.split(''), [])
+  const [active, setActive] = useState(true)
+  // Al primo disegno (server e client) le lettere stanno ferme: i valori
+  // casuali calcolati durante il render erano diversi tra server e browser
+  // e React segnalava l'errore di idratazione.
+  const [styles, setStyles] = useState<(string | null)[]>([])
+
+  const primoGiro = useRef(true)
 
   useEffect(() => {
+    // Con "riduci movimento" attivo nel sistema l'effetto parte spento
+    if (primoGiro.current) {
+      primoGiro.current = false
+      if (active && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setActive(false)
+        return
+      }
+    }
+    const genera = () =>
+      setStyles(letters.map((ch) => (ch === ' ' ? null : randomTransform(active ? 1 : 0))))
+    genera()
     if (!active) return
-    const interval = setInterval(() => setTick((t) => t + 1), 2600)
+    const interval = setInterval(genera, 2600)
     return () => clearInterval(interval)
-  }, [active])
-
-  // Regenerate styles on every tick
-  const styles = useMemo(
-    () =>
-      letters.map((ch) => (ch === ' ' ? null : randomTransform(active ? 1 : 0))),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tick, active, letters.length]
-  )
+  }, [active, letters])
 
   return (
     <div className="bg-white rounded-lg border-2 border-primary/15 shadow-card overflow-hidden">
@@ -51,16 +59,17 @@ export function DyslexiaSimulation() {
           </h3>
         </div>
         <button
+          type="button"
           onClick={() => setActive((v) => !v)}
-          className="inline-flex items-center gap-2 bg-primary text-white font-semibold text-sm px-4 py-2 rounded-full hover:bg-primary-dark transition-colors"
+          className="inline-flex items-center gap-2 bg-primary text-white font-semibold text-sm px-4 py-2 rounded-full hover:bg-primary-dark transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           {active ? (
             <>
-              <EyeOff size={16} /> Ferma l'effetto
+              <EyeOff size={16} aria-hidden /> Ferma l&apos;effetto
             </>
           ) : (
             <>
-              <Eye size={16} /> Mostra l'effetto
+              <Eye size={16} aria-hidden /> Mostra l&apos;effetto
             </>
           )}
         </button>
@@ -69,16 +78,17 @@ export function DyslexiaSimulation() {
       <div className="px-6 md:px-10 py-10 md:py-14 min-h-[180px] flex items-center justify-center">
         <p
           className="text-xl md:text-3xl font-medium text-text-main leading-relaxed text-center"
-          aria-label={SAMPLE_TEXT}
           style={{ fontFamily: 'Georgia, serif' }}
         >
+          {/* Il lettore di schermo legge la frase intera, non lettera per lettera */}
+          <span className="sr-only">{SAMPLE_TEXT}</span>
+          <span aria-hidden="true">
           {letters.map((ch, i) =>
             ch === ' ' ? (
               <span key={i}> </span>
             ) : (
               <span
                 key={i}
-                aria-hidden="true"
                 className="inline-block transition-transform duration-[2600ms] ease-in-out"
                 style={{ transform: styles[i] ?? undefined, willChange: 'transform' }}
               >
@@ -86,6 +96,7 @@ export function DyslexiaSimulation() {
               </span>
             )
           )}
+          </span>
         </p>
       </div>
 
