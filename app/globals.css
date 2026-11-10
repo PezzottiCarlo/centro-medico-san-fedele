@@ -155,13 +155,17 @@ html.high-contrast .section {
 html.high-contrast main :is(.glass-card, .card) {
   padding: 2rem;
 }
-html.high-contrast main :is(.gap-3, .gap-4) {
+/* Solo gli spazi tra card e blocchi: nelle righe di icone e testo (gap-2,
+   gap-1.5) uno spazio più largo staccherebbe l'icona dalla sua etichetta */
+html.high-contrast main :is(.grid, .flex-col):is(.gap-3, .gap-4) {
   gap: 1.25rem;
 }
-html.high-contrast main :is(.gap-5, .gap-6) {
+html.high-contrast main :is(.grid, .flex-col):is(.gap-5, .gap-6) {
   gap: 2rem;
 }
-html.high-contrast :is(main, footer) :is(button, a[class*='rounded-full'], a[class*='btn-'], input, select, textarea) {
+/* Controlli più alti da toccare, tranne quelli con una forma fissa
+   (interruttori, caselle, bottoni rotondi solo icona) che si deformerebbero */
+html.high-contrast :is(main, footer) :is(button, a[class*='rounded-full'], a[class*='btn-'], input, select, textarea):not([role='switch'], [type='checkbox'], [type='radio'], [type='range'], [data-interruttore], [class*='w-8'], [class*='w-9'], [class*='w-10'], [class*='w-11'], [class*='w-12']) {
   min-height: 48px;
 }
 
@@ -172,6 +176,25 @@ html.high-contrast main :is(.border-gray-100, .border-gray-200, .border-gray-300
 html.high-contrast :focus-visible {
   outline: 3px solid #111827 !important;
   outline-offset: 3px !important;
+}
+
+/* ── Movimento ridotto ───────────────────────────────────────────
+   Chi ha attivato "riduci movimento" nel sistema (vertigini, emicrania,
+   disturbi vestibolari) non vede animazioni né scorrimenti fluidi: gli
+   elementi compaiono subito nello stato finale. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
 }
 
 /* ── Utility classes ─────────────────────────────────────────── */
