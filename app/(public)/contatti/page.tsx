@@ -4,6 +4,7 @@ import { ContactForm } from '@/components/home/ContactForm'
 import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { linkSicuro } from '@/lib/link'
 
 export const revalidate = 60
 export async function generateMetadata() {
@@ -74,9 +75,9 @@ export default async function ContattiPage() {
                 <p className="text-gray-600">
                   {site.cap} {site.citta} ({site.provincia})
                 </p>
-                {site.mapsUrl && (
+                {linkSicuro(site.mapsUrl) && (
                   <a
-                    href={site.mapsUrl}
+                    href={linkSicuro(site.mapsUrl) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary text-sm hover:underline mt-2 inline-block"

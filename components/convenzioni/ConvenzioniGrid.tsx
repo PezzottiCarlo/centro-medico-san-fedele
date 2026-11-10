@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { ExternalLink, X, Info } from 'lucide-react'
 import type { Convenzione } from '@/types'
+import { linkSicuro } from '@/lib/link'
 
 interface Props {
   convenzioni: Convenzione[]
@@ -93,11 +94,11 @@ export function ConvenzioniGrid({ convenzioni }: Props) {
                     <Info size={14} /> Scopri
                   </button>
                 )}
-                {c.url && (
+                {linkSicuro(c.url) && (
                   <>
                     {hasDetail && <span className="w-px h-4 bg-gray-200" />}
                     <a
-                      href={c.url}
+                      href={linkSicuro(c.url) ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-primary font-medium hover:underline"
@@ -186,10 +187,10 @@ export function ConvenzioniGrid({ convenzioni }: Props) {
               )}
 
               {/* CTA sito */}
-              {open.url && (
+              {linkSicuro(open.url) && (
                 <div className="mt-8 pt-6 border-t border-bg-soft text-center">
                   <a
-                    href={open.url}
+                    href={linkSicuro(open.url) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary inline-flex items-center gap-2"

@@ -39,8 +39,13 @@ const EVENTO_CHIUDI_CHAT = 'sanfedele:chiudi-chat'
  */
 function LinkBot({ href, children }: { href?: string; children?: React.ReactNode }) {
   const router = useRouter()
-  const isExternal = !!href && /^https?:\/\//i.test(href)
-  const isInterno = !!href && href.startsWith('/')
+  const isExternal = !!href && /^https:\/\//i.test(href)
+  const isInterno = !!href && href.startsWith('/') && !href.startsWith('//')
+  // Solo link interni o https: un `javascript:` o `data:` generato dal modello
+  // resta testo semplice
+  if (!isExternal && !isInterno && !/^(tel|mailto):/i.test(href ?? '')) {
+    return <span>{children}</span>
+  }
 
   function suClick(e: React.MouseEvent<HTMLAnchorElement>) {
     if (!isInterno || !href || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
@@ -483,7 +488,14 @@ export function ChatbotButton({ domande = [], telefono, orari }: ChatbotButtonPr
                     style={msg.sender === 'user' ? { backgroundColor: '#D05241' } : undefined}
                   >
                     {msg.sender === 'bot' ? (
-                      <ReactMarkdown components={botMarkdownComponents}>
+                      <ReactMarkdown
+                          components={botMarkdownComponents}
+                          // Niente immagini né HTML nelle risposte del bot: farebbero
+                          // partire richieste verso indirizzi decisi dal testo
+                          disallowedElements={['img']}
+                          unwrapDisallowed
+                          skipHtml
+                        >
                         {msg.text}
                       </ReactMarkdown>
                     ) : (

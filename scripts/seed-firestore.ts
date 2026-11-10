@@ -458,6 +458,19 @@ const RECENSIONI = [
 async function main() {
   console.log('\n🌱  Seed Firestore — Centro Medico San Fedele\n')
 
+  // Lo script CANCELLA specialistiche, medici, patologie, news, convenzioni e
+  // recensioni. Il progetto san-fedele-dev è anche la produzione: si parte solo
+  // ripetendo il nome del progetto, così un `npm run seed` per sbaglio non fa danni.
+  const progetto = process.env.FIREBASE_ADMIN_PROJECT_ID
+  const conferma = process.argv[process.argv.indexOf('--conferma') + 1]
+  if (!process.argv.includes('--conferma') || conferma !== progetto) {
+    console.error(
+      `❌  Il seed cancella i contenuti del progetto "${progetto}".\n` +
+        `    Per procedere davvero: npm run seed -- --conferma ${progetto}`
+    )
+    process.exit(1)
+  }
+
   // Clear existing data
   console.log('📦  Pulizia collezioni...')
   await Promise.all([

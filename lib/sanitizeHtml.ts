@@ -1,5 +1,21 @@
 import sanitizeHtml from 'sanitize-html'
 
+// Le immagini nei testi devono stare nel nostro bucket: quelle linkate da siti
+// esterni (es. miniature di Google Immagini) sono bloccate dalla CSP, restano
+// rotte e possono avere problemi di copyright. Meglio scartarle qui.
+const BUCKET =
+  process.env.FIREBASE_STORAGE_BUCKET ||
+  process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+  'san-fedele-dev.firebasestorage.app'
+
+function immagineNostra(src: string): boolean {
+  return (
+    src.startsWith('/') ||
+    src.startsWith(`https://storage.googleapis.com/${BUCKET}/`) ||
+    src.startsWith(`https://firebasestorage.googleapis.com/v0/b/${BUCKET}/`)
+  )
+}
+
 /**
  * Ripulisce l'HTML redazionale prima di iniettarlo con `dangerouslySetInnerHTML`.
  *
@@ -30,12 +46,15 @@ const OPZIONI: sanitizeHtml.IOptions = {
     // `class` serve alle utility di formattazione dell'editor
     '*': ['class'],
   },
-  // Niente `javascript:` né `vbscript:`; `data:` solo per le immagini inline
+  // Niente `javascript:` né `vbscript:`; immagini solo https (e dal bucket, vedi sotto)
   allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-  allowedSchemesByTag: { img: ['http', 'https', 'data'] },
+  allowedSchemesByTag: { img: ['https'] },
   allowProtocolRelative: false,
   // I link esterni non devono poter manipolare la finestra che li ha aperti
   transformTags: {
+    // La pagina ha già il suo h1: un h1 nel testo (es. il nome del medico in
+    // cima alla bio) ne creerebbe un secondo
+    h1: 'h2',
     a: (tagName, attribs) => {
       const href = attribs.href ?? ''
       const esterno = /^https?:\/\//i.test(href)
@@ -49,6 +68,10 @@ const OPZIONI: sanitizeHtml.IOptions = {
   },
   // Il contenuto di questi tag va buttato insieme al tag, non lasciato come testo
   nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript'],
+  exclusiveFilter: (frame) =>
+    // Immagini fuori dal bucket e titoli vuoti (l'editor ne lascia di vuoti)
+    (frame.tag === 'img' && !immagineNostra(frame.attribs.src ?? '')) ||
+    (/^h[1-6]$/.test(frame.tag) && !frame.text.trim() && !frame.mediaChildren.length),
 }
 
 /** HTML redazionale ripulito, pronto per `dangerouslySetInnerHTML`. */

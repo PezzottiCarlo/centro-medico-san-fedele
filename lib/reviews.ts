@@ -41,7 +41,8 @@ async function fetchGooglePlace(): Promise<GooglePlaceDetails | null> {
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(
       placeId
     )}&fields=rating,user_ratings_total,url,reviews&key=${apiKey}&language=it&reviews_sort=newest`
-    const res = await fetch(url, { next: { revalidate: 3600 } })
+    // Se Google non risponde la home non deve restare in attesa
+    const res = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (!res.ok) return null
     const data = (await res.json()) as { status?: string; result?: GooglePlaceDetails }
     if (data.status && data.status !== 'OK') {

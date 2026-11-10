@@ -1,4 +1,5 @@
 import type { HeroConfig, HeroCTA, SiteConfig } from '@/types'
+import { linkSicuro } from '@/lib/link'
 
 export const HERO_PAGE_SLUGS = [
   'home',
@@ -80,8 +81,11 @@ export function risolviLinkCta(href: string, site: SiteConfig): string {
     .replaceAll(CTA_SEGNAPOSTO_EMAIL, site.email)
 }
 
-export function risolviCta(cta: HeroCTA | undefined, site: SiteConfig): HeroCTA | undefined {
-  return cta && { ...cta, href: risolviLinkCta(cta.href, site) }
+/** CTA pronta per il sito: segnaposto risolti e link sicuro, altrimenti niente bottone. */
+export function risolviCta(cta: HeroCTA | null | undefined, site: SiteConfig): HeroCTA | undefined {
+  if (!cta?.testo?.trim()) return undefined
+  const href = linkSicuro(risolviLinkCta(cta.href ?? '', site))
+  return href ? { ...cta, href } : undefined
 }
 
 export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
