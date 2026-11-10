@@ -1,7 +1,9 @@
 import { adminDb } from '@/lib/firebase/admin'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { generatePageMetadata } from '@/lib/seo'
-import type { Medico, StoriaEvento, Specialistica, Patologia } from '@/types'
+import type { Medico, StoriaEvento, Specialistica } from '@/types'
+import { caricaSchedePatologie, type SchedaPatologia } from '@/lib/patologie'
+import { ApriPatologia } from '@/components/patologie/ApriPatologia'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
@@ -50,7 +52,7 @@ async function getStoriaSportiva(): Promise<StoriaEvento[]> {
 async function getSpecialisticaSport(): Promise<{
   spec: Specialistica | null
   medici: Medico[]
-  patologie: Patologia[]
+  patologie: SchedaPatologia[]
 }> {
   try {
     const specSnap = await adminDb
@@ -65,18 +67,15 @@ async function getSpecialisticaSport(): Promise<{
     const specDoc = specSnap.docs[0]
     const spec: Specialistica = { id: specDoc.id, ...(specDoc.data() as Omit<Specialistica, 'id'>) }
 
-    const [mediciSnap, patSnap] = await Promise.all([
+    const [mediciSnap, patologie] = await Promise.all([
       adminDb.collection('medici').where('pubblicato', '==', true).get(),
-      adminDb.collection('patologie').get(),
+      // Le patologie si aprono in una finestra (components/patologie)
+      caricaSchedePatologie(specDoc.id).catch(() => [] as SchedaPatologia[]),
     ])
 
     const medici: Medico[] = mediciSnap.docs
       .filter((d) => (d.data().specialisticheIds as string[])?.includes(specDoc.id))
       .map((d) => ({ id: d.id, ...(d.data() as Omit<Medico, 'id'>) }))
-
-    const patologie: Patologia[] = patSnap.docs
-      .filter((d) => d.data().specialisticaId === specDoc.id)
-      .map((d) => ({ id: d.id, ...(d.data() as Omit<Patologia, 'id'>) }))
 
     return { spec, medici, patologie }
   } catch {
@@ -296,25 +295,22 @@ export default async function SportPage() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {specSport.patologie.map((p) => (
-                    <Link
-                      key={p.id}
-                      href={`/patologie/${p.slug}`}
-                      className="group relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300"
-                    >
+                    <li key={p.id}>
+                    <article className="group relative h-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-slate-950">
                       {p.immagine ? (
                         <div className="relative w-full aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
                           <Image
                             src={p.immagine}
-                            alt={p.nome}
+                            alt=""
                             fill
                             className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
                             sizes="(max-width: 768px) 100vw, 33vw"
                           />
                         </div>
                       ) : (
-                        <div className="relative w-full aspect-[16/10] bg-gradient-to-br from-emerald-500/10 via-slate-900 to-teal-500/10 flex items-center justify-center">
+                        <div aria-hidden className="relative w-full aspect-[16/10] bg-gradient-to-br from-emerald-500/10 via-slate-900 to-teal-500/10 flex items-center justify-center">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-12 h-12 text-emerald-500/40">
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                             <circle cx="12" cy="10" r="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -323,19 +319,26 @@ export default async function SportPage() {
                       )}
 
                       <div className="p-5">
-                        <h4 className="font-bold text-white text-lg mb-2 group-hover:text-emerald-400 transition-colors">
-                          {p.nome}
+                        <h4 className="font-bold text-white text-lg mb-2">
+                          <ApriPatologia
+                            scheda={p}
+                            tema="scuro"
+                            className="text-left group-hover:text-emerald-400 transition-colors focus:outline-none after:absolute after:inset-0 after:content-['']"
+                          >
+                            {p.nome}
+                          </ApriPatologia>
                         </h4>
-                        <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
-                          {p.descrizione?.replace(/<[^>]*>/g, '').substring(0, 120)}
-                        </p>
-                        <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-semibold group-hover:gap-2.5 transition-all">
+                        {p.anteprima && (
+                          <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">{p.anteprima}</p>
+                        )}
+                        <span aria-hidden className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-semibold group-hover:gap-2.5 transition-all">
                           Approfondisci <ArrowRight size={12} />
                         </span>
                       </div>
-                    </Link>
+                    </article>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
           </div>

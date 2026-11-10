@@ -4,11 +4,13 @@ import Image from 'next/image'
 import { adminDb } from '@/lib/firebase/admin'
 import { generatePageMetadata, generateSpecialtyJsonLd, metaDescrizione, metaTitolo } from '@/lib/seo'
 import { riassunto, testoReale } from '@/lib/testo'
-import type { Specialistica, Medico, Patologia } from '@/types'
+import type { Specialistica, Medico } from '@/types'
 import { ArrowRight } from 'lucide-react'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
 import { SottoSpecialisticheSection } from '@/components/specialistiche/SottoSpecialisticheSection'
 import { pulisciHtml, jsonLdSicuro } from '@/lib/sanitizeHtml'
+import { caricaSchedePatologie, type SchedaPatologia } from '@/lib/patologie'
+import { ApriPatologia } from '@/components/patologie/ApriPatologia'
 
 export const revalidate = 60
 
@@ -25,10 +27,9 @@ export async function generateStaticParams() {
 }
 
 async function getData(slug: string) {
-  const [specSnap, mediciSnap, patSnap] = await Promise.all([
+  const [specSnap, mediciSnap] = await Promise.all([
     adminDb.collection('specialistiche').where('slug', '==', slug).limit(1).get(),
     adminDb.collection('medici').where('pubblicato', '==', true).get(),
-    adminDb.collection('patologie').get(),
   ])
 
   if (specSnap.empty) return null
@@ -43,9 +44,8 @@ async function getData(slug: string) {
     .filter((d) => (d.data().specialisticheIds as string[])?.includes(specDoc.id))
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Medico, 'id'>) }))
 
-  const patologie: Patologia[] = patSnap.docs
-    .filter((d) => d.data().specialisticaId === specDoc.id)
-    .map((d) => ({ id: d.id, ...(d.data() as Omit<Patologia, 'id'>) }))
+  // Le patologie si aprono in una finestra (components/patologie)
+  const patologie: SchedaPatologia[] = await caricaSchedePatologie(specDoc.id).catch(() => [])
 
   return { spec, medici, patologie }
 }
@@ -143,28 +143,31 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
           {patologie.length > 0 && (
             <div>
               <h2 className="heading-3 mb-6">Patologie Trattate</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {patologie.map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/patologie/${p.slug}`}
-                    className="glass-card hover:shadow-card-hover transition-all hover:-translate-y-1 group"
-                  >
-                    {p.immagine && (
-                      <div className="relative w-full h-32 rounded-lg overflow-hidden mb-3 -mt-1 bg-bg-soft">
-                        <Image src={p.immagine} alt={p.nome} fill className="object-contain p-2" sizes="(max-width: 768px) 100vw, 33vw" />
-                      </div>
-                    )}
-                    <h3 className="font-semibold text-text-main mb-1">{p.nome}</h3>
-                    <p className="text-gray-500 text-sm line-clamp-2">
-                      {p.descrizione?.replace(/<[^>]*>/g, '').substring(0, 100)}
-                    </p>
-                    <span className="inline-flex items-center gap-1 text-primary text-xs font-medium mt-2 group-hover:gap-2 transition-all">
-                      Approfondisci <ArrowRight size={12} />
-                    </span>
-                  </Link>
+                  <li key={p.id}>
+                    <article className="group relative h-full glass-card hover:shadow-card-hover transition-all hover:-translate-y-1 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary has-[:focus-visible]:ring-offset-2">
+                      {p.immagine && (
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden mb-3 -mt-1 bg-bg-soft">
+                          <Image src={p.immagine} alt="" fill className="object-contain p-2" sizes="(max-width: 768px) 100vw, 33vw" />
+                        </div>
+                      )}
+                      <h3 className="font-semibold text-text-main mb-1">
+                        <ApriPatologia
+                          scheda={p}
+                          className="text-left group-hover:text-primary transition-colors focus:outline-none after:absolute after:inset-0 after:content-['']"
+                        >
+                          {p.nome}
+                        </ApriPatologia>
+                      </h3>
+                      {p.anteprima && <p className="text-gray-600 text-sm line-clamp-2">{p.anteprima}</p>}
+                      <span aria-hidden className="inline-flex items-center gap-1 text-primary-dark text-xs font-medium mt-2 group-hover:gap-2 transition-all">
+                        Approfondisci <ArrowRight size={12} />
+                      </span>
+                    </article>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
 
