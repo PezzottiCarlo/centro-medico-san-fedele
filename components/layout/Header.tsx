@@ -151,6 +151,7 @@ export function Header() {
       {/* Main nav — logo left, titolo absolutely centered, actions right */}
       <nav
         ref={navRef}
+        aria-label="Menu principale"
         className={`container-main relative flex items-center justify-between gap-4 transition-all duration-300 ${scrolled ? 'py-2 md:py-2' : 'py-5 md:py-6'
           }`}
       >
@@ -263,11 +264,13 @@ export function Header() {
             aria-controls="mobile-menu"
           >
             <Menu
+              aria-hidden
               size={26}
               className={`absolute transition-all duration-300 ${mobileOpen ? 'opacity-0 rotate-90 scale-75' : 'opacity-100 rotate-0 scale-100'
                 }`}
             />
             <X
+              aria-hidden
               size={26}
               className={`absolute transition-all duration-300 ${mobileOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-75'
                 }`}
@@ -320,7 +323,7 @@ export function Header() {
               }`}
           >
             <div className="container-main py-4">
-              <nav className="flex flex-col gap-1">
+              <nav aria-label="Menu" className="flex flex-col gap-1">
                 {NAV_ITEMS.map((item, idx) => {
                   const active = isActive(item.href, pathname)
                   return (

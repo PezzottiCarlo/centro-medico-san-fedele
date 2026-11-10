@@ -29,7 +29,8 @@ export async function Footer() {
           <div className="flex items-center gap-4">
             <Image
               src="/logo-san-fedele.png"
-              alt="Centro Medico San Fedele"
+              // Il nome è scritto accanto: niente doppia lettura
+              alt=""
               width={48}
               height={48}
               className="rounded-full object-cover"
@@ -45,17 +46,17 @@ export async function Footer() {
           {social.length > 0 && (
             <div className="flex items-center gap-3">
               {social.map(({ href, label, Icona }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors" aria-label={label}>
-                  <Icona size={18} />
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-primary/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white" aria-label={`${label} (si apre in una nuova scheda)`}>
+                  <Icona size={18} aria-hidden />
                 </a>
               ))}
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 border-t border-white/10 pt-8">
+        <nav aria-label="Collegamenti del sito" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 border-t border-white/10 pt-8">
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Servizi</h4>
+            <h2 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Servizi</h2>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><Link href="/ambulatori" className="hover:text-white transition-colors">Specialistiche</Link></li>
               <li><Link href="/medici" className="hover:text-white transition-colors">I Nostri Medici</Link></li>
@@ -66,7 +67,7 @@ export async function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Informazioni</h4>
+            <h2 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Informazioni</h2>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><Link href="/convenzioni" className="hover:text-white transition-colors">Convenzioni</Link></li>
               <li><Link href="/patologie" className="hover:text-white transition-colors">Patologie trattate</Link></li>
@@ -78,10 +79,10 @@ export async function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Contatti</h4>
+            <h2 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Contatti</h2>
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-start gap-2">
-                <MapPin size={16} className="mt-0.5 flex-shrink-0 text-primary" />
+                <MapPin size={16} className="mt-0.5 flex-shrink-0 text-primary" aria-hidden />
                 <span>
                   {site.indirizzo}
                   <br />
@@ -89,19 +90,19 @@ export async function Footer() {
                 </span>
               </li>
               <li className="flex items-center gap-2">
-                <Phone size={16} className="flex-shrink-0 text-primary" />
+                <Phone size={16} className="flex-shrink-0 text-primary" aria-hidden />
                 <a href={telLink} className="hover:text-white transition-colors font-medium">
                   {site.telefono}
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <Mail size={16} className="flex-shrink-0 text-primary" />
+                <Mail size={16} className="flex-shrink-0 text-primary" aria-hidden />
                 <a href={mailHref} className="hover:text-white transition-colors">
                   {site.email}
                 </a>
               </li>
               <li className="flex items-start gap-2">
-                <Clock size={16} className="flex-shrink-0 text-primary mt-0.5" />
+                <Clock size={16} className="flex-shrink-0 text-primary mt-0.5" aria-hidden />
                 <div>
                   {site.orari.map((o, i) => (
                     <p key={i}>
@@ -112,7 +113,7 @@ export async function Footer() {
               </li>
             </ul>
           </div>
-        </div>
+        </nav>
       </div>
 
       <div className="border-t border-white/10">
@@ -121,7 +122,7 @@ export async function Footer() {
           {social.length > 0 && (
             <div className="flex items-center gap-4">
               {social.map(({ href, label, Icona }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label={label}><Icona size={16} /></a>
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white" aria-label={`${label} (si apre in una nuova scheda)`}><Icona size={16} aria-hidden /></a>
               ))}
             </div>
           )}
