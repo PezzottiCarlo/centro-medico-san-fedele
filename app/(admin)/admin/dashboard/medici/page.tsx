@@ -1,16 +1,12 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { adminAuth, adminDb } from '@/lib/firebase/admin'
+import { adminDb } from '@/lib/firebase/admin'
+import { richiediSessione } from '@/lib/firebase/sessione'
 import type { Medico } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Edit2 } from 'lucide-react'
 import Image from 'next/image'
 
 export default async function AdminMediciPage() {
-  const cookieStore = cookies()
-  const session = cookieStore.get('session')
-  if (!session?.value) redirect('/admin/login')
-  try { await adminAuth.verifySessionCookie(session.value, true) } catch { redirect('/admin/login') }
+  await richiediSessione()
 
   const snap = await adminDb.collection('medici').get()
   const medici: Medico[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Medico, 'id'>) }))

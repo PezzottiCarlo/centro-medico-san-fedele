@@ -1,6 +1,4 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { adminAuth } from '@/lib/firebase/admin'
+import { richiediSessione } from '@/lib/firebase/sessione'
 import { getAllHeroConfigs } from '@/lib/firebase/hero'
 import { HERO_PAGE_LABELS, HERO_PAGE_SLUGS } from '@/lib/heroDefaults'
 import Link from 'next/link'
@@ -9,14 +7,7 @@ import { ArrowLeft, ArrowRight, Image as ImageIcon } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminHeroPage() {
-  const cookieStore = cookies()
-  const session = cookieStore.get('session')
-  if (!session?.value) redirect('/admin/login')
-  try {
-    await adminAuth.verifySessionCookie(session.value, true)
-  } catch {
-    redirect('/admin/login')
-  }
+  await richiediSessione()
 
   const heroes = await getAllHeroConfigs()
 

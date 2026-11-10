@@ -1,6 +1,5 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { adminAuth, adminDb } from '@/lib/firebase/admin'
+import { adminDb } from '@/lib/firebase/admin'
+import { richiediSessione } from '@/lib/firebase/sessione'
 import type { Patologia, Specialistica } from '@/types'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -27,14 +26,7 @@ async function getData(): Promise<{ patologie: Patologia[]; specMap: Map<string,
 }
 
 export default async function AdminPatologiePage() {
-  const cookieStore = cookies()
-  const session = cookieStore.get('session')
-  if (!session?.value) redirect('/admin/login')
-  try {
-    await adminAuth.verifySessionCookie(session.value, true)
-  } catch {
-    redirect('/admin/login')
-  }
+  await richiediSessione()
 
   const { patologie, specMap } = await getData()
 

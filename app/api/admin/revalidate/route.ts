@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { adminAuth } from '@/lib/firebase/admin'
+import { z } from 'zod'
+import { leggiSessione } from '@/lib/firebase/sessione'
 import { HERO_SLUG_TO_PATH, HERO_PAGE_SLUGS, HeroPageSlug } from '@/lib/heroDefaults'
 
 // Route di contenuto statiche note (senza segmenti dinamici)
@@ -32,24 +32,33 @@ function isAllowed(path: string): boolean {
   )
 }
 
+const CorpoSchema = z.object({
+  slug: z.string().max(100).optional(),
+  path: z.string().max(300).optional(),
+  paths: z.array(z.string().max(300)).max(100).optional(),
+  // Dati usati in molte pagine (contatti, specialistiche, medici): si
+  // invalida tutto il sito pubblico invece di elencare decine di pagine
+  tutto: z.boolean().optional(),
+})
+
 export async function POST(req: Request) {
-  const cookieStore = cookies()
-  const session = cookieStore.get('session')?.value
-  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  try {
-    await adminAuth.verifySessionCookie(session, true)
-  } catch {
+  if (!(await leggiSessione())) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  let body: { slug?: string; path?: string; paths?: string[] } = {}
+  let body: z.infer<typeof CorpoSchema>
   try {
-    body = (await req.json()) as { slug?: string; path?: string; paths?: string[] }
+    body = CorpoSchema.parse(await req.json())
   } catch {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 })
   }
 
   const revalidated: string[] = []
+
+  if (body.tutto) {
+    revalidatePath('/', 'layout')
+    return NextResponse.json({ ok: true, revalidated: ['/ (layout)'] })
+  }
 
   // Retrocompatibilità: revalidate tramite hero slug
   if (body.slug && HERO_PAGE_SLUGS.includes(body.slug as HeroPageSlug)) {

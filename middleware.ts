@@ -12,8 +12,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
 
-    // The actual token verification happens in the admin layout server component
-    // Middleware just checks cookie presence for fast redirect
+    // Qui si controlla solo che il cookie ci sia, per un redirect veloce: la
+    // verifica vera (firma, scadenza, revoca) la fanno il layout della
+    // dashboard, le pagine server e le API (lib/firebase/sessione.ts).
   }
 
   return NextResponse.next()

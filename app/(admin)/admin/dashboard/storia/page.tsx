@@ -1,6 +1,5 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { adminAuth, adminDb } from '@/lib/firebase/admin'
+import { adminDb } from '@/lib/firebase/admin'
+import { richiediSessione } from '@/lib/firebase/sessione'
 import type { StoriaEvento, Riconoscimento } from '@/types'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -21,10 +20,7 @@ async function getStoria() {
 }
 
 export default async function AdminStoriaPage() {
-  const cookieStore = cookies()
-  const session = cookieStore.get('session')
-  if (!session?.value) redirect('/admin/login')
-  try { await adminAuth.verifySessionCookie(session.value, true) } catch { redirect('/admin/login') }
+  await richiediSessione()
 
   const { eventi, riconoscimenti } = await getStoria()
 

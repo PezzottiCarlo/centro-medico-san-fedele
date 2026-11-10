@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { adminAuth, getAdminApp } from '@/lib/firebase/admin'
+import { getAdminApp } from '@/lib/firebase/admin'
+import { leggiSessione } from '@/lib/firebase/sessione'
 import { getStorage } from 'firebase-admin/storage'
 
 export const runtime = 'nodejs'
@@ -18,6 +18,8 @@ const CARTELLE_AMMESSE = new Set([
   'storia',
   'news',
   'hero',
+  // Immagini inserite nei testi dall'editor (RichEditor): news, storia, schede
+  'content',
   'uploads',
 ])
 
@@ -37,14 +39,13 @@ const DIMENSIONE_MAX = 8 * 1024 * 1024 // 8 MB
 
 export async function POST(request: NextRequest) {
   // ── Solo admin autenticati ────────────────────────────────
-  const session = cookies().get('session')?.value
-  if (!session) {
+  if (!(await leggiSessione())) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
-  try {
-    await adminAuth.verifySessionCookie(session, true)
-  } catch {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  // Rifiuta subito i corpi enormi, prima di caricarli in memoria
+  const lunghezza = Number(request.headers.get('content-length') || 0)
+  if (lunghezza > DIMENSIONE_MAX + 64 * 1024) {
+    return NextResponse.json({ error: 'File troppo grande (massimo 8 MB)' }, { status: 413 })
   }
 
   try {
@@ -77,8 +78,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80)
-    const filename = `${Date.now()}_${safeName}`
+    // L'estensione la decide il contenuto, non il nome dato dal client: un
+    // JPEG chiamato "x.html" viene salvato come .jpg
+    const base = file.name
+      .replace(/\.[^.]*$/, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 80) || 'immagine'
+    const filename = `${Date.now()}_${base}.${TIPI_AMMESSI[tipoReale]}`
 
     const bucket = getStorage(getAdminApp()).bucket()
     const fileRef = bucket.file(`${folder}/${filename}`)
@@ -86,7 +92,6 @@ export async function POST(request: NextRequest) {
     await fileRef.save(buffer, {
       metadata: {
         contentType: tipoReale,
-        // Evita che il browser reinterpreti il file come qualcos'altro
         contentDisposition: 'inline',
         cacheControl: 'public, max-age=31536000, immutable',
       },

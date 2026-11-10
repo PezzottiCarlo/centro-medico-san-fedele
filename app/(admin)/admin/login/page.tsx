@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { useEffect, useState } from 'react'
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
@@ -14,6 +14,13 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+
+  // Rimandati qui perché la sessione è scaduta o è stata chiusa altrove
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('motivo') === 'sessione') {
+      setError('La sessione è scaduta: accedi di nuovo.')
+    }
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -33,6 +40,8 @@ export default function AdminLoginPage() {
       if (res.ok) {
         router.push('/admin/dashboard')
       } else {
+        // Niente sessione sul server: non lasciare l'utente loggato solo nel browser
+        await signOut(auth).catch(() => {})
         setError('Errore durante la creazione della sessione.')
       }
     } catch {
@@ -60,8 +69,10 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} className="bg-slate-800 rounded-lg border border-slate-700 p-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+              <label htmlFor="login-email" className="block text-sm font-medium text-slate-300 mb-1">Email</label>
               <input
+                id="login-email"
+                autoComplete="username"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -71,9 +82,11 @@ export default function AdminLoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-slate-300 mb-1">Password</label>
               <div className="relative">
                 <input
+                  id="login-password"
+                  autoComplete="current-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -83,7 +96,9 @@ export default function AdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
+                  aria-pressed={showPassword}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -92,7 +107,7 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm mt-3 bg-red-500/10 border border-red-500/20 rounded p-3">
+            <p role="alert" className="text-red-400 text-sm mt-3 bg-red-500/10 border border-red-500/20 rounded p-3">
               {error}
             </p>
           )}

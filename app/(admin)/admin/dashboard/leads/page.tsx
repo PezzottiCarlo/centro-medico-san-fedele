@@ -1,6 +1,5 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { adminAuth, adminDb } from '@/lib/firebase/admin'
+import { adminDb } from '@/lib/firebase/admin'
+import { richiediSessione } from '@/lib/firebase/sessione'
 import type { Lead } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -9,14 +8,7 @@ import { LeadsList } from '@/components/admin/LeadsList'
 export const dynamic = 'force-dynamic'
 
 export default async function LeadsPage() {
-  const cookieStore = cookies()
-  const session = cookieStore.get('session')
-  if (!session?.value) redirect('/admin/login')
-  try {
-    await adminAuth.verifySessionCookie(session.value, true)
-  } catch {
-    redirect('/admin/login')
-  }
+  await richiediSessione()
 
   let leads: Lead[] = []
   try {
