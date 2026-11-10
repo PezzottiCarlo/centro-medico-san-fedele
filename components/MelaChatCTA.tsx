@@ -32,6 +32,7 @@ export function MelaChatCTA() {
             width={120}
             height={120}
             className="w-24 h-24 md:w-28 md:h-28 object-contain flex-shrink-0"
+            aria-hidden
           />
           <div className="max-w-md">
             <h2
@@ -47,10 +48,11 @@ export function MelaChatCTA() {
             <button
               type="button"
               onClick={openChatbot}
-              className={`group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 ${
+              aria-haspopup="dialog"
+              className={`group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                 scura
-                  ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/30'
-                  : 'bg-gradient-to-r from-primary/70 via-primary to-primary-dark text-white shadow-primary/25 hover:shadow-primary/30'
+                  ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/30 focus-visible:ring-emerald-400 focus-visible:ring-offset-slate-950'
+                  : 'bg-gradient-to-r from-primary via-primary to-primary-dark text-white shadow-primary/25 hover:shadow-primary/30 focus-visible:ring-primary'
               }`}
             >
               <MessageCircle size={18} aria-hidden />

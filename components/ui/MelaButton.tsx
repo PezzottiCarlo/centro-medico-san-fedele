@@ -136,7 +136,9 @@ export function MelaButton(props: MelaButtonProps) {
 
   const bgClasses =
     variant === 'gradient'
-      ? 'bg-gradient-to-r from-primary/70 via-primary to-primary-dark'
+      // Niente partenza trasparente: il testo bianco sul blu schiarito
+      // scendeva sotto 3:1 quando la mela sta a destra
+      ? 'bg-gradient-to-r from-primary via-primary to-primary-dark'
       : 'bg-primary hover:bg-primary-dark'
 
   const padding = isLeft ? cfg.padLeft : cfg.padRight
@@ -161,12 +163,17 @@ export function MelaButton(props: MelaButtonProps) {
       ? ''
       : 'disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-card'
 
-  const rootClassName = `group relative ${display} items-center ${justify} overflow-visible rounded-full ${bgClasses} ${padding} ${cfg.padY} shadow-card hover:shadow-card-hover transition-all ${disabledClasses} ${className}`
+  const rootClassName = `group relative ${display} items-center ${justify} overflow-visible rounded-full ${bgClasses} ${padding} ${cfg.padY} shadow-card hover:shadow-card-hover transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${disabledClasses} ${className}`
+  const nuovaScheda = 'href' in props && props.target === '_blank'
 
   const inner = (
     <>
-      <div
-        className={`absolute ${melaPositionClasses} ${ancoraggio} pointer-events-none`}
+      {/* span e non div: dentro link e bottoni vanno solo elementi in linea.
+          Lo specchio sta sul contenitore: messo sull'immagine, lo `scale`
+          dell'hover lo annullava e la mela si girava al passaggio del mouse. */}
+      <span
+        aria-hidden
+        className={`absolute ${melaPositionClasses} ${ancoraggio} pointer-events-none ${melaFlip ? '-scale-x-100' : ''}`}
       >
         <Image
           src={img.src}
@@ -175,14 +182,15 @@ export function MelaButton(props: MelaButtonProps) {
           height={img.height}
           // Larghezza reale a schermo: senza `sizes` si scaricava la variante da 2048 px
           sizes={`${MELA_PX[melaSize]}px`}
-          className={`${cfg.mela} h-auto drop-shadow-xl group-hover:scale-110 ${melaHoverRotate} transition-transform duration-300 ${melaFlip ? 'scale-x-[-1]' : ''}`}
+          className={`${cfg.mela} h-auto drop-shadow-xl group-hover:scale-110 ${melaHoverRotate} transition-transform duration-300`}
         />
-      </div>
+      </span>
       <span
         className={`text-white ${cfg.text} font-semibold inline-flex items-center gap-1.5 group-hover:gap-2 transition-all whitespace-nowrap`}
       >
         {children}
-        {showArrow && <ArrowRight size={cfg.arrow} />}
+        {nuovaScheda && <span className="sr-only"> (si apre in una nuova scheda)</span>}
+        {showArrow && <ArrowRight size={cfg.arrow} aria-hidden />}
       </span>
     </>
   )
