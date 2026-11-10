@@ -9,13 +9,13 @@ import type { HeroConfig, HeroCTA } from '@/types'
 function ctaClasses(cta: HeroCTA): string {
   switch (cta.icona) {
     case 'whatsapp':
-      return 'text-white bg-[#25D366] hover:bg-[#1ebe57] shadow-lg shadow-[#25D366]/30'
+      return 'text-white bg-whatsapp hover:bg-whatsapp-dark shadow-lg shadow-black/20'
     case 'phone':
       return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
     case 'calendar':
       return 'text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30'
     case 'arrow':
-      return 'text-white bg-secondary hover:bg-secondary-dark shadow-lg shadow-secondary/30'
+      return 'text-white bg-secondary-deep hover:bg-[#2F6826] shadow-lg shadow-secondary/30'
     default:
       return 'text-white bg-white/10 hover:bg-white/20 border border-white/30 backdrop-blur'
   }

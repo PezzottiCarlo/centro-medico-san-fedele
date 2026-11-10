@@ -48,7 +48,7 @@ export function InfoRapide({ site }: Props) {
                     className="flex items-baseline justify-between gap-3 border-b border-bg-soft pb-2.5 last:border-0 last:pb-0"
                   >
                     <span className="font-medium text-text-main">{o.giorno}</span>
-                    <span className={`text-right font-semibold ${chiuso ? 'text-gray-400' : 'text-primary-dark'}`}>
+                    <span className={`text-right font-semibold ${chiuso ? 'text-gray-500' : 'text-primary-dark'}`}>
                       {o.ore}
                     </span>
                   </li>
@@ -72,7 +72,7 @@ export function InfoRapide({ site }: Props) {
               <Phone size={26} aria-hidden />
             </span>
             <h3 className="relative text-xl font-bold mb-1">Chiama il centro</h3>
-            <p className="relative text-white/75 text-sm mb-5">
+            <p className="relative text-white/90 text-sm mb-5">
               La segreteria risponde negli orari di apertura.
             </p>
 
@@ -87,9 +87,10 @@ export function InfoRapide({ site }: Props) {
                 href={whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#1ebe57]"
+                className="relative flex items-center justify-center gap-2 rounded-full bg-whatsapp px-5 py-3 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-whatsapp-dark"
               >
                 <CtaIcon kind="whatsapp" size={20} /> Scrivici su WhatsApp
+                <span className="sr-only">(si apre in una nuova scheda)</span>
               </a>
             )}
 
@@ -101,7 +102,7 @@ export function InfoRapide({ site }: Props) {
                 <MapPin size={20} className="mt-0.5 flex-shrink-0" aria-hidden />
                 <span className="text-sm leading-snug">
                   <span className="block font-semibold">{site.indirizzo}</span>
-                  <span className="text-white/75">
+                  <span className="text-white/90">
                     {site.cap} {site.citta} ({site.provincia})
                   </span>
                 </span>
