@@ -21,39 +21,46 @@ export async function generateMetadata() {
   return generatePageMetadata({ site: await getSiteConfig() })
 }
 
+/**
+ * Dati della home. Ogni lettura è indipendente: prima bastava un errore su una
+ * collection per svuotare tutte le sezioni e mostrare "0 medici, 0 specialistiche".
+ */
 async function getHomeData() {
-  try {
-    const [specSnap, reviews, convSnap, mediciSnap, patSnap] = await Promise.all([
-      adminDb.collection('specialistiche').where('pubblicata', '==', true).get(),
-      getReviews({ limit: 6 }),
-      adminDb.collection('convenzioni').where('attiva', '==', true).get(),
-      adminDb.collection('medici').where('pubblicato', '==', true).get(),
-      adminDb.collection('patologie').get(),
-    ])
-
-    const specialistiche: Specialistica[] = specSnap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as Omit<Specialistica, 'id'>) }))
-      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
-
-    const convenzioni: Convenzione[] = convSnap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<Convenzione, 'id'>),
-    }))
-
-    const medici: Medico[] = mediciSnap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<Medico, 'id'>),
-    }))
-
-    const patologie: Patologia[] = patSnap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<Patologia, 'id'>),
-    }))
-
-    return { specialistiche, reviews, convenzioni, medici, patologie }
-  } catch {
-    return { specialistiche: [], reviews: [], convenzioni: [], medici: [], patologie: [] }
+  const [specRes, reviewsRes, convRes, mediciRes, patRes] = await Promise.allSettled([
+    adminDb.collection('specialistiche').where('pubblicata', '==', true).get(),
+    getReviews({ limit: 6 }),
+    adminDb.collection('convenzioni').where('attiva', '==', true).get(),
+    adminDb.collection('medici').where('pubblicato', '==', true).get(),
+    adminDb.collection('patologie').get(),
+  ])
+  for (const r of [specRes, reviewsRes, convRes, mediciRes, patRes]) {
+    if (r.status === 'rejected') console.error('[home] lettura fallita:', r.reason)
   }
+
+  // Già ordinate per `order` da adminDb (lib/firebase/admin.ts)
+  const specialistiche: Specialistica[] =
+    specRes.status === 'fulfilled'
+      ? specRes.value.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Specialistica, 'id'>) }))
+      : []
+
+  const convenzioni: Convenzione[] =
+    convRes.status === 'fulfilled'
+      ? convRes.value.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Convenzione, 'id'>) }))
+      : []
+
+  const medici: Medico[] =
+    mediciRes.status === 'fulfilled'
+      ? mediciRes.value.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Medico, 'id'>) }))
+      : []
+
+  const patologie: Patologia[] =
+    patRes.status === 'fulfilled'
+      ? patRes.value.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Patologia, 'id'>) }))
+      : []
+
+  const reviews = reviewsRes.status === 'fulfilled' ? reviewsRes.value : []
+
+  return { specialistiche, reviews, convenzioni, medici, patologie }
 }
 
 export default async function HomePage() {
@@ -89,7 +96,17 @@ export default async function HomePage() {
                 Un centro multidisciplinare con specialisti dedicati per ogni area della salute.
               </p>
             </div>
-            <SpecialtySearchGrid specialistiche={specialistiche} patologie={patologie} />
+            <SpecialtySearchGrid
+              specialistiche={specialistiche.map((s) => ({
+                id: s.id,
+                nome: s.nome,
+                slug: s.slug,
+                icona: s.icona,
+                descrizioneBreve: s.descrizioneBreve,
+                sotto: (s.sottoSpecialistiche ?? []).map((x) => x.nome),
+              }))}
+              patologie={patologie.map((p) => ({ nome: p.nome, specialisticaId: p.specialisticaId }))}
+            />
           </div>
         </section>
       )}

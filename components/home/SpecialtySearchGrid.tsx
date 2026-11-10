@@ -2,13 +2,22 @@
 
 import { useState, useMemo } from 'react'
 import { Search, X } from 'lucide-react'
-import { SpecialtyCard } from './SpecialtyCard'
+import { SpecialtyCard, type SpecialisticaCard } from './SpecialtyCard'
 import { MelaButton } from '@/components/ui/MelaButton'
-import type { Specialistica, Patologia } from '@/types'
+
+/** Dati ridotti al minimo: prima arrivavano al browser descrizioni HTML e
+ *  relazioni intere, oltre 100 KB per una ricerca che usa solo i nomi */
+export interface SpecialisticaRicerca extends SpecialisticaCard {
+  sotto: string[]
+}
+export interface PatologiaRicerca {
+  nome: string
+  specialisticaId: string
+}
 
 interface Props {
-  specialistiche: Specialistica[]
-  patologie?: Patologia[]
+  specialistiche: SpecialisticaRicerca[]
+  patologie?: PatologiaRicerca[]
 }
 
 function normalize(s: string): string {
@@ -31,7 +40,7 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
       if (matchedSpecIds.has(s.id)) return true
       if (normalize(s.nome).includes(q)) return true
       if (s.descrizioneBreve && normalize(s.descrizioneBreve).includes(q)) return true
-      if (s.sottoSpecialistiche?.some((sub) => normalize(sub.nome).includes(q))) return true
+      if (s.sotto.some((nome) => normalize(nome).includes(q))) return true
       return false
     })
   }, [query, specialistiche, patologie])
@@ -43,9 +52,14 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
         <div className="relative group">
           <Search
             size={20}
+            aria-hidden
             className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/60 group-focus-within:text-primary transition-colors"
           />
+          <label htmlFor="cerca-specialistiche" className="sr-only">
+            Cerca una specialistica, una prestazione o una patologia
+          </label>
           <input
+            id="cerca-specialistiche"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -63,8 +77,9 @@ export function SpecialtySearchGrid({ specialistiche, patologie = [] }: Props) {
             </button>
           )}
         </div>
+        {/* Annunciato dai lettori di schermo mentre si scrive */}
         {query && (
-          <p className="text-sm text-text-main/60 mt-3 text-center">
+          <p role="status" className="text-sm text-text-main/70 mt-3 text-center">
             {filtered.length === 0
               ? 'Nessuna specialistica trovata'
               : `${filtered.length} ${filtered.length === 1 ? 'risultato' : 'risultati'}`}
