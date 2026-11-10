@@ -1,5 +1,6 @@
 import type { HeroConfig, HeroCTA, SiteConfig } from '@/types'
 import { linkSicuro } from '@/lib/link'
+import { ANNO_FONDAZIONE } from '@/lib/siteConfig'
 
 export const HERO_PAGE_SLUGS = [
   'home',
@@ -88,6 +89,8 @@ export function risolviCta(cta: HeroCTA | null | undefined, site: SiteConfig): H
   return href ? { ...cta, href } : undefined
 }
 
+// Senza `immagine` la hero usa il gradiente del sito: i default puntavano a
+// file (/contatti.jpg, /news.jpg…) mai esistiti, che risultavano rotti.
 export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
   home: {
     pageSlug: 'home',
@@ -122,7 +125,6 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     titolo: 'Scrivici, chiamaci o vieni a trovarci',
     sottotitolo:
       'Siamo a tua disposizione per qualsiasi informazione o richiesta. Nel cuore della Provincia di Como.',
-    immagine: '/contatti.jpg',
     variant: 'standard',
     pubblicato: true,
   },
@@ -130,7 +132,7 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     pageSlug: 'storia',
     titolo: 'La nostra storia',
     sottotitolo:
-      'Dal 2008 al fianco dei nostri pazienti. Un percorso di crescita, innovazione e dedizione alla cura della persona.',
+      `Dal ${ANNO_FONDAZIONE} al fianco dei nostri pazienti. Un percorso di crescita, innovazione e dedizione alla cura della persona.`,
     immagine: '/storia.jpg',
     variant: 'standard',
     pubblicato: true,
@@ -140,7 +142,6 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     titolo: 'News, Articoli & Eventi',
     sottotitolo:
       'Aggiornamenti, approfondimenti e notizie dal mondo della salute e dal nostro centro medico.',
-    immagine: '/news.jpg',
     variant: 'standard',
     pubblicato: true,
   },
@@ -149,7 +150,6 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     titolo: 'Convenzioni',
     sottotitolo:
       'Grazie alle nostre convenzioni, le prestazioni sono più accessibili. Verifica se la tua assicurazione o il tuo ente è tra i nostri partner.',
-    immagine: '/convenzioni.jpg',
     variant: 'standard',
     pubblicato: true,
   },
@@ -157,7 +157,6 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     pageSlug: 'lavora-con-noi',
     titolo: 'Lavora con Noi',
     sottotitolo: 'Cerchiamo professionisti appassionati e competenti per ampliare il nostro team.',
-    immagine: '/lavora-con-noi.jpg',
     variant: 'standard',
     pubblicato: true,
   },
@@ -166,7 +165,6 @@ export const HERO_DEFAULTS: Record<HeroPageSlug, HeroConfig> = {
     titolo: 'Area DSA',
     sottotitolo:
       'Percorsi specializzati di diagnosi, trattamento e supporto per bambini, adolescenti e adulti.',
-    immagine: '/dsa.jpg',
     variant: 'standard',
     pubblicato: true,
   },

@@ -2,7 +2,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { adminDb } from '@/lib/firebase/admin'
-import { generatePageMetadata, generateSpecialtyJsonLd } from '@/lib/seo'
+import { generatePageMetadata, generateSpecialtyJsonLd, metaDescrizione, metaTitolo } from '@/lib/seo'
+import { riassunto } from '@/lib/testo'
 import type { Specialistica, Medico, Patologia } from '@/types'
 import { ArrowRight } from 'lucide-react'
 import { DoctorScroller } from '@/components/home/DoctorScroller'
@@ -54,8 +55,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const data = await getData(params.slug)
     if (!data) return {}
     return generatePageMetadata({
-      title: data.spec.metaTitle || data.spec.nome,
-      description: data.spec.metaDescription || data.spec.descrizioneBreve,
+      title: metaTitolo(data.spec.metaTitle, data.spec.nome),
+      description: metaDescrizione(
+        data.spec.metaDescription,
+        data.spec.descrizioneBreve || riassunto(data.spec.descrizione)
+      ),
       slug: `ambulatori/${params.slug}`,
     })
   } catch {

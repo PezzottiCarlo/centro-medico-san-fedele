@@ -1,10 +1,42 @@
 import type { Metadata } from 'next'
 import { SITE_CONFIG_DEFAULT } from '@/lib/siteConfig'
 import { SITE_URL } from '@/lib/siteUrl'
+import { riassunto } from '@/lib/testo'
 import type { SiteConfig } from '@/types'
 
 const BASE_URL = SITE_URL
-const DEFAULT_TITLE = 'Centro Medico San Fedele'
+const NOME_SITO = 'Centro Medico San Fedele'
+const DEFAULT_TITLE = NOME_SITO
+/** Immagine per le anteprime social (1200×630) e logo dei dati strutturati */
+const OG_IMAGE = `${BASE_URL}/og-image.jpg`
+const LOGO = `${BASE_URL}/logo-san-fedele.png`
+
+/**
+ * Titolo di una pagina senza il nome del sito: lo aggiunge il template del
+ * layout ("%s | Centro Medico San Fedele"). Toglie il suffisso se l'admin l'ha
+ * già scritto nel meta title, altrimenti compariva due o tre volte.
+ */
+function titoloPulito(titolo: string): string {
+  return titolo.replace(/\s*[|–—-]\s*Centro Medico San Fedele\s*$/i, '').trim()
+}
+
+/**
+ * Meta title dall'admin, se è un titolo vero: un valore di una o due lettere
+ * (es. "S", lasciato a metà) cede il posto al nome della pagina.
+ */
+export function metaTitolo(metaTitle: string | undefined, nome: string): string {
+  const pulito = titoloPulito(metaTitle ?? '')
+  return pulito.length >= 3 ? pulito : nome
+}
+
+/**
+ * Meta description dall'admin, se è una frase vera: segnaposto come "da fare"
+ * o testi troppo brevi per Google cedono il posto a quella calcolata.
+ */
+export function metaDescrizione(metaDescription: string | undefined, ripiego: string): string {
+  const pulita = (metaDescription ?? '').trim()
+  return pulita.length >= 30 && !/^(da fare|todo|tbd|xxx)/i.test(pulita) ? pulita : ripiego
+}
 
 /** "Longone al Segrino (CO)", dai dati di /admin/dashboard/site-config. */
 export function localitaCentro(site: Pick<SiteConfig, 'citta' | 'provincia'>): string {
@@ -29,13 +61,17 @@ export function generatePageMetadata({
   /** Contatti attuali del centro, per la descrizione predefinita */
   site?: SiteConfig
 }): Metadata {
-  const fullTitle = title ? `${title} | Centro Medico San Fedele` : DEFAULT_TITLE
-  const desc = description ?? descrizionePredefinita(site)
+  const titoloPagina = title ? titoloPulito(title) : ''
+  // og:title e twitter non passano dal template del layout: lì serve completo
+  const fullTitle = titoloPagina ? `${titoloPagina} | ${NOME_SITO}` : DEFAULT_TITLE
+  // `||` e non `??`: una description vuota ("" da una bio vuota) toglieva il tag
+  const desc = description?.trim() || descrizionePredefinita(site)
   const url = slug ? `${BASE_URL}/${slug}` : BASE_URL
-  const ogImage = image ?? `${BASE_URL}/og-image.jpg`
+  const ogImage = image || OG_IMAGE
 
   return {
-    title: fullTitle,
+    // Il layout aggiunge " | Centro Medico San Fedele"; la home usa il titolo intero
+    title: titoloPagina ? titoloPagina : { absolute: DEFAULT_TITLE },
     description: desc,
     openGraph: {
       title: fullTitle,
@@ -69,7 +105,7 @@ export function generatePhysicianJsonLd(medico: {
     '@context': 'https://schema.org',
     '@type': 'Physician',
     name: medico.nome,
-    description: medico.bio,
+    description: riassunto(medico.bio, 300) || undefined,
     image: medico.foto,
     url: `${BASE_URL}/medici/${medico.slug}`,
     medicalSpecialty: medico.specialistiche,
@@ -90,7 +126,8 @@ export function generateSpecialtyJsonLd(spec: {
     '@context': 'https://schema.org',
     '@type': 'MedicalSpecialty',
     name: spec.nome,
-    description: spec.descrizione,
+    // Testo semplice: la descrizione è HTML dell'editor
+    description: riassunto(spec.descrizione, 300) || undefined,
     url: `${BASE_URL}/ambulatori/${spec.slug}`,
   }
 }
@@ -109,7 +146,7 @@ export function generateStoriaImageGalleryJsonLd(
       contentUrl: e.immagine,
       url: e.immagine,
       name: e.anno ? `${e.titolo} (${e.anno})` : e.titolo,
-      caption: e.descrizione ? e.descrizione.replace(/<[^>]*>/g, '').trim().slice(0, 200) : e.titolo,
+      caption: riassunto(e.descrizione, 200) || e.titolo,
       creditText: 'Centro Medico San Fedele',
     }))
 
@@ -128,7 +165,7 @@ export function generateOrganizationJsonLd(site?: SiteConfig) {
     '@type': 'MedicalOrganization',
     name: 'Centro Medico San Fedele',
     url: BASE_URL,
-    logo: `${BASE_URL}/logo.png`,
+    logo: LOGO,
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: (site?.telefonoE164 || SITE_CONFIG_DEFAULT.telefonoE164).replace(/[^\d+]/g, ''),
