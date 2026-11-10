@@ -185,7 +185,7 @@ export default async function SpecialisticaPage({ params }: { params: { slug: st
 
           {/* Prenota CTA */}
           <div className="glass-card text-center">
-            <h3 className="heading-3 mb-3">Prenota una visita</h3>
+            <h2 className="heading-3 mb-3">Prenota una visita</h2>
             <p className="text-gray-500 mb-6 max-w-lg mx-auto">
               I nostri specialisti sono a tua disposizione. Prenota una visita per {spec.nome.toLowerCase()}.
             </p>

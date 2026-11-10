@@ -71,9 +71,12 @@ function Interruttore({
 export function DSASwitch({
   compact = false,
   dark = false,
+  titolo: Titolo = 'h2',
 }: {
   compact?: boolean
   dark?: boolean
+  /** Nel menu dell'header non è un titolo di sezione della pagina */
+  titolo?: 'h2' | 'p'
 }) {
   const { dsaMode, highContrast, toggleDsaMode, toggleHighContrast } = useAccessibility()
 
@@ -112,9 +115,9 @@ export function DSASwitch({
 
   return (
     <div className={cn('rounded-lg p-6', dark ? 'bg-white/5' : 'bg-secondary/10')}>
-      <h3 className={cn('font-semibold mb-4', dark ? 'text-white' : 'text-text-main')}>
+      <Titolo className={cn('font-semibold mb-4', dark ? 'text-white' : 'text-text-main')}>
         Accessibilità
-      </h3>
+      </Titolo>
       <div className="space-y-4">
         <Interruttore
           etichetta="Modalità DSA"

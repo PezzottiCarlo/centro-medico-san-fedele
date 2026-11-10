@@ -40,12 +40,16 @@ export default async function ConvenzioniPage() {
           {convenzioni.length === 0 ? (
             <p className="text-center text-gray-500">Nessuna convenzione disponibile al momento.</p>
           ) : (
-            <ConvenzioniGrid convenzioni={convenzioni} />
+            <>
+              {/* Titolo per i lettori di schermo: le schede (h3) non restano senza sezione */}
+              <h2 className="sr-only">Enti e assicurazioni convenzionati</h2>
+              <ConvenzioniGrid convenzioni={convenzioni} />
+            </>
           )}
 
           {/* CTA */}
           <div className="bg-white rounded-lg p-6 shadow-card border border-gray-100 text-center mt-16">
-            <h3 className="heading-3 mb-3">Hai domande sulle convenzioni?</h3>
+            <h2 className="heading-3 mb-3">Hai domande sulle convenzioni?</h2>
             <p className="text-gray-500 mb-6">
               Contattaci per verificare se il tuo ente o la tua assicurazione è convenzionata con noi.
             </p>

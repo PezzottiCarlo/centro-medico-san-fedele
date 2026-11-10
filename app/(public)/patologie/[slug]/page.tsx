@@ -115,7 +115,7 @@ export default async function PatologiaPage({ params }: { params: { slug: string
             <div className="space-y-6">
               {medici.length > 0 && (
                 <div className="glass-card">
-                  <h3 className="font-semibold text-text-main mb-4">Medici Specialisti</h3>
+                  <h2 className="font-semibold text-text-main mb-4">Medici Specialisti</h2>
                   <div className="space-y-3">
                     {medici.map((m) => (
                       <div key={m.id} className="flex items-center gap-3">

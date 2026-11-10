@@ -384,7 +384,7 @@ export function Header() {
                 className={`mt-3 transition-all duration-300 ${mobileOpen ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
                   }`}
               >
-                <DSASwitch dark={dark} />
+                <DSASwitch dark={dark} titolo="p" />
               </div>
             </div>
           </div>
