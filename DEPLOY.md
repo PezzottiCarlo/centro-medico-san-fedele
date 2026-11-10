@@ -19,17 +19,17 @@
 - [x] Tutto pushato su `origin/dev` e `origin/main`
 
 ### File creati nel repo
-- [`apphosting.yaml`](apphosting.yaml) — runtime + env vars + 10 secret per backend App Hosting
+- [`apphosting.yaml`](apphosting.yaml) — runtime, env vars e secret del backend App Hosting (elenco completo lì)
 - [`firebase.json`](firebase.json) — collega rules Firestore + Storage
 - [`.firebaserc`](.firebaserc) — punta al progetto `san-fedele-dev`
-- [`firestore.rules`](firestore.rules) — lettura pubblica contenuti, scrittura solo via Admin SDK
+- [`firestore.rules`](firestore.rules) — lettura pubblica dei contenuti; scrittura dal pannello admin per chi ha fatto login (la registrazione di nuovi utenti è disattivata in console, quindi solo gli account creati a mano); `leads` leggibili e modificabili solo dall'admin, creati solo dal server (`/api/prenota`)
 - [`firestore.indexes.json`](firestore.indexes.json) — vuoto, da aggiornare se servono indici compositi
-- [`storage.rules`](storage.rules) — lettura pubblica, scrittura solo via Admin SDK
+- [`storage.rules`](storage.rules) — lettura dei singoli file pubblica, elenco e scrittura chiusi: i caricamenti passano da `/api/upload` (Admin SDK, sessione admin obbligatoria)
 - [`scripts/migrate-uploads-to-storage.ts`](scripts/migrate-uploads-to-storage.ts) — script migrazione locale → Storage
 
 ### File modificati nel repo
 - [`app/api/upload/route.ts`](app/api/upload/route.ts) — rimossa logica filesystem locale, sempre Firebase Storage
-- [`next.config.mjs`](next.config.mjs) — aggiunto `output: 'standalone'`
+- [`next.config.mjs`](next.config.mjs) — `output: 'standalone'` aggiunto e poi tolto: App Hosting usa il suo adapter
 - [`.env.example`](.env.example) — aggiunte `FIREBASE_STORAGE_BUCKET` + variabili SMTP
 - [`.gitignore`](.gitignore) — esclude `public/uploads/` + cache Firebase
 - [`package.json`](package.json) — aggiunto script `migrate-uploads`
@@ -138,7 +138,7 @@ git branch -D prod && git push origin --delete prod
 | Branch sviluppo | `dev` |
 | Repo GitHub | `PezzottiCarlo/centro-medico-san-fedele` |
 
-### Secret richiesti (8)
+### Secret richiesti (10)
 
 Valori da `.env.local`. **Admin SDK NON serve in prod** — App Hosting usa Application Default Credentials tramite il SA `firebase-app-hosting-compute@san-fedele-dev` (ruoli `Cloud Datastore User` + `Firebase Admin SDK Administrator Service Agent` + `Storage Object Viewer` già configurati). Quindi solo per la build/runtime client + email:
 
@@ -149,6 +149,8 @@ Valori da `.env.local`. **Admin SDK NON serve in prod** — App Hosting usa Appl
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | idem |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` | credenziali Gmail SMTP (per ora `carlo.pezzotti01@gmail.com`, cliente deciderà la mail definitiva) |
 | `EMAIL_TO` | destinatario dei lead (form contatti + prenotazioni) |
+| `RECAPTCHA_SECRET_KEY` | chiave segreta reCAPTCHA v3 (la chiave del sito è `value:` in `apphosting.yaml`) |
+| `GOOGLE_PLACES_API_KEY` | API Places di Google Cloud per voto e recensioni in home (`GOOGLE_PLACE_ID` è `value:`) |
 
 I secret `FIREBASE_ADMIN_CLIENT_EMAIL` e `FIREBASE_ADMIN_PRIVATE_KEY` possono restare in Secret Manager (costano zero) ma non sono più referenziati in `apphosting.yaml`.
 
@@ -158,6 +160,8 @@ Le seguenti sono già impostate come `value:` (non secret) in `apphosting.yaml`:
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=san-fedele-dev.firebasestorage.app`
 - `FIREBASE_ADMIN_PROJECT_ID=san-fedele-dev`
 - `FIREBASE_STORAGE_BUCKET=san-fedele-dev.firebasestorage.app`
+
+Al cambio di dominio: impostare `NEXT_PUBLIC_SITE_URL=https://www.centrosanfedele.it` (è già il valore di ripiego). Sugli altri host (es. `*.hosted.app`) il sito risponde con `X-Robots-Tag: noindex`, così Google indicizza solo il dominio vero.
 
 ---
 

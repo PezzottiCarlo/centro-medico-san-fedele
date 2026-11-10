@@ -69,13 +69,14 @@ san-fedele/
 ├── lib/
 │   ├── firebase/admin.ts       # Firebase Admin SDK
 │   ├── firebase/client.ts      # Firebase Client SDK
-│   ├── firebase/collections.ts # Query helper Firestore
+│   ├── firebase/sessione.ts    # Lettura/verifica del cookie di sessione admin
 │   ├── utils.ts                # slugify, formatDate, cn
 │   ├── seo.ts                  # Metadata + JSON-LD
 │   └── email.ts                # Template email notifica
 ├── hooks/
 │   ├── useAccessibility.ts     # DSA mode + high contrast
-│   └── useSearch.ts            # Ricerca client-side
+│   ├── usePrenotaForm.ts       # Invio dei moduli a /api/prenota
+│   └── useRecaptcha.ts         # Caricamento e token reCAPTCHA v3
 ├── types/index.ts              # Tutti i modelli TypeScript
 ├── scripts/seed-firestore.ts   # Script seeding database
 └── docs/ARCHITETTURA.md        # Questa documentazione
@@ -359,17 +360,25 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 
 ## 8. Autenticazione
 
-- Firebase Auth con session cookie HTTP-only (5 giorni)
-- Login: `/admin/login`
-- Middleware protegge `/admin/*`
-- API: `POST /api/auth/session` (crea), `DELETE /api/auth/session` (logout)
+- Firebase Auth con session cookie HTTP-only, `secure`, `sameSite=strict` (5 giorni)
+- Login: `/admin/login`. La sessione si crea solo con un login recente (meno di 5 minuti)
+- Il middleware controlla solo la presenza del cookie su `/admin/*`; la verifica vera
+  (firma, scadenza, revoca) la fanno le pagine e le API server con `richiediSessione()` /
+  `leggiSessione()` in `lib/firebase/sessione.ts`
+- API: `POST /api/auth/session` (crea), `DELETE /api/auth/session` (logout: revoca i token
+  dell'utente, quindi esce da tutti i dispositivi)
+- Qualunque utente autenticato è admin: la registrazione pubblica è disattivata nella console
+  Firebase (Authentication → Impostazioni → Azioni utente), gli account si creano a mano
 
 ---
 
 ## 9. Accessibilita (DSA)
 
-- Toggle DSA Mode → font OpenDyslexic, spaziatura aumentata
-- Toggle High Contrast → colori ad alto contrasto
+- Toggle DSA Mode → font Lexend (next/font), spaziatura aumentata
+- Toggle High Contrast → colori ad alto contrasto, testo più grande, controlli da 48 px
+- "Riduci movimento" del sistema rispettato in tutto il sito (globals.css)
+- Moduli con etichette collegate, errori annunciati, finestre modali con focus intrappolato,
+  link "Salta al contenuto", contrasti AA su testi e bottoni
 - Stato persistito in localStorage
 - Pagina dedicata `/dsa`
 - Hook: `useAccessibility()`
@@ -400,12 +409,13 @@ Le sotto-specialistiche vengono create con riferimenti reali agli ID medici (ris
 - `apphosting.yaml` — runtime, env vars, lista secret
 - `firebase.json` — punta a regole Firestore + Storage
 - `.firebaserc` — collega il repo al progetto `san-fedele-dev`
-- `firestore.rules` — lettura pubblica per contenuti pubblici, scrittura solo via Admin SDK
-- `storage.rules` — lettura pubblica per asset immagine, scrittura solo via Admin SDK
+- `firestore.rules` — lettura pubblica dei contenuti; scrittura dal pannello admin per chi ha fatto login (la registrazione di nuovi utenti è disattivata in console, quindi solo gli account creati a mano); `leads` leggibili e modificabili solo dall'admin, creati solo dal server (`/api/prenota`)
+- `storage.rules` — lettura dei singoli file pubblica, elenco e scrittura chiusi: i caricamenti passano da `/api/upload` (Admin SDK, sessione admin obbligatoria)
+- Dopo ogni modifica alle regole: `firebase deploy --only firestore:rules,storage`
 
 ### Secret richiesti su Google Secret Manager
 
-`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_TO`.
+`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_TO`, `RECAPTCHA_SECRET_KEY`, `GOOGLE_PLACES_API_KEY` (più `WHATSAPP_TOKEN` se si attiva la notifica WhatsApp). L'elenco completo è in `apphosting.yaml`.
 
 Le credenziali Admin SDK NON sono più secret in produzione: App Hosting usa Application Default Credentials tramite il SA `firebase-app-hosting-compute@san-fedele-dev` (ruoli `Cloud Datastore User` + `Firebase Admin SDK Administrator Service Agent`). In sviluppo locale si continua a usare `FIREBASE_ADMIN_CLIENT_EMAIL` + `FIREBASE_ADMIN_PRIVATE_KEY` da `.env.local` (vedi [lib/firebase/admin.ts](../lib/firebase/admin.ts)).
 
@@ -437,7 +447,7 @@ Chatbot AI che risponde **solo** dai contenuti del sito e resta sempre aggiornat
 - `POST /api/chat` (`runtime = 'nodejs'`, `dynamic = 'force-dynamic'`): valida con Zod `{ messages: {role,content}[] }`, rate limit best-effort per-IP (15/min), compone knowledge base + system prompt, chiama l'LLM, ritorna `{ success, reply }`.
 - `lib/chatbot/knowledgeBase.ts`: legge `specialistiche/medici/patologie/news_eventi/convenzioni` via `adminDb`, le compila in testo semplice (HTML stripped, campi lunghi troncati), cache in memoria TTL 5 min. Freschezza automatica: nessun vector DB.
 - `lib/chatbot/systemPrompt.ts`: persona "MelaBot", grounding rule, guardrail medico, gestione fuori-tema. Obbliga il modello a usare markdown leggero con link interni cliccabili (`[testo](/percorso)`).
-- `lib/chatbot/llm.ts`: wrapper isolato — Google Gemini via **Vertex AI**, SDK `@google/genai` (il vecchio `@google-cloud/vertexai` è deprecato). Modello e regione configurabili via env `VERTEX_MODEL` (default `gemini-flash-latest`) e `VERTEX_LOCATION` (default `global`). Auth dual-mode come `lib/firebase/admin.ts`: ADC in produzione, `FIREBASE_ADMIN_*` in locale. Cambiare provider = riscrivere solo questo file.
+- `lib/chatbot/llm.ts`: wrapper isolato — Google Gemini via **Vertex AI**, SDK `@google/genai` (il vecchio `@google-cloud/vertexai` è deprecato). Modello e regione configurabili via env `VERTEX_MODEL` (default `gemini-2.5-flash`) e `VERTEX_LOCATION` (default `europe-west4`, così i messaggi restano in UE). Timeout di 20 s. Auth dual-mode come `lib/firebase/admin.ts`: ADC in produzione, `FIREBASE_ADMIN_*` in locale. Cambiare provider = riscrivere solo questo file.
 - `components/ChatbotButton.tsx`: bot rinominato in MelaBot; le risposte sono renderizzate via `react-markdown` (link rosso brand, target=_blank su esterni, niente HTML grezzo, protocolli `javascript:`/`vbscript:` filtrati di default).
 - `lib/siteConfig.ts`: aggiunto `CENTER_INFO` (nome, telefono, indirizzo, orari) — fonte unica.
 
