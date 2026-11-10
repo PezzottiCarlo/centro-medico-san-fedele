@@ -551,7 +551,7 @@ function PrenotaFormInterno({
               >
                 <span className="text-2xl" aria-hidden>{s.icona}</span>
                 <span className="font-medium text-sm">{s.nome}</span>
-                <ChevronRight size={16} className="ml-auto text-gray-400" aria-hidden />
+                <ChevronRight size={16} className="ml-auto text-gray-500" aria-hidden />
               </button>
             ))}
           </div>
@@ -584,7 +584,7 @@ function PrenotaFormInterno({
                       {count} {count === 1 ? 'medico' : 'medici'}
                     </span>
                   )}
-                  <ChevronRight size={16} className="text-gray-400 flex-shrink-0" aria-hidden />
+                  <ChevronRight size={16} className="text-gray-500 flex-shrink-0" aria-hidden />
                 </button>
               )
             })}
@@ -771,7 +771,7 @@ function MedicoStep({
             <span className="block font-medium">Nessuna preferenza</span>
             <span className="block text-xs text-gray-600">Ti assegniamo noi lo specialista disponibile</span>
           </span>
-          <ChevronRight size={16} className="ml-auto text-gray-400" aria-hidden />
+          <ChevronRight size={16} className="ml-auto text-gray-500" aria-hidden />
         </button>
         {medici.map((m) => (
           <button
@@ -784,7 +784,7 @@ function MedicoStep({
               {m.nome.charAt(0)}
             </div>
             <span className="font-medium">{m.nome}</span>
-            <ChevronRight size={16} className="ml-auto text-gray-400" aria-hidden />
+            <ChevronRight size={16} className="ml-auto text-gray-500" aria-hidden />
           </button>
         ))}
       </div>

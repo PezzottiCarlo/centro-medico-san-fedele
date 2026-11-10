@@ -116,7 +116,7 @@ export async function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-main py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+        <div className="container-main py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <p>&copy; {new Date().getFullYear()} Centro Medico San Fedele. Tutti i diritti riservati.</p>
           {social.length > 0 && (
             <div className="flex items-center gap-4">

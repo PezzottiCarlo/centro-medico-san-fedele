@@ -79,11 +79,11 @@ export default async function DSAPage() {
             <h2 className="heading-2 mb-6">Cosa sono i Disturbi Specifici dell&apos;Apprendimento?</h2>
             {spec?.descrizione ? (
               <div
-                className="prose-content text-gray-500 text-lg leading-relaxed text-left md:text-center"
+                className="prose-content text-gray-600 text-lg leading-relaxed text-left md:text-center"
                 dangerouslySetInnerHTML={{ __html: pulisciHtml(spec.descrizione) }}
               />
             ) : (
-              <div className="text-gray-500 text-lg leading-relaxed space-y-4">
+              <div className="text-gray-600 text-lg leading-relaxed space-y-4">
                 <p>
                   I Disturbi Specifici dell&apos;Apprendimento (DSA) sono disturbi del neurosviluppo che
                   riguardano le abilità di lettura (<strong>dislessia</strong>), scrittura (<strong>disgrafia</strong> e <strong>disortografia</strong>)
@@ -146,7 +146,7 @@ export default async function DSAPage() {
                   {s.icon}
                 </div>
                 <h3 className="font-semibold text-text-main text-lg mb-2">{s.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">{s.desc}</p>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">{s.desc}</p>
                 <ul className="space-y-2">
                   {s.details.map((d) => (
                     <li key={d} className="flex items-start gap-2 text-sm text-gray-600">
@@ -183,7 +183,7 @@ export default async function DSAPage() {
               Il percorso
             </p>
             <h2 className="heading-2 mb-4">Come funziona?</h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
               Un percorso strutturato e personalizzato, dalla prima valutazione all&apos;intervento.
             </p>
           </div>
@@ -228,7 +228,7 @@ export default async function DSAPage() {
                   </div>
                   <div className="pb-8">
                     <h3 className="font-semibold text-text-main text-lg mb-1">{item.title}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}

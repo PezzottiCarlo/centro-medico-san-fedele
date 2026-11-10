@@ -37,7 +37,7 @@ export default async function MediciPage() {
       <section className="section bg-muted/30">
         <div className="container-main">
           {medici.length === 0 ? (
-            <p className="text-center text-gray-400">Nessun medico disponibile al momento.</p>
+            <p className="text-center text-gray-500">Nessun medico disponibile al momento.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {medici.map((m) => (

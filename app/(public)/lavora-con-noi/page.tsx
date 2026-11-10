@@ -39,7 +39,7 @@ export default async function LavoraConNoiPage() {
                 <Mail size={18} />
                 {site.email}
               </a>
-              <p className="text-gray-400 text-sm mt-6">
+              <p className="text-gray-500 text-sm mt-6">
                 Valuteremo la tua candidatura e ti contatteremo per un eventuale colloquio.
               </p>
             </div>

@@ -60,7 +60,7 @@ function FeaturedCard({ item }: { item: NewsEvento }) {
             <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
               {etichettaCategoria(item.categoria)}
             </span>
-            <span className="text-xs text-gray-400">{formatDate(item.dataPublicazione)}</span>
+            <span className="text-xs text-gray-500">{formatDate(item.dataPublicazione)}</span>
           </div>
           <h3 className="font-semibold text-text-main text-xl md:text-2xl mb-3 group-hover:text-primary transition-colors">
             {item.titolo}
@@ -96,7 +96,7 @@ function NewsCard({ item }: { item: NewsEvento }) {
           <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
             {etichettaCategoria(item.categoria)}
           </span>
-          <span className="text-xs text-gray-400">{formatDate(item.dataPublicazione)}</span>
+          <span className="text-xs text-gray-500">{formatDate(item.dataPublicazione)}</span>
         </div>
         <h3 className="font-semibold text-text-main text-lg mb-3 group-hover:text-primary transition-colors line-clamp-2">
           {item.titolo}
@@ -131,7 +131,7 @@ export default async function NewsPage() {
       {!hasContent ? (
         <div className="section">
           <div className="container-main">
-            <p className="text-center text-gray-400">Nessun contenuto disponibile al momento.</p>
+            <p className="text-center text-gray-500">Nessun contenuto disponibile al momento.</p>
           </div>
         </div>
       ) : (

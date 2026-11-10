@@ -38,7 +38,7 @@ export default async function ConvenzioniPage() {
       <div className="section">
         <div className="container-main">
           {convenzioni.length === 0 ? (
-            <p className="text-center text-gray-400">Nessuna convenzione disponibile al momento.</p>
+            <p className="text-center text-gray-500">Nessuna convenzione disponibile al momento.</p>
           ) : (
             <ConvenzioniGrid convenzioni={convenzioni} />
           )}

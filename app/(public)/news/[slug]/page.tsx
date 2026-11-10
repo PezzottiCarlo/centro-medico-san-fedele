@@ -69,7 +69,7 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
           <time dateTime={news.dataPublicazione} className="text-sm text-gray-500">
             {formatDate(news.dataPublicazione)}
           </time>
-          {news.autore && <span className="text-sm text-gray-400">di {news.autore}</span>}
+          {news.autore && <span className="text-sm text-gray-500">di {news.autore}</span>}
         </div>
 
         <h1 className="heading-1 mb-8">{news.titolo}</h1>

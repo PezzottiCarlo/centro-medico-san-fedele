@@ -108,7 +108,7 @@ export default async function AmbulatorioPage() {
           </div>
 
           {specialistiche.length === 0 ? (
-            <p className="text-center text-gray-400">Nessuna specialistica disponibile al momento.</p>
+            <p className="text-center text-gray-500">Nessuna specialistica disponibile al momento.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {specialistiche.map((spec) => (

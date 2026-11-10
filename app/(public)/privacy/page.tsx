@@ -38,7 +38,7 @@ export default async function PrivacyPage() {
       <div className="container-main">
         <div className="max-w-3xl mx-auto">
           <h1 className="heading-1 mb-2">Privacy Policy</h1>
-          <p className="text-sm text-gray-400 mb-8">
+          <p className="text-sm text-gray-500 mb-8">
             Informativa ai sensi degli artt. 13 e 14 del Regolamento UE 2016/679 (GDPR) · Ultimo
             aggiornamento: {ULTIMO_AGGIORNAMENTO}
           </p>

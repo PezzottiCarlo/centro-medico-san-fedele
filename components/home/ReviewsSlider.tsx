@@ -48,10 +48,10 @@ export function ReviewsSlider({ reviews }: { reviews: Review[] }) {
         <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-text-main">{r.autore}</p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-500">
               {formatDate(r.data)}{' '}
               {r.fonte === 'google' && (
-                <span className="ml-1 text-blue-500">via Google</span>
+                <span className="ml-1 text-primary-dark">via Google</span>
               )}
             </p>
           </div>

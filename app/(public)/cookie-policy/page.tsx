@@ -64,7 +64,7 @@ export default async function CookiePolicyPage() {
       <div className="container-main">
         <div className="max-w-3xl mx-auto">
           <h1 className="heading-1 mb-2">Cookie Policy</h1>
-          <p className="text-sm text-gray-400 mb-8">
+          <p className="text-sm text-gray-500 mb-8">
             Informativa sull&apos;uso dei cookie e degli strumenti di memorizzazione, ai sensi
             dell&apos;art. 122 del Codice Privacy e delle Linee guida del Garante del 10 giugno
             2021 · Ultimo aggiornamento: {ULTIMO_AGGIORNAMENTO}
@@ -128,15 +128,15 @@ export default async function CookiePolicyPage() {
                   <p className="font-mono text-xs text-text-main break-all">{v.nome}</p>
                   <dl className="mt-2 space-y-1.5">
                     <div>
-                      <dt className="text-xs uppercase tracking-wide text-gray-400">Tipo</dt>
+                      <dt className="text-xs uppercase tracking-wide text-gray-500">Tipo</dt>
                       <dd>{v.tipo}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs uppercase tracking-wide text-gray-400">Finalità</dt>
+                      <dt className="text-xs uppercase tracking-wide text-gray-500">Finalità</dt>
                       <dd>{v.finalita}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs uppercase tracking-wide text-gray-400">Durata</dt>
+                      <dt className="text-xs uppercase tracking-wide text-gray-500">Durata</dt>
                       <dd>{v.durata}</dd>
                     </div>
                   </dl>
