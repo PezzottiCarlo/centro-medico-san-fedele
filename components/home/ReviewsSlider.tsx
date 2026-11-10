@@ -25,13 +25,20 @@ export function ReviewsSlider({ reviews }: { reviews: Review[] }) {
 
   return (
     <div className="relative max-w-3xl mx-auto">
-      <div className="bg-white rounded-lg shadow-card p-8 md:p-12">
-        <Quote size={32} className="text-primary/30 mb-4" />
+      {/* Al cambio di recensione il lettore di schermo legge la nuova */}
+      <div className="bg-white rounded-lg shadow-card p-8 md:p-12" aria-live="polite">
+        {reviews.length > 1 && (
+          <p className="sr-only">
+            Recensione {current + 1} di {reviews.length}
+          </p>
+        )}
+        <Quote size={32} className="text-primary/30 mb-4" aria-hidden />
 
-        <div className="flex gap-1 mb-4">
+        <div className="flex gap-1 mb-4" role="img" aria-label={`${Math.round(r.stelle)} stelle su 5`}>
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
+              aria-hidden
               size={20}
               className={cn(
                 'fill-current',
@@ -56,39 +63,52 @@ export function ReviewsSlider({ reviews }: { reviews: Review[] }) {
             </p>
           </div>
 
+          {reviews.length > 1 && (
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={prev}
-              className="p-2 rounded-full bg-muted hover:bg-primary/10 transition-colors"
+              className="p-2 rounded-full bg-muted hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Recensione precedente"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={20} aria-hidden />
             </button>
             <button
+              type="button"
               onClick={next}
-              className="p-2 rounded-full bg-muted hover:bg-primary/10 transition-colors"
+              className="p-2 rounded-full bg-muted hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Recensione successiva"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={20} aria-hidden />
             </button>
           </div>
+          )}
         </div>
       </div>
 
-      {/* Dots */}
-      <div className="flex justify-center gap-2 mt-4">
+      {/* Pallini: il punto resta piccolo, l'area da toccare è di 24 px */}
+      {reviews.length > 1 && (
+      <div className="flex justify-center gap-1 mt-4">
         {reviews.map((_, i) => (
           <button
             key={i}
+            type="button"
             onClick={() => setCurrent(i)}
-            className={cn(
-              'w-2 h-2 rounded-full transition-colors',
-              i === current ? 'bg-primary' : 'bg-gray-300'
-            )}
+            className="group flex h-6 w-6 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label={`Vai alla recensione ${i + 1}`}
-          />
+            aria-current={i === current ? 'true' : undefined}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'w-2 h-2 rounded-full transition-colors',
+                i === current ? 'bg-primary scale-125' : 'bg-gray-400 group-hover:bg-gray-500'
+              )}
+            />
+          </button>
         ))}
       </div>
+      )}
     </div>
   )
 }

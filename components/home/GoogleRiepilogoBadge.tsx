@@ -22,7 +22,8 @@ export function GoogleRiepilogoBadge({ riepilogo }: { riepilogo: GoogleRiepilogo
         <div>
           <div className="flex items-center gap-2">
             <span className="text-3xl font-black text-text-main leading-none">{voto}</span>
-            <span className="flex gap-0.5" aria-label={`${voto} stelle su 5`}>
+            {/* aria-label su uno span senza ruolo non viene letto: serve role="img" */}
+            <span className="flex gap-0.5" role="img" aria-label={`${voto} stelle su 5`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
@@ -45,7 +46,8 @@ export function GoogleRiepilogoBadge({ riepilogo }: { riepilogo: GoogleRiepilogo
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-text-main transition-colors hover:border-primary hover:text-primary"
         >
-          Leggi tutte <ExternalLink size={14} aria-hidden />
+          Leggi tutte <span className="sr-only">le recensioni su Google (si apre in una nuova scheda)</span>
+          <ExternalLink size={14} aria-hidden />
         </a>
         <a
           href={riepilogo.scriviUrl}
@@ -54,6 +56,7 @@ export function GoogleRiepilogoBadge({ riepilogo }: { riepilogo: GoogleRiepilogo
           className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
         >
           <PenLine size={14} aria-hidden /> Lascia una recensione
+          <span className="sr-only"> su Google (si apre in una nuova scheda)</span>
         </a>
       </div>
     </div>
