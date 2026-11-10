@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 // Più modali (o modale + menu) possono bloccare lo scroll insieme: si sblocca
@@ -32,6 +33,8 @@ interface Props {
   tema?: 'chiaro' | 'scuro'
   /** Fascia colorata in cima alla finestra */
   fascia?: string
+  /** Finestra più larga, per testi lunghi (schede delle patologie) */
+  larga?: boolean
 }
 
 /**
@@ -41,9 +44,12 @@ interface Props {
  *   e alla chiusura torna al bottone che l'ha aperta;
  * - Esc o un clic fuori la chiudono;
  * - il contenuto scorre dentro la finestra sui telefoni piccoli;
- * - sta sopra header e chatbot.
+ * - sta sopra header e chatbot;
+ * - viene disegnata direttamente nel <body>: aperta da dentro una card con
+ *   `backdrop-blur` o `transform` (glass-card, hover:-translate-y) il
+ *   `position: fixed` restava chiuso nella card invece di coprire la pagina.
  */
-export function Modale({ titolo, onChiudi, children, tema = 'chiaro', fascia }: Props) {
+export function Modale({ titolo, onChiudi, children, tema = 'chiaro', fascia, larga = false }: Props) {
   const finestra = useRef<HTMLDivElement>(null)
   const chiudi = useRef(onChiudi)
   chiudi.current = onChiudi
@@ -84,7 +90,10 @@ export function Modale({ titolo, onChiudi, children, tema = 'chiaro', fascia }: 
 
   const scuro = tema === 'scuro'
 
-  return (
+  // Si apre solo dopo un'azione nel browser: sul server non viene mai disegnata
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
         aria-hidden
@@ -99,7 +108,7 @@ export function Modale({ titolo, onChiudi, children, tema = 'chiaro', fascia }: 
         aria-modal="true"
         aria-label={titolo}
         tabIndex={-1}
-        className={`relative w-full max-w-lg max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain rounded-2xl shadow-2xl focus:outline-none motion-safe:animate-[modalPop_.25s_ease] ${
+        className={`relative w-full ${larga ? 'max-w-2xl' : 'max-w-lg'} max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain rounded-2xl shadow-2xl focus:outline-none motion-safe:animate-[modalPop_.25s_ease] ${
           scuro ? 'bg-slate-900 border border-slate-800 text-white' : 'bg-white text-text-main'
         }`}
       >
@@ -108,7 +117,8 @@ export function Modale({ titolo, onChiudi, children, tema = 'chiaro', fascia }: 
           type="button"
           onClick={onChiudi}
           aria-label="Chiudi"
-          className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 ${
+          // z-10: un'immagine in cima al contenuto (schede patologie) la copriva
+          className={`absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 ${
             scuro
               ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 focus-visible:ring-emerald-400'
               : 'bg-bg-soft text-text-main hover:bg-bg-deep focus-visible:ring-primary'
@@ -118,6 +128,7 @@ export function Modale({ titolo, onChiudi, children, tema = 'chiaro', fascia }: 
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
