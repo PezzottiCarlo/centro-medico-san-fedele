@@ -5,6 +5,7 @@ import { PageHero } from '@/components/layout/PageHero'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { linkSicuro } from '@/lib/link'
+import { telefonoCentro } from '@/lib/telefono'
 
 export const revalidate = 60
 export async function generateMetadata() {
@@ -18,7 +19,7 @@ export async function generateMetadata() {
 
 export default async function ContattiPage() {
   const [hero, site] = await Promise.all([getHeroConfig('contatti'), getSiteConfig()])
-  const telHref = `tel:${site.telefonoE164.replace(/[^\d+]/g, '')}`
+  const telLink = `tel:${telefonoCentro(site)}`
   // Percorso dalla posizione attuale al centro: su telefono apre l'app Google
   // Maps già in navigazione, su computer il calcolo del percorso sul sito
   const navigazioneHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
@@ -88,7 +89,7 @@ export default async function ContattiPage() {
               </InfoCard>
 
               <InfoCard icon={<Phone size={20} className="text-primary" />} title="Telefono">
-                <a href={telHref} className="text-primary font-medium hover:underline">
+                <a href={telLink} className="text-primary font-medium hover:underline">
                   {site.telefono}
                 </a>
               </InfoCard>

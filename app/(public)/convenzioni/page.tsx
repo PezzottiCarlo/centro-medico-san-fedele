@@ -5,6 +5,7 @@ import { PageHero } from '@/components/layout/PageHero'
 import { ConvenzioniGrid } from '@/components/convenzioni/ConvenzioniGrid'
 import { getHeroConfig } from '@/lib/firebase/hero'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { telefonoCentro } from '@/lib/telefono'
 
 export const revalidate = 60
 
@@ -48,7 +49,7 @@ export default async function ConvenzioniPage() {
             <p className="text-gray-500 mb-6">
               Contattaci per verificare se il tuo ente o la tua assicurazione è convenzionata con noi.
             </p>
-            <a href={`tel:${site.telefonoE164}`} className="btn-primary">
+            <a href={`tel:${telefonoCentro(site)}`} className="btn-primary">
               Chiama il {site.telefono}
             </a>
           </div>

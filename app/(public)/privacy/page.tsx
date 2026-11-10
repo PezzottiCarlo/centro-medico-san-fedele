@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { generatePageMetadata } from '@/lib/seo'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { telefonoCentro } from '@/lib/telefono'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -78,7 +79,7 @@ export default async function PrivacyPage() {
                 </li>
               )}
               <li>
-                Telefono: <a href={`tel:${site.telefonoE164}`}>{site.telefono}</a>
+                Telefono: <a href={`tel:${telefonoCentro(site)}`}>{site.telefono}</a>
               </li>
             </ul>
 

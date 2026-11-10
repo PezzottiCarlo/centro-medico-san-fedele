@@ -3,14 +3,10 @@ import Link from 'next/link'
 import { StatoApertura } from '@/components/home/StatoApertura'
 import { CtaIcon } from '@/components/ui/CtaIcon'
 import type { SiteConfig } from '@/types'
+import { telefonoCentro, whatsappHref } from '@/lib/telefono'
 
 interface Props {
   site: SiteConfig
-}
-
-/** Numero pulito per i link tel: e wa.me */
-function soloCifre(numero: string): string {
-  return numero.replace(/[^\d+]/g, '')
 }
 
 /**
@@ -18,8 +14,9 @@ function soloCifre(numero: string): string {
  * chiamarvi. Il modulo per scrivere sta in fondo alla pagina (ScriviciSection).
  */
 export function InfoRapide({ site }: Props) {
-  const tel = soloCifre(site.telefonoE164 || site.telefono)
-  const whatsapp = site.whatsappE164 ? soloCifre(site.whatsappE164).replace(/^\+/, '') : ''
+  const tel = telefonoCentro(site)
+  // Prima non toglieva lo "00" iniziale: con un numero salvato come 0039… il link si rompeva
+  const whatsapp = whatsappHref(site.whatsappE164)
 
   return (
     <section className="relative bg-gradient-to-b from-bg-soft via-white to-white py-14 md:py-20">
@@ -87,7 +84,7 @@ export function InfoRapide({ site }: Props) {
             </a>
             {whatsapp && (
               <a
-                href={`https://wa.me/${whatsapp}`}
+                href={whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#1ebe57]"

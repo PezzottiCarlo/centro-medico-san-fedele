@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Phone, Mail, MapPin, Clock, Instagram, Facebook, Linkedin } from 'lucide-react'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
 import { ANNO_FONDAZIONE } from '@/lib/siteConfig'
+import { telefonoCentro } from '@/lib/telefono'
 
 // Accetta solo indirizzi web veri: un campo lasciato a metà o un `javascript:`
 // non diventano un link nel footer.
@@ -13,7 +14,7 @@ function linkSocial(url?: string): string | null {
 
 export async function Footer() {
   const site = await getSiteConfig()
-  const telHref = `tel:${site.telefonoE164.replace(/[^\d+]/g, '')}`
+  const telLink = `tel:${telefonoCentro(site)}`
   const mailHref = `mailto:${site.email}`
   const social = [
     { href: linkSocial(site.instagramUrl), label: 'Instagram', Icona: Instagram },
@@ -68,6 +69,7 @@ export async function Footer() {
             <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-300">Informazioni</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><Link href="/convenzioni" className="hover:text-white transition-colors">Convenzioni</Link></li>
+              <li><Link href="/patologie" className="hover:text-white transition-colors">Patologie trattate</Link></li>
               <li><Link href="/lavora-con-noi" className="hover:text-white transition-colors">Lavora con Noi</Link></li>
               <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link href="/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link></li>
@@ -88,7 +90,7 @@ export async function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="flex-shrink-0 text-primary" />
-                <a href={telHref} className="hover:text-white transition-colors font-medium">
+                <a href={telLink} className="hover:text-white transition-colors font-medium">
                   {site.telefono}
                 </a>
               </li>

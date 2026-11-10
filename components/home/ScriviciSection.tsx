@@ -1,6 +1,7 @@
 import { Clock, ShieldCheck, Stethoscope, Phone } from 'lucide-react'
 import { ModuloContatto } from '@/components/home/ModuloContatto'
 import type { SiteConfig } from '@/types'
+import { telefonoCentro } from '@/lib/telefono'
 
 interface Props {
   site: SiteConfig
@@ -19,7 +20,7 @@ const VANTAGGI = [
  * un pannello chiaro a destra. Su telefono il testo viene prima del modulo.
  */
 export function ScriviciSection({ site, specialistiche }: Props) {
-  const tel = (site.telefonoE164 || site.telefono).replace(/[^\d+]/g, '')
+  const tel = telefonoCentro(site)
 
   return (
     <section

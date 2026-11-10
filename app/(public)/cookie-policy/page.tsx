@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { generatePageMetadata } from '@/lib/seo'
 import { getSiteConfig } from '@/lib/firebase/siteConfig'
+import { telefonoCentro } from '@/lib/telefono'
 
 export const revalidate = 60
 export const metadata = generatePageMetadata({
@@ -35,7 +36,7 @@ const STRUMENTI_PROPRI: Voce[] = [
     nome: 'accessibility',
     tipo: 'Memoria locale (localStorage)',
     finalita:
-      'Ricorda le preferenze di accessibilità che hai scelto — carattere ad alta leggibilità, alto contrasto, dimensione del testo — così non devi reimpostarle a ogni visita.',
+      'Ricorda le preferenze di accessibilità che hai scelto (modalità DSA con carattere ad alta leggibilità, alto contrasto), così non devi reimpostarle a ogni visita.',
     durata: 'Finché non svuoti i dati del browser',
   },
   {
@@ -44,6 +45,13 @@ const STRUMENTI_PROPRI: Voce[] = [
     finalita:
       'Ricorda che hai già chiuso il messaggio di invito dell’assistente virtuale, per non riproportelo a ogni pagina.',
     durata: 'Fino alla chiusura della scheda del browser',
+  },
+  {
+    nome: 'sanfedele:prenota-precompilata',
+    tipo: 'Memoria di sessione (sessionStorage)',
+    finalita:
+      'Se chiedi all’assistente virtuale di prenotare, conserva per un istante i dati che gli hai scritto (nome, contatti, motivo della visita) per precompilare il modulo di prenotazione. Viene cancellata appena il modulo li legge e non è mai inviata a terzi.',
+    durata: 'Fino all’apertura del modulo, al massimo fino alla chiusura della scheda',
   },
 ]
 
@@ -269,7 +277,7 @@ export default async function CookiePolicyPage() {
               Il titolare del trattamento è {titolare}, con sede in {site.indirizzoCompleto}. Per
               qualsiasi domanda su questa informativa puoi scrivere a{' '}
               <a href={`mailto:${site.email}`}>{site.email}</a> o telefonare al{' '}
-              <a href={`tel:${site.telefonoE164}`}>{site.telefono}</a>.
+              <a href={`tel:${telefonoCentro(site)}`}>{site.telefono}</a>.
             </p>
             <p>
               Come trattiamo i dati che ci lasci tramite i moduli, l&apos;assistente virtuale e la

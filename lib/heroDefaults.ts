@@ -1,6 +1,7 @@
 import type { HeroConfig, HeroCTA, SiteConfig } from '@/types'
 import { linkSicuro } from '@/lib/link'
 import { ANNO_FONDAZIONE } from '@/lib/siteConfig'
+import { telefonoCentro, whatsappHref } from '@/lib/telefono'
 
 export const HERO_PAGE_SLUGS = [
   'home',
@@ -72,10 +73,9 @@ export function normalizzaLinkCta(href: string): string {
 
 /** Sostituisce i segnaposto con i contatti attuali del sito. */
 export function risolviLinkCta(href: string, site: SiteConfig): string {
-  const soloCifre = (numero: string) => numero.replace(/[^\d+]/g, '')
-  const telefono = soloCifre(site.telefonoE164 || site.telefono)
+  const telefono = telefonoCentro(site)
   // wa.me vuole il numero internazionale senza "+" né zeri iniziali
-  const whatsapp = soloCifre(site.whatsappE164 || telefono).replace(/^\+|^00/, '')
+  const whatsapp = (whatsappHref(site.whatsappE164 || telefono) ?? '').replace('https://wa.me/', '')
   return normalizzaLinkCta(href)
     .replaceAll(CTA_SEGNAPOSTO_TELEFONO, telefono)
     .replaceAll(CTA_SEGNAPOSTO_WHATSAPP, whatsapp)
